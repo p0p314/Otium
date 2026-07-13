@@ -57,7 +57,21 @@ export const Season = z.object({
 });
 export type Season = z.infer<typeof Season>;
 
-/** Représentation transport (DTO) d'un média. Le domaine a son propre modèle riche. */
+/**
+ * Résumé d'un média issu du catalogue externe (recherche) : identité par `externalRef`,
+ * pas encore d'`id` interne (le média n'est pas nécessairement en base).
+ */
+export const MediaSummary = z.object({
+  type: MediaType,
+  title: z.string(),
+  year: z.number().int().nullable(),
+  posterUrl: z.string().url().nullable(),
+  genres: z.array(Genre),
+  externalRef: ExternalRef,
+});
+export type MediaSummary = z.infer<typeof MediaSummary>;
+
+/** Représentation transport (DTO) d'un média persisté. Le domaine a son propre modèle riche. */
 export const Media = z.object({
   id: z.string(),
   type: MediaType,

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Media, MediaType } from "./media.js";
+import { MediaSummary, MediaType } from "./media.js";
 
 export const SearchMediaQuery = z.object({
   q: z.string().min(1).max(200),
@@ -17,5 +17,5 @@ export const Paginated = <T extends z.ZodTypeAny>(item: T) =>
     total: z.number().int().nonnegative(),
   });
 
-export const SearchMediaResult = Paginated(Media);
+export const SearchMediaResult = Paginated(MediaSummary);
 export type SearchMediaResult = z.infer<typeof SearchMediaResult>;
