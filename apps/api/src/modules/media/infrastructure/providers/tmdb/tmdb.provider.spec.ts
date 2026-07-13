@@ -70,6 +70,36 @@ describe("TmdbProvider", () => {
     expect(http.getJson).not.toHaveBeenCalled();
   });
 
+  it("utilise l'en-tête Bearer pour un jeton v4 (JWT)", async () => {
+    const http = { getJson: vi.fn(async () => tmdbResponse) } as unknown as HttpClient;
+    const provider = new TmdbProvider(
+      makeConfig({ TMDB_ACCESS_TOKEN: "eyJhbGciOiJ.abc.def" }),
+      http,
+      makeRedis(),
+    );
+
+    await provider.search({ query: "x", page: 1, pageSize: 20 });
+
+    const [url, headers] = vi.mocked(http.getJson).mock.calls[0]!;
+    expect((headers as Record<string, string>).Authorization).toBe("Bearer eyJhbGciOiJ.abc.def");
+    expect(url).not.toContain("api_key=");
+  });
+
+  it("utilise le paramètre api_key pour une clé v3", async () => {
+    const http = { getJson: vi.fn(async () => tmdbResponse) } as unknown as HttpClient;
+    const provider = new TmdbProvider(
+      makeConfig({ TMDB_ACCESS_TOKEN: "abc123def456" }),
+      http,
+      makeRedis(),
+    );
+
+    await provider.search({ query: "x", page: 1, pageSize: 20 });
+
+    const [url, headers] = vi.mocked(http.getJson).mock.calls[0]!;
+    expect(url).toContain("api_key=abc123def456");
+    expect((headers as Record<string, string>).Authorization).toBeUndefined();
+  });
+
   it("ne retient que le type demandé", async () => {
     const http = { getJson: vi.fn(async () => tmdbResponse) } as unknown as HttpClient;
     const provider = new TmdbProvider(makeConfig(), http, makeRedis());

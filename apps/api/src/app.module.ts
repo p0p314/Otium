@@ -10,7 +10,12 @@ import { RedisModule } from "./shared/infrastructure/redis/redis.module";
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true, validate: validateEnv }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      // .env à la racine du monorepo (cwd = apps/api en dev/prisma) ; fallback local.
+      envFilePath: ["../../.env", ".env"],
+      validate: validateEnv,
+    }),
     PrismaModule,
     RedisModule,
     HttpModule,

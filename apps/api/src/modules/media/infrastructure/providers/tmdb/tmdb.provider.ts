@@ -41,14 +41,20 @@ export class TmdbProvider implements MediaCatalogProvider {
 
     const imageBaseUrl = this.config.get("TMDB_IMAGE_BASE_URL", { infer: true });
     const baseUrl = this.config.get("TMDB_API_BASE_URL", { infer: true });
-    const url =
+    let url =
       `${baseUrl}/search/multi?include_adult=false&language=fr-FR` +
       `&page=${params.page}&query=${encodeURIComponent(params.query)}`;
 
-    const raw = await this.http.getJson<TmdbSearchResponse>(url, {
-      Authorization: `Bearer ${token}`,
-      Accept: "application/json",
-    });
+    // Supporte les deux formats de credential TMDB : jeton v4 (JWT → en-tête Bearer)
+    // ou clé API v3 (→ paramètre api_key). Évite les 401 selon ce que fournit l'utilisateur.
+    const headers: Record<string, string> = { Accept: "application/json" };
+    if (token.startsWith("eyJ")) {
+      headers.Authorization = `Bearer ${token}`;
+    } else {
+      url += `&api_key=${encodeURIComponent(token)}`;
+    }
+
+    const raw = await this.http.getJson<TmdbSearchResponse>(url, headers);
 
     let items = raw.results
       .map((item) => toCatalogMedia(item, imageBaseUrl))
