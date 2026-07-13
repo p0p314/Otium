@@ -11,7 +11,15 @@ async function bootstrap(): Promise<void> {
   const config = app.get(ConfigService<Env, true>);
 
   app.use(helmet());
-  app.enableCors({ origin: config.get("WEB_ORIGIN", { infer: true }), credentials: true });
+  // En dev, tolère toutes les variantes locales (localhost / 127.0.0.1, tout port) pour
+  // éviter les blocages CORS selon l'URL ouverte. En prod, on reste strict sur WEB_ORIGIN.
+  const isProduction = config.get("NODE_ENV", { infer: true }) === "production";
+  app.enableCors({
+    origin: isProduction
+      ? config.get("WEB_ORIGIN", { infer: true })
+      : [/^http:\/\/localhost(:\d+)?$/, /^http:\/\/127\.0\.0\.1(:\d+)?$/],
+    credentials: true,
+  });
   app.setGlobalPrefix("api");
   app.enableShutdownHooks();
 
