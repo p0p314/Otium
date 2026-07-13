@@ -1,0 +1,154 @@
+// Schéma Prisma — vit dans l'INFRASTRUCTURE. Le domaine ne le connaît pas (ADR-0002).
+// Modèle relationnel dérivé de docs/architecture/05-modele-metier.md.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum MediaType {
+  MOVIE
+  SERIES
+}
+
+enum WatchStatus {
+  PLANNED
+  IN_PROGRESS
+  COMPLETED
+  DROPPED
+  PAUSED
+}
+
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  passwordHash String
+  displayName  String
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  libraryItems LibraryItem[]
+  lists        List[]
+  reviews      Review[]
+}
+
+model Media {
+  id               String        @id @default(cuid())
+  type             MediaType
+  title            String
+  year             Int?
+  posterUrl        String?
+  runtimeMinutes   Int?
+  externalProvider String
+  externalId       String
+  genres           String[]
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  seasons          Season[]
+  libraryItems     LibraryItem[]
+  listItems        ListItem[]
+  reviews          Review[]
+
+  @@unique([externalProvider, externalId])
+  @@index([type])
+}
+
+model Season {
+  id       String    @id @default(cuid())
+  media    Media     @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  mediaId  String
+  number   Int
+  episodes Episode[]
+
+  @@unique([mediaId, number])
+}
+
+model Episode {
+  id             String           @id @default(cuid())
+  season         Season           @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  seasonId       String
+  number         Int
+  title          String
+  runtimeMinutes Int?
+  watchedBy      WatchedEpisode[]
+
+  @@unique([seasonId, number])
+}
+
+model LibraryItem {
+  id         String           @id @default(cuid())
+  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
+  media      Media            @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  mediaId    String
+  status     WatchStatus      @default(PLANNED)
+  rating     Int?
+  isFavorite Boolean          @default(false)
+  addedAt    DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+  watched    WatchedEpisode[]
+
+  @@unique([userId, mediaId])
+  @@index([userId, status])
+}
+
+model WatchedEpisode {
+  libraryItem   LibraryItem @relation(fields: [libraryItemId], references: [id], onDelete: Cascade)
+  libraryItemId String
+  episode       Episode     @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  episodeId     String
+  watchedAt     DateTime    @default(now())
+
+  @@id([libraryItemId, episodeId])
+}
+
+model List {
+  id        String     @id @default(cuid())
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  name      String
+  createdAt DateTime   @default(now())
+  items     ListItem[]
+
+  @@index([userId])
+}
+
+model ListItem {
+  list     List   @relation(fields: [listId], references: [id], onDelete: Cascade)
+  listId   String
+  media    Media  @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  mediaId  String
+  position Int
+
+  @@id([listId, mediaId])
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  media     Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  mediaId   String
+  body      String
+  rating    Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, mediaId])
+}
+
+// Journal des événements de domaine — source de vérité pour historique/stats/reco (ADR-0006).
+model DomainEvent {
+  id         String   @id @default(cuid())
+  name       String
+  userId     String?
+  mediaId    String?
+  payload    Json
+  occurredAt DateTime @default(now())
+
+  @@index([name])
+  @@index([userId])
+}

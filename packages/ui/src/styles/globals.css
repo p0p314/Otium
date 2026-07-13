@@ -1,0 +1,88 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Design tokens Otium — identité originale (voir CLAUDE.md — UX/UI).
+ * Valeurs HSL exposées en variables CSS, consommées par le preset Tailwind.
+ * Thème clair par défaut ; `.dark` (posé par ThemeProvider) bascule en sombre.
+ */
+@layer base {
+  :root {
+    --background: 40 33% 98%;
+    --foreground: 240 10% 12%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 12%;
+
+    --muted: 240 5% 94%;
+    --muted-foreground: 240 4% 42%;
+
+    --primary: 262 60% 52%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 240 5% 92%;
+    --secondary-foreground: 240 10% 16%;
+
+    --accent: 28 90% 55%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 240 6% 88%;
+    --input: 240 6% 88%;
+    --ring: 262 60% 52%;
+
+    --radius: 0.65rem;
+  }
+
+  .dark {
+    --background: 240 12% 8%;
+    --foreground: 40 20% 96%;
+
+    --card: 240 10% 11%;
+    --card-foreground: 40 20% 96%;
+
+    --muted: 240 6% 18%;
+    --muted-foreground: 240 5% 65%;
+
+    --primary: 262 70% 68%;
+    --primary-foreground: 240 20% 10%;
+
+    --secondary: 240 6% 20%;
+    --secondary-foreground: 40 20% 96%;
+
+    --accent: 28 90% 60%;
+    --accent-foreground: 240 20% 10%;
+
+    --destructive: 0 62% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 240 6% 22%;
+    --input: 240 6% 22%;
+    --ring: 262 70% 68%;
+  }
+
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-feature-settings:
+      "rlig" 1,
+      "calt" 1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
