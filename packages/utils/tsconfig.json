@@ -1,0 +1,4 @@
+{
+  "extends": "@otium/config/tsconfig/lib.json",
+  "include": ["src"]
+}

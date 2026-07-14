@@ -1,0 +1,32 @@
+/**
+ * Modèle de lecture du catalogue externe (résultats de recherche/détails), normalisé.
+ * Domaine pur : aucune dépendance à un fournisseur concret (TMDB…) ni à un framework.
+ * L'identité provient de la source externe via `externalRef` (ADR-0003 / ADR-0004).
+ */
+export type CatalogMediaType = "MOVIE" | "SERIES";
+
+export interface CatalogExternalRef {
+  readonly provider: string;
+  readonly externalId: string;
+}
+
+export interface CatalogGenre {
+  readonly id: string;
+  readonly label: string;
+}
+
+export interface CatalogMedia {
+  readonly externalRef: CatalogExternalRef;
+  readonly type: CatalogMediaType;
+  readonly title: string;
+  readonly year: number | null;
+  readonly posterUrl: string | null;
+  readonly genres: readonly CatalogGenre[];
+}
+
+export interface CatalogSearchResult {
+  readonly items: readonly CatalogMedia[];
+  readonly page: number;
+  readonly pageSize: number;
+  readonly total: number;
+}
