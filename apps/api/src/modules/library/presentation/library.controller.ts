@@ -12,6 +12,7 @@ import {
 import {
   AddToLibraryInput,
   type LibraryItem as LibraryItemDto,
+  RateMediaInput,
   ToggleFavoriteInput,
 } from "@otium/types";
 import { ZodValidationPipe } from "../../../shared/presentation/zod-validation.pipe";
@@ -22,6 +23,8 @@ import {
 import { CurrentUser } from "../../authentication/presentation/current-user.decorator";
 import { AddMediaToLibraryUseCase } from "../application/add-media-to-library.usecase";
 import { GetLibraryUseCase } from "../application/get-library.usecase";
+import { GetLibraryItemUseCase } from "../application/get-library-item.usecase";
+import { RateMediaUseCase } from "../application/rate-media.usecase";
 import { RemoveFromLibraryUseCase } from "../application/remove-from-library.usecase";
 import { ToggleFavoriteUseCase } from "../application/toggle-favorite.usecase";
 import { toLibraryItemDto } from "./library.mapper";
@@ -31,15 +34,25 @@ import { toLibraryItemDto } from "./library.mapper";
 export class LibraryController {
   constructor(
     private readonly getLibrary: GetLibraryUseCase,
+    private readonly getItem: GetLibraryItemUseCase,
     private readonly addMedia: AddMediaToLibraryUseCase,
     private readonly removeMedia: RemoveFromLibraryUseCase,
     private readonly toggleFavorite: ToggleFavoriteUseCase,
+    private readonly rateMedia: RateMediaUseCase,
   ) {}
 
   @Get()
   async list(@CurrentUser() user: AuthenticatedUser): Promise<LibraryItemDto[]> {
     const items = await this.getLibrary.execute(user.id);
     return items.map(toLibraryItemDto);
+  }
+
+  @Get(":itemId")
+  async detail(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("itemId") itemId: string,
+  ): Promise<LibraryItemDto> {
+    return toLibraryItemDto(await this.getItem.execute({ userId: user.id, itemId }));
   }
 
   @Post()
@@ -71,6 +84,16 @@ export class LibraryController {
       itemId,
       isFavorite: input.isFavorite,
     });
+    return toLibraryItemDto(item);
+  }
+
+  @Patch(":itemId/rating")
+  async rate(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("itemId") itemId: string,
+    @Body(new ZodValidationPipe(RateMediaInput)) input: RateMediaInput,
+  ): Promise<LibraryItemDto> {
+    const item = await this.rateMedia.execute({ userId: user.id, itemId, rating: input.rating });
     return toLibraryItemDto(item);
   }
 }

@@ -67,6 +67,21 @@ export class PrismaLibraryRepository implements LibraryRepository {
     return updated;
   }
 
+  async setRating(userId: string, itemId: string, rating: number | null): Promise<LibraryItem> {
+    await this.prisma.libraryItem.updateMany({ where: { id: itemId, userId }, data: { rating } });
+    const updated = await this.findItem(userId, itemId);
+    if (!updated) throw new InternalServerErrorException("Élément introuvable après mise à jour.");
+    return updated;
+  }
+
+  async getMediaId(userId: string, itemId: string): Promise<string | null> {
+    const item = await this.prisma.libraryItem.findFirst({
+      where: { id: itemId, userId },
+      select: { mediaId: true },
+    });
+    return item?.mediaId ?? null;
+  }
+
   private toDomain(row: LibraryItemRow): LibraryItem {
     return {
       id: row.id,

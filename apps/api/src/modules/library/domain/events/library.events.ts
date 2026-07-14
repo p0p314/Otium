@@ -62,3 +62,27 @@ export class SeriesCompleted extends DomainEvent {
     return {};
   }
 }
+
+export class MediaRated extends DomainEvent {
+  readonly name = "MediaRated";
+  constructor(
+    userId: string,
+    mediaId: string,
+    private readonly rating: number | null,
+  ) {
+    super(userId, mediaId);
+  }
+  payload(): Record<string, unknown> {
+    return { rating: this.rating };
+  }
+}
+
+export class ReviewSaved extends DomainEvent {
+  readonly name = "CommentCreated";
+  constructor(userId: string, mediaId: string) {
+    super(userId, mediaId);
+  }
+  payload(): Record<string, unknown> {
+    return {};
+  }
+}

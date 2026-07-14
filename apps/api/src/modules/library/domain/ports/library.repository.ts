@@ -11,6 +11,10 @@ export interface LibraryRepository {
   findItem(userId: string, itemId: string): Promise<LibraryItem | null>;
   remove(userId: string, itemId: string): Promise<void>;
   setFavorite(userId: string, itemId: string, isFavorite: boolean): Promise<LibraryItem>;
+  /** Fixe la note (1–10) ou l'efface (`null`). */
+  setRating(userId: string, itemId: string, rating: number | null): Promise<LibraryItem>;
+  /** Identifiant interne du média d'un élément (pour les avis), ou `null`. */
+  getMediaId(userId: string, itemId: string): Promise<string | null>;
 }
 
 export const LIBRARY_REPOSITORY = Symbol("LIBRARY_REPOSITORY");
