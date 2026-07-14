@@ -1,5 +1,6 @@
 import type { MediaSummary } from "@otium/types";
 import { ImageOff } from "lucide-react";
+import type { ReactNode } from "react";
 
 const TYPE_LABEL: Record<MediaSummary["type"], string> = {
   MOVIE: "Film",
@@ -7,7 +8,7 @@ const TYPE_LABEL: Record<MediaSummary["type"], string> = {
 };
 
 /** Vignette d'un média dans les résultats de recherche. Image en chargement paresseux. */
-export function MediaCard({ media }: { media: MediaSummary }) {
+export function MediaCard({ media, action }: { media: MediaSummary; action?: ReactNode }) {
   return (
     <article className="group">
       <div className="aspect-[2/3] overflow-hidden rounded-lg bg-muted">
@@ -29,6 +30,7 @@ export function MediaCard({ media }: { media: MediaSummary }) {
         {TYPE_LABEL[media.type]}
         {media.year ? ` · ${media.year}` : ""}
       </p>
+      {action}
     </article>
   );
 }

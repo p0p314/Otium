@@ -12,5 +12,6 @@ import { MediaController } from "./presentation/media.controller";
     // Liaison port → adapter. Changer de fournisseur = changer cette seule ligne (ADR-0004).
     { provide: MEDIA_CATALOG_PROVIDER, useExisting: TmdbProvider },
   ],
+  exports: [MEDIA_CATALOG_PROVIDER],
 })
 export class MediaModule {}

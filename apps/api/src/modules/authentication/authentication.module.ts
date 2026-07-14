@@ -20,6 +20,7 @@ import { AuthGuard } from "./presentation/auth.guard";
     { provide: SESSION_STORE, useClass: RedisSessionStore },
   ],
   // Exporté pour que d'autres modules (library…) puissent protéger leurs routes.
-  exports: [AuthGuard, SESSION_STORE],
+  // On ré-exporte UserModule pour que l'AuthGuard résolve USER_REPOSITORY chez l'importateur.
+  exports: [AuthGuard, SESSION_STORE, UserModule],
 })
 export class AuthenticationModule {}

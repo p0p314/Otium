@@ -1,9 +1,12 @@
-import { createRootRoute, createRoute, createRouter } from "@tanstack/react-router";
+import { createRootRoute, createRoute, createRouter, redirect } from "@tanstack/react-router";
 import { LoginPage } from "./features/auth/login-page";
 import { RegisterPage } from "./features/auth/register-page";
+import { LibraryPage } from "./features/library/library-page";
+import { SeriesTrackingPage } from "./features/library/series-tracking-page";
 import { SearchPage } from "./features/media-search/search-page";
 import { RootLayout } from "./routes/root-layout";
 import { HomePage } from "./routes/home";
+import { useAuthStore } from "./stores/auth-store";
 
 const rootRoute = createRootRoute({ component: RootLayout });
 
@@ -31,7 +34,34 @@ const registerRoute = createRoute({
   component: RegisterPage,
 });
 
-const routeTree = rootRoute.addChildren([indexRoute, searchRoute, loginRoute, registerRoute]);
+const requireAuth = () => {
+  if (useAuthStore.getState().token === null) {
+    throw redirect({ to: "/login" });
+  }
+};
+
+const libraryRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/library",
+  beforeLoad: requireAuth,
+  component: LibraryPage,
+});
+
+const seriesTrackingRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/library/$itemId",
+  beforeLoad: requireAuth,
+  component: SeriesTrackingPage,
+});
+
+const routeTree = rootRoute.addChildren([
+  indexRoute,
+  searchRoute,
+  loginRoute,
+  registerRoute,
+  libraryRoute,
+  seriesTrackingRoute,
+]);
 
 export const router = createRouter({ routeTree });
 

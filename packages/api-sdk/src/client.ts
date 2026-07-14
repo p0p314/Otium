@@ -4,11 +4,12 @@ import {
   AuthUser,
   LibraryItem,
   type LoginInput,
-  type MarkEpisodeWatchedInput,
-  type RateMediaInput,
+  type MarkEpisodeInput,
   type RegisterInput,
   type SearchMediaQuery,
   SearchMediaResult,
+  SeriesTracking,
+  type ToggleFavoriteInput,
 } from "@otium/types";
 import { z } from "zod";
 import { ApiError } from "./errors.js";
@@ -76,12 +77,25 @@ export class OtiumClient {
     return this.request("/library", LibraryItem, { method: "POST", body: input });
   }
 
-  async rateMedia(itemId: string, input: RateMediaInput): Promise<LibraryItem> {
-    return this.request(`/library/${itemId}/rating`, LibraryItem, { method: "PUT", body: input });
+  async removeFromLibrary(itemId: string): Promise<void> {
+    await this.request(`/library/${itemId}`, z.void(), { method: "DELETE" });
   }
 
-  async markEpisodeWatched(itemId: string, input: MarkEpisodeWatchedInput): Promise<LibraryItem> {
-    return this.request(`/library/${itemId}/episodes`, LibraryItem, {
+  async toggleFavorite(itemId: string, input: ToggleFavoriteInput): Promise<LibraryItem> {
+    return this.request(`/library/${itemId}/favorite`, LibraryItem, {
+      method: "PATCH",
+      body: input,
+    });
+  }
+
+  // --- Suivi de séries ---
+
+  async getSeriesTracking(itemId: string): Promise<SeriesTracking> {
+    return this.request(`/library/${itemId}/series`, SeriesTracking);
+  }
+
+  async markEpisode(itemId: string, input: MarkEpisodeInput): Promise<SeriesTracking> {
+    return this.request(`/library/${itemId}/episodes`, SeriesTracking, {
       method: "PATCH",
       body: input,
     });

@@ -1,5 +1,5 @@
-import type { CatalogMedia, CatalogMediaType } from "../../../domain";
-import type { TmdbSearchItem } from "./tmdb.types";
+import type { CatalogMedia, CatalogMediaType, CatalogSeason } from "../../../domain";
+import type { TmdbSearchItem, TmdbSeasonDetails } from "./tmdb.types";
 
 const TMDB_PROVIDER = "tmdb";
 
@@ -29,5 +29,18 @@ export function toCatalogMedia(item: TmdbSearchItem, imageBaseUrl: string): Cata
     year: parseYear(item.release_date ?? item.first_air_date),
     posterUrl: item.poster_path ? `${imageBaseUrl}${item.poster_path}` : null,
     genres: [],
+  };
+}
+
+/** Convertit une saison TMDB (avec ses épisodes) en saison catalogue normalisée. */
+export function toCatalogSeason(seasonNumber: number, season: TmdbSeasonDetails): CatalogSeason {
+  return {
+    number: seasonNumber,
+    episodes: season.episodes.map((e) => ({
+      seasonNumber: e.season_number,
+      number: e.episode_number,
+      title: e.name && e.name.trim() ? e.name : `Épisode ${e.episode_number}`,
+      runtimeMinutes: e.runtime ?? null,
+    })),
   };
 }

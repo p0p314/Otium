@@ -1,0 +1,86 @@
+import { Injectable, InternalServerErrorException } from "@nestjs/common";
+import { type Prisma } from "@prisma/client";
+import { PrismaService } from "../../../shared/infrastructure/prisma/prisma.service";
+import type { LibraryItem, LibraryRepository, MediaDescriptor } from "../domain";
+
+type LibraryItemRow = Prisma.LibraryItemGetPayload<{ include: { media: true } }>;
+
+/** Adapter Prisma du port `LibraryRepository`. L'ajout upsert le média puis l'élément. */
+@Injectable()
+export class PrismaLibraryRepository implements LibraryRepository {
+  constructor(private readonly prisma: PrismaService) {}
+
+  async add(userId: string, media: MediaDescriptor): Promise<LibraryItem> {
+    const mediaRow = await this.prisma.media.upsert({
+      where: {
+        externalProvider_externalId: {
+          externalProvider: media.externalRef.provider,
+          externalId: media.externalRef.externalId,
+        },
+      },
+      create: {
+        type: media.type,
+        title: media.title,
+        year: media.year,
+        posterUrl: media.posterUrl,
+        externalProvider: media.externalRef.provider,
+        externalId: media.externalRef.externalId,
+        genres: [],
+      },
+      update: { title: media.title, year: media.year, posterUrl: media.posterUrl },
+    });
+
+    const item = await this.prisma.libraryItem.upsert({
+      where: { userId_mediaId: { userId, mediaId: mediaRow.id } },
+      create: { userId, mediaId: mediaRow.id },
+      update: {},
+      include: { media: true },
+    });
+    return this.toDomain(item);
+  }
+
+  async findByUser(userId: string): Promise<LibraryItem[]> {
+    const rows = await this.prisma.libraryItem.findMany({
+      where: { userId },
+      include: { media: true },
+      orderBy: { addedAt: "desc" },
+    });
+    return rows.map((row) => this.toDomain(row));
+  }
+
+  async findItem(userId: string, itemId: string): Promise<LibraryItem | null> {
+    const row = await this.prisma.libraryItem.findFirst({
+      where: { id: itemId, userId },
+      include: { media: true },
+    });
+    return row ? this.toDomain(row) : null;
+  }
+
+  async remove(userId: string, itemId: string): Promise<void> {
+    await this.prisma.libraryItem.deleteMany({ where: { id: itemId, userId } });
+  }
+
+  async setFavorite(userId: string, itemId: string, isFavorite: boolean): Promise<LibraryItem> {
+    await this.prisma.libraryItem.updateMany({ where: { id: itemId, userId }, data: { isFavorite } });
+    const updated = await this.findItem(userId, itemId);
+    if (!updated) throw new InternalServerErrorException("Élément introuvable après mise à jour.");
+    return updated;
+  }
+
+  private toDomain(row: LibraryItemRow): LibraryItem {
+    return {
+      id: row.id,
+      media: {
+        externalRef: { provider: row.media.externalProvider, externalId: row.media.externalId },
+        type: row.media.type,
+        title: row.media.title,
+        year: row.media.year,
+        posterUrl: row.media.posterUrl,
+      },
+      status: row.status,
+      rating: row.rating,
+      isFavorite: row.isFavorite,
+      addedAt: row.addedAt,
+    };
+  }
+}

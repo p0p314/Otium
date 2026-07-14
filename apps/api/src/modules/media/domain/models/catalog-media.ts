@@ -30,3 +30,20 @@ export interface CatalogSearchResult {
   readonly pageSize: number;
   readonly total: number;
 }
+
+export interface CatalogEpisode {
+  readonly seasonNumber: number;
+  readonly number: number;
+  readonly title: string;
+  readonly runtimeMinutes: number | null;
+}
+
+export interface CatalogSeason {
+  readonly number: number;
+  readonly episodes: readonly CatalogEpisode[];
+}
+
+/** Structure saisons/épisodes d'une série, normalisée depuis le fournisseur. */
+export interface CatalogSeriesDetails {
+  readonly seasons: readonly CatalogSeason[];
+}
