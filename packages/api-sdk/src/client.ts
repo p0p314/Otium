@@ -4,9 +4,11 @@ import {
   AuthUser,
   LibraryItem,
   type LoginInput,
+  type MarkEpisodeInput,
   type RegisterInput,
   type SearchMediaQuery,
   SearchMediaResult,
+  SeriesTracking,
   type ToggleFavoriteInput,
 } from "@otium/types";
 import { z } from "zod";
@@ -81,6 +83,19 @@ export class OtiumClient {
 
   async toggleFavorite(itemId: string, input: ToggleFavoriteInput): Promise<LibraryItem> {
     return this.request(`/library/${itemId}/favorite`, LibraryItem, {
+      method: "PATCH",
+      body: input,
+    });
+  }
+
+  // --- Suivi de séries ---
+
+  async getSeriesTracking(itemId: string): Promise<SeriesTracking> {
+    return this.request(`/library/${itemId}/series`, SeriesTracking);
+  }
+
+  async markEpisode(itemId: string, input: MarkEpisodeInput): Promise<SeriesTracking> {
+    return this.request(`/library/${itemId}/episodes`, SeriesTracking, {
       method: "PATCH",
       body: input,
     });

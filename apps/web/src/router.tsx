@@ -2,6 +2,7 @@ import { createRootRoute, createRoute, createRouter, redirect } from "@tanstack/
 import { LoginPage } from "./features/auth/login-page";
 import { RegisterPage } from "./features/auth/register-page";
 import { LibraryPage } from "./features/library/library-page";
+import { SeriesTrackingPage } from "./features/library/series-tracking-page";
 import { SearchPage } from "./features/media-search/search-page";
 import { RootLayout } from "./routes/root-layout";
 import { HomePage } from "./routes/home";
@@ -33,16 +34,24 @@ const registerRoute = createRoute({
   component: RegisterPage,
 });
 
+const requireAuth = () => {
+  if (useAuthStore.getState().token === null) {
+    throw redirect({ to: "/login" });
+  }
+};
+
 const libraryRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/library",
-  // Route protégée : redirige vers /login si aucune session.
-  beforeLoad: () => {
-    if (useAuthStore.getState().token === null) {
-      throw redirect({ to: "/login" });
-    }
-  },
+  beforeLoad: requireAuth,
   component: LibraryPage,
+});
+
+const seriesTrackingRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/library/$itemId",
+  beforeLoad: requireAuth,
+  component: SeriesTrackingPage,
 });
 
 const routeTree = rootRoute.addChildren([
@@ -51,6 +60,7 @@ const routeTree = rootRoute.addChildren([
   loginRoute,
   registerRoute,
   libraryRoute,
+  seriesTrackingRoute,
 ]);
 
 export const router = createRouter({ routeTree });

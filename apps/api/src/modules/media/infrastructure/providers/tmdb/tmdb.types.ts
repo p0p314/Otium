@@ -15,3 +15,16 @@ export interface TmdbSearchItem {
   first_air_date?: string;
   poster_path?: string | null;
 }
+
+export interface TmdbTvDetails {
+  seasons: { season_number: number; episode_count: number }[];
+}
+
+export interface TmdbSeasonDetails {
+  episodes: {
+    season_number: number;
+    episode_number: number;
+    name?: string;
+    runtime?: number | null;
+  }[];
+}

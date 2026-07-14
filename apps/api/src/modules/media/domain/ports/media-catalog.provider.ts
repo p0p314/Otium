@@ -1,4 +1,8 @@
-import type { CatalogMediaType, CatalogSearchResult } from "../models/catalog-media";
+import type {
+  CatalogMediaType,
+  CatalogSearchResult,
+  CatalogSeriesDetails,
+} from "../models/catalog-media";
 
 export interface MediaCatalogSearchParams {
   readonly query: string;
@@ -15,6 +19,8 @@ export interface MediaCatalogSearchParams {
 export interface MediaCatalogProvider {
   readonly name: string;
   search(params: MediaCatalogSearchParams): Promise<CatalogSearchResult>;
+  /** Structure saisons/épisodes d'une série, par identifiant externe. */
+  getSeriesDetails(externalId: string): Promise<CatalogSeriesDetails>;
 }
 
 /** Jeton d'injection (DI) pour le port `MediaCatalogProvider`. */

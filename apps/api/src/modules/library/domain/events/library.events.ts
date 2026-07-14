@@ -38,3 +38,27 @@ export class FavoriteChanged extends DomainEvent {
     return {};
   }
 }
+
+export class EpisodeWatched extends DomainEvent {
+  readonly name = "EpisodeWatched";
+  constructor(
+    userId: string,
+    mediaId: string,
+    private readonly episodeId: string,
+  ) {
+    super(userId, mediaId);
+  }
+  payload(): Record<string, unknown> {
+    return { episodeId: this.episodeId };
+  }
+}
+
+export class SeriesCompleted extends DomainEvent {
+  readonly name = "SeriesCompleted";
+  constructor(userId: string, mediaId: string) {
+    super(userId, mediaId);
+  }
+  payload(): Record<string, unknown> {
+    return {};
+  }
+}

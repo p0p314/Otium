@@ -9,6 +9,7 @@ describe("SearchMediaUseCase", () => {
     const provider: MediaCatalogProvider = {
       name: "fake",
       search: vi.fn().mockResolvedValue(emptyResult),
+      getSeriesDetails: vi.fn().mockResolvedValue({ seasons: [] }),
     };
     const useCase = new SearchMediaUseCase(provider);
 
@@ -22,6 +23,7 @@ describe("SearchMediaUseCase", () => {
     const provider: MediaCatalogProvider = {
       name: "fake",
       search: vi.fn().mockResolvedValue(emptyResult),
+      getSeriesDetails: vi.fn().mockResolvedValue({ seasons: [] }),
     };
     const useCase = new SearchMediaUseCase(provider);
 
