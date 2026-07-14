@@ -2,6 +2,7 @@ import "reflect-metadata";
 import { Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { NestFactory } from "@nestjs/core";
+import type { NextFunction, Request, Response } from "express";
 import helmet from "helmet";
 import { AppModule } from "./app.module";
 import type { Env } from "./shared/infrastructure/config/env";
@@ -22,6 +23,15 @@ async function bootstrap(): Promise<void> {
   });
   app.setGlobalPrefix("api");
   app.enableShutdownHooks();
+
+  // Journalisation légère des requêtes en développement (diagnostic).
+  if (!isProduction) {
+    const httpLogger = new Logger("HTTP");
+    app.use((req: Request, res: Response, next: NextFunction) => {
+      res.on("finish", () => httpLogger.log(`${req.method} ${req.originalUrl} → ${res.statusCode}`));
+      next();
+    });
+  }
 
   const port = config.get("PORT", { infer: true });
   await app.listen(port);

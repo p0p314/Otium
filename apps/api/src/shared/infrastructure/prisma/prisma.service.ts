@@ -10,8 +10,17 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   private readonly logger = new Logger(PrismaService.name);
 
   async onModuleInit(): Promise<void> {
-    await this.$connect();
-    this.logger.log("Connexion PostgreSQL établie");
+    try {
+      await this.$connect();
+      this.logger.log("Connexion PostgreSQL établie");
+    } catch (error) {
+      // Dégradation gracieuse : on ne bloque pas le démarrage si la base est absente
+      // (ex. Docker éteint). Les fonctionnalités sans DB (recherche catalogue) restent
+      // disponibles ; Prisma retentera la connexion à la première requête.
+      this.logger.error(
+        `Connexion PostgreSQL indisponible au démarrage : ${(error as Error).message}`,
+      );
+    }
   }
 
   async onModuleDestroy(): Promise<void> {
