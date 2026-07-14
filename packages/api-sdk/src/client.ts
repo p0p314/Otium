@@ -1,8 +1,12 @@
 import {
   type AddToLibraryInput,
+  AuthSession,
+  AuthUser,
   LibraryItem,
+  type LoginInput,
   type MarkEpisodeWatchedInput,
   type RateMediaInput,
+  type RegisterInput,
   type SearchMediaQuery,
   SearchMediaResult,
 } from "@otium/types";
@@ -44,6 +48,24 @@ export class OtiumClient {
     });
     if (query.type) params.set("type", query.type);
     return this.request(`/media/search?${params.toString()}`, SearchMediaResult);
+  }
+
+  // --- Authentification ---
+
+  async register(input: RegisterInput): Promise<AuthSession> {
+    return this.request("/auth/register", AuthSession, { method: "POST", body: input });
+  }
+
+  async login(input: LoginInput): Promise<AuthSession> {
+    return this.request("/auth/login", AuthSession, { method: "POST", body: input });
+  }
+
+  async me(): Promise<AuthUser> {
+    return this.request("/auth/me", AuthUser);
+  }
+
+  async logout(): Promise<void> {
+    await this.request("/auth/logout", z.void(), { method: "POST" });
   }
 
   async getLibrary(): Promise<LibraryItem[]> {
