@@ -16,23 +16,26 @@ Découpage par incréments livrables. Chaque incrément respecte la **Definition
 - **Sortie** : pipeline vert (`typecheck`/`lint`/`test`/`build` sur 7 packages). Reste à exécuter
       la migration Prisma initiale une fois Docker démarré, puis `pnpm dev`.
 
-## MVP — « je suis mes films et séries »
+## MVP — « je suis mes films et séries » ✅ (livré et mergé sur `main`, 2026-07-15)
 
-Objectif : un utilisateur s'inscrit, cherche, ajoute, et suit sa progression série.
+Objectif atteint : un utilisateur s'inscrit, cherche, ajoute, note/commente et suit sa progression série.
 
-1. **Auth** (module `authentication` + `user`) — inscription/connexion, sessions Redis.
-2. **Catalogue** (`media`) — recherche + détails via **1 provider** (TMDB), cache Redis.
-3. **Bibliothèque** (`library`) — ajout/retrait, `WatchStatus`.
-4. **Séries** — saisons/épisodes, marquer épisode vu, **reprise (next unwatched)**.
-5. **Films** — statut vu/à voir/complété.
-6. **Événements** — `MediaAdded`, `EpisodeWatched`, `MovieCompleted` (+ journal).
+1. [x] **Auth** (`authentication` + `user`) — inscription/connexion, bcrypt, sessions Redis, `AuthGuard`.
+2. [x] **Catalogue** (`media`) — recherche + détails séries via **TMDB** (port + adapter), cache Redis.
+3. [x] **Bibliothèque** (`library`) — ajout/retrait, `WatchStatus`, favoris (niveau `Media`).
+4. [x] **Séries** — saisons/épisodes, marquer épisode vu, **reprise (`nextUnwatched`)**, statuts.
+5. [x] **Films** — statut ; note 0–10 et avis (transversaux `Media`).
+6. [x] **Événements** — `MediaAdded`, `EpisodeWatched`, `MediaRated`, `CommentCreated`… (journal `DomainEvent`).
+
+**Reste (polish MVP → V1)** : recherche du **détail film** (page dédiée), listes personnalisées,
+i18n des messages de validation (Zod en anglais), jeton en cookie httpOnly, mesure des métriques.
 
 **Métriques MVP** : « recherche → ajout » p95 < 3 s ; reprise exacte 100 % ; LCP mobile < 2,5 s.
 
 ## V1 — « une vraie bibliothèque personnelle »
 
-7. **Favoris** + **listes personnalisées**.
-8. **Notation** + **avis** + **historique** (dérivé des événements).
+7. **Favoris** ✅ + **listes personnalisées** (listes à faire).
+8. **Notation** ✅ + **avis** ✅ + **historique** (à dériver des événements journalisés).
 9. **Recherche avancée** — Postgres FTS, filtres, genres, tri, pagination.
 10. **Statistiques de base** (temps, volumes) alimentées par les événements.
 11. **Polish UX** — états vides, skeletons partout, animations, accessibilité AA, i18n FR.

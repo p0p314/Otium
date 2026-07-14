@@ -9,24 +9,40 @@ séries, les livres, mangas, animés, jeux vidéo, podcasts, musique et document
 
 ## État du projet
 
-🟢 **Phase 0 — fondations en place.** Le monorepo (Turborepo + pnpm), le socle partagé
-(config, types, utils, api-sdk, design system), l'API NestJS (noyau Clean Architecture, Prisma,
-Redis, bus d'événements, module `health`) et le front React (shell, thème clair/sombre) sont
-opérationnels : `typecheck`, `lint`, `test` et `build` passent sur les 7 packages. Les modules
-métier (auth, media, library) arrivent au **MVP** (voir [roadmap](docs/roadmap.md)).
+🟢 **MVP « films & séries » complet, sur `main`.** Vérifié de bout en bout (données réelles
+TMDB, PostgreSQL, Redis) ; `typecheck`, `lint`, `test` (~85 tests) et `build` passent.
 
-## Démarrage
+Fonctionnalités disponibles :
 
-Prérequis : Node ≥ 20, pnpm 9 (via `corepack`), Docker (pour PostgreSQL + Redis).
+- **Recherche** de films/séries (via TMDB, abstraction de fournisseur + cache Redis).
+- **Authentification** (inscription/connexion, hachage bcrypt, sessions Redis, routes protégées).
+- **Bibliothèque** : ajout/retrait, statut, favoris (au niveau `Media` générique).
+- **Suivi de séries** : saisons/épisodes, épisodes vus, progression, **reprise automatique**.
+- **Notation** (0–10) et **avis** (texte), au niveau `Media`.
+- **Événements de domaine** journalisés (`MediaAdded`, `EpisodeWatched`, `MediaRated`…) —
+  socle des futures statistiques/recommandations.
+
+Prochaines étapes : voir [roadmap](docs/roadmap.md) (polish i18n/sécurité, stats/reco, Meilisearch,
+nouveaux types de médias).
+
+## Démarrage / reprise
+
+Prérequis : Node ≥ 20, **pnpm via `corepack`**, **Docker Desktop démarré** (PostgreSQL + Redis).
 
 ```bash
-corepack pnpm install            # installe les dépendances
-docker compose up -d             # démarre PostgreSQL + Redis
-cp .env.example .env             # configure l'environnement
+docker compose up -d                        # démarre PostgreSQL + Redis
+cp .env.example .env                        # puis renseigner TMDB_ACCESS_TOKEN (clé TMDB v3 ou v4)
+corepack pnpm@9.15.0 install                # installe les dépendances
 pnpm --filter @otium/api prisma:generate
-pnpm --filter @otium/api prisma:migrate   # crée le schéma
-pnpm dev                         # lance web (5173) + api (3000)
+pnpm --filter @otium/api prisma:migrate     # applique le schéma (base neuve)
+pnpm dev                                     # web http://localhost:5173 · API http://localhost:3001/api
 ```
+
+> **Ports** : l'API écoute sur **`PORT`** (défaut 3000 ; `3001` recommandé dans `.env` si 3000 est
+> déjà pris). Le front lit **`VITE_API_URL`** (défaut `http://localhost:3000/api`) — l'aligner sur
+> le port de l'API (ex. `apps/web/.env` → `VITE_API_URL=http://localhost:3001/api`).
+> `.env` n'est pas versionné ; sans `TMDB_ACCESS_TOKEN`, la recherche renvoie 503 (le reste
+> fonctionne). L'API démarre même sans base (dégradation gracieuse).
 
 Vérifications : `pnpm typecheck` · `pnpm lint` · `pnpm test` · `pnpm build`.
 
