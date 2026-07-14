@@ -1,4 +1,12 @@
-import { QueryClient } from "@tanstack/react-query";
+import { onlineManager, QueryClient } from "@tanstack/react-query";
+
+// Otium est une application « toujours en ligne » (elle parle à sa propre API). Certains
+// navigateurs/webviews émettent des événements `offline` parasites qui poussent TanStack
+// Query à suspendre les requêtes (fetchStatus "paused"). On neutralise l'écoute
+// online/offline et on force l'état "en ligne" pour éviter toute mise en pause automatique.
+// (Complété par `networkMode: "always"` ci-dessous.)
+onlineManager.setEventListener(() => () => {});
+onlineManager.setOnline(true);
 
 /**
  * Client TanStack Query partagé. `staleTime` non nul = moins de refetch =

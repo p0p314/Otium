@@ -29,7 +29,10 @@ export class OtiumClient {
 
   constructor(options: OtiumClientOptions) {
     this.baseUrl = options.baseUrl.replace(/\/$/, "");
-    this.fetchImpl = options.fetch ?? globalThis.fetch;
+    // `fetch` doit être appelé avec `this === window` dans les navigateurs ; sans binding,
+    // l'appel via `this.fetchImpl(...)` lève « 'fetch' called on an object that does not
+    // implement interface Window ». On lie donc le fetch global par défaut à globalThis.
+    this.fetchImpl = options.fetch ?? globalThis.fetch.bind(globalThis);
     this.getToken = options.getToken;
   }
 
