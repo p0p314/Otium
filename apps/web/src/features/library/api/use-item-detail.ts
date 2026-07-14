@@ -1,0 +1,52 @@
+import type { SaveReviewInput } from "@otium/types";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { api } from "../../../lib/api";
+import { useAuth } from "../../auth/api/use-auth";
+
+const itemKey = (itemId: string) => ["library-item", itemId] as const;
+const reviewKey = (itemId: string) => ["review", itemId] as const;
+
+export function useLibraryItem(itemId: string) {
+  const { isAuthenticated } = useAuth();
+  return useQuery({
+    queryKey: itemKey(itemId),
+    queryFn: () => api.getLibraryItem(itemId),
+    enabled: isAuthenticated,
+  });
+}
+
+export function useRateMedia(itemId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (rating: number) => api.rateMedia(itemId, { rating }),
+    onSuccess: (item) => {
+      queryClient.setQueryData(itemKey(itemId), item);
+      queryClient.invalidateQueries({ queryKey: ["library"] });
+    },
+  });
+}
+
+export function useReview(itemId: string) {
+  const { isAuthenticated } = useAuth();
+  return useQuery({
+    queryKey: reviewKey(itemId),
+    queryFn: () => api.getReview(itemId),
+    enabled: isAuthenticated,
+  });
+}
+
+export function useSaveReview(itemId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: SaveReviewInput) => api.saveReview(itemId, input),
+    onSuccess: (review) => queryClient.setQueryData(reviewKey(itemId), review),
+  });
+}
+
+export function useDeleteReview(itemId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.deleteReview(itemId),
+    onSuccess: () => queryClient.setQueryData(reviewKey(itemId), null),
+  });
+}

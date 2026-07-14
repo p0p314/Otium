@@ -2,7 +2,7 @@ import { createRootRoute, createRoute, createRouter, redirect } from "@tanstack/
 import { LoginPage } from "./features/auth/login-page";
 import { RegisterPage } from "./features/auth/register-page";
 import { LibraryPage } from "./features/library/library-page";
-import { SeriesTrackingPage } from "./features/library/series-tracking-page";
+import { ItemDetailPage } from "./features/library/item-detail-page";
 import { SearchPage } from "./features/media-search/search-page";
 import { RootLayout } from "./routes/root-layout";
 import { HomePage } from "./routes/home";
@@ -47,11 +47,11 @@ const libraryRoute = createRoute({
   component: LibraryPage,
 });
 
-const seriesTrackingRoute = createRoute({
+const itemDetailRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/library/$itemId",
   beforeLoad: requireAuth,
-  component: SeriesTrackingPage,
+  component: ItemDetailPage,
 });
 
 const routeTree = rootRoute.addChildren([
@@ -60,7 +60,7 @@ const routeTree = rootRoute.addChildren([
   loginRoute,
   registerRoute,
   libraryRoute,
-  seriesTrackingRoute,
+  itemDetailRoute,
 ]);
 
 export const router = createRouter({ routeTree });

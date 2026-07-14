@@ -17,6 +17,8 @@ import { AddMediaToLibraryUseCase } from "../src/modules/library/application/add
 import { GetLibraryUseCase } from "../src/modules/library/application/get-library.usecase";
 import { RemoveFromLibraryUseCase } from "../src/modules/library/application/remove-from-library.usecase";
 import { ToggleFavoriteUseCase } from "../src/modules/library/application/toggle-favorite.usecase";
+import { GetLibraryItemUseCase } from "../src/modules/library/application/get-library-item.usecase";
+import { RateMediaUseCase } from "../src/modules/library/application/rate-media.usecase";
 import { LibraryController } from "../src/modules/library/presentation/library.controller";
 
 class InMemoryLibraryRepository implements LibraryRepository {
@@ -61,6 +63,16 @@ class InMemoryLibraryRepository implements LibraryRepository {
     this.items.set(itemId, updated);
     return updated;
   }
+  async setRating(_userId: string, itemId: string, rating: number | null): Promise<LibraryItem> {
+    const item = this.items.get(itemId)!;
+    const updated = { ...item, rating };
+    this.items.set(itemId, updated);
+    return updated;
+  }
+  async getMediaId(userId: string, itemId: string): Promise<string | null> {
+    const item = this.items.get(itemId);
+    return item && item.userId === userId ? `media-${item.media.externalRef.externalId}` : null;
+  }
 }
 
 const TOKEN = "test-token";
@@ -87,9 +99,11 @@ describe("Library (e2e)", () => {
       controllers: [LibraryController],
       providers: [
         GetLibraryUseCase,
+        GetLibraryItemUseCase,
         AddMediaToLibraryUseCase,
         RemoveFromLibraryUseCase,
         ToggleFavoriteUseCase,
+        RateMediaUseCase,
         AuthGuard,
         { provide: LIBRARY_REPOSITORY, useClass: InMemoryLibraryRepository },
         { provide: EVENT_PUBLISHER, useValue: { publish: async () => undefined, publishAll: async () => undefined } },

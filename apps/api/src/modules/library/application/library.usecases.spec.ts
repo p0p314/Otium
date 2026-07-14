@@ -34,6 +34,8 @@ describe("Library use cases", () => {
       findItem: vi.fn().mockResolvedValue(item),
       remove: vi.fn().mockResolvedValue(undefined),
       setFavorite: vi.fn().mockResolvedValue({ ...item, isFavorite: true }),
+      setRating: vi.fn().mockResolvedValue({ ...item, rating: 8 }),
+      getMediaId: vi.fn().mockResolvedValue("media-1"),
     };
     events = { publish: vi.fn().mockResolvedValue(undefined), publishAll: vi.fn() };
   });

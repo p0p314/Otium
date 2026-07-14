@@ -5,7 +5,11 @@ import {
   LibraryItem,
   type LoginInput,
   type MarkEpisodeInput,
+  type RateMediaInput,
   type RegisterInput,
+  Review,
+  ReviewResponse,
+  type SaveReviewInput,
   type SearchMediaQuery,
   SearchMediaResult,
   SeriesTracking,
@@ -71,6 +75,27 @@ export class OtiumClient {
 
   async getLibrary(): Promise<LibraryItem[]> {
     return this.request("/library", z.array(LibraryItem));
+  }
+
+  async getLibraryItem(itemId: string): Promise<LibraryItem> {
+    return this.request(`/library/${itemId}`, LibraryItem);
+  }
+
+  async rateMedia(itemId: string, input: RateMediaInput): Promise<LibraryItem> {
+    return this.request(`/library/${itemId}/rating`, LibraryItem, { method: "PATCH", body: input });
+  }
+
+  async getReview(itemId: string): Promise<Review | null> {
+    const { review } = await this.request(`/library/${itemId}/review`, ReviewResponse);
+    return review;
+  }
+
+  async saveReview(itemId: string, input: SaveReviewInput): Promise<Review> {
+    return this.request(`/library/${itemId}/review`, Review, { method: "PUT", body: input });
+  }
+
+  async deleteReview(itemId: string): Promise<void> {
+    await this.request(`/library/${itemId}/review`, z.void(), { method: "DELETE" });
   }
 
   async addToLibrary(input: AddToLibraryInput): Promise<LibraryItem> {

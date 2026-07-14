@@ -70,21 +70,17 @@ export function LibraryPage() {
                   </Button>
                 </div>
               </div>
-              {item.media.type === "SERIES" ? (
-                <Link
-                  to="/library/$itemId"
-                  params={{ itemId: item.id }}
-                  className="mt-2 line-clamp-1 block text-sm font-medium hover:text-primary"
-                >
-                  {item.media.title}
-                </Link>
-              ) : (
-                <h3 className="mt-2 line-clamp-1 text-sm font-medium">{item.media.title}</h3>
-              )}
+              <Link
+                to="/library/$itemId"
+                params={{ itemId: item.id }}
+                className="mt-2 line-clamp-1 block text-sm font-medium hover:text-primary"
+              >
+                {item.media.title}
+              </Link>
               <p className="text-xs text-muted-foreground">
                 {TYPE_LABEL[item.media.type]}
                 {item.media.year ? ` · ${item.media.year}` : ""}
-                {item.media.type === "SERIES" ? " · Suivre ›" : ""}
+                {item.rating ? ` · ★ ${item.rating}/10` : ""}
               </p>
             </li>
           ))}
