@@ -24,6 +24,14 @@ export function RootLayout() {
               >
                 Rechercher
               </Link>
+              {isAuthenticated ? (
+                <Link
+                  to="/library"
+                  className="text-muted-foreground transition-colors hover:text-foreground [&.active]:text-foreground"
+                >
+                  Ma bibliothèque
+                </Link>
+              ) : null}
             </nav>
           </div>
 

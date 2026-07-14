@@ -1,6 +1,7 @@
 import { Skeleton } from "@otium/ui";
 import type { MediaSummary } from "@otium/types";
 import { SearchX } from "lucide-react";
+import type { ReactNode } from "react";
 import { MediaCard } from "./media-card";
 
 interface MediaResultsProps {
@@ -9,12 +10,20 @@ interface MediaResultsProps {
   isError: boolean;
   /** Vrai dès que l'utilisateur a saisi une requête exploitable. */
   hasQuery: boolean;
+  /** Action optionnelle rendue sur chaque carte (ex. bouton « Ajouter »). */
+  renderAction?: (media: MediaSummary) => ReactNode;
 }
 
 const GRID = "grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5";
 
 /** Présentation pure des résultats : squelettes, erreur, état vide, grille. */
-export function MediaResults({ items, isLoading, isError, hasQuery }: MediaResultsProps) {
+export function MediaResults({
+  items,
+  isLoading,
+  isError,
+  hasQuery,
+  renderAction,
+}: MediaResultsProps) {
   if (!hasQuery) {
     return (
       <EmptyState
@@ -55,7 +64,7 @@ export function MediaResults({ items, isLoading, isError, hasQuery }: MediaResul
     <ul className={GRID}>
       {items.map((media) => (
         <li key={`${media.externalRef.provider}:${media.externalRef.externalId}`}>
-          <MediaCard media={media} />
+          <MediaCard media={media} action={renderAction?.(media)} />
         </li>
       ))}
     </ul>

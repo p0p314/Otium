@@ -1,6 +1,7 @@
 import { Search } from "lucide-react";
 import { useState } from "react";
 import { useDebouncedValue } from "../../hooks/use-debounced-value";
+import { AddToLibraryButton } from "../library/components/add-to-library-button";
 import { MIN_QUERY_LENGTH, useMediaSearch } from "./api/use-media-search";
 import { MediaResults } from "./components/media-results";
 
@@ -38,6 +39,7 @@ export function SearchPage() {
         isLoading={hasQuery && isLoading}
         isError={isError}
         hasQuery={hasQuery}
+        renderAction={(media) => <AddToLibraryButton media={media} />}
       />
     </section>
   );

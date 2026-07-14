@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { AuthenticationModule } from "./modules/authentication/authentication.module";
 import { HealthModule } from "./modules/health/health.module";
+import { LibraryModule } from "./modules/library/library.module";
 import { MediaModule } from "./modules/media/media.module";
 import { validateEnv } from "./shared/infrastructure/config/env";
 import { EventsModule } from "./shared/infrastructure/events/events.module";
@@ -24,6 +25,7 @@ import { RedisModule } from "./shared/infrastructure/redis/redis.module";
     HealthModule,
     MediaModule,
     AuthenticationModule,
+    LibraryModule,
   ],
 })
 export class AppModule {}
