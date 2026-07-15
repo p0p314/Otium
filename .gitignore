@@ -31,6 +31,9 @@ Thumbs.db
 # Prisma
 apps/api/prisma/*.db
 
+# Redis (dump local créé au lancement de redis-server)
+*.rdb
+
 # Logs
 *.log
 npm-debug.log*
