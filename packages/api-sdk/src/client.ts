@@ -11,6 +11,7 @@ import {
   type LoginInput,
   type RenameListInput,
   type MarkEpisodeInput,
+  type MarkEpisodesInput,
   type RateMediaInput,
   type RegisterInput,
   Review,
@@ -197,6 +198,13 @@ export class OtiumClient {
 
   async markEpisode(itemId: string, input: MarkEpisodeInput): Promise<SeriesTracking> {
     return this.request(`/library/${itemId}/episodes`, SeriesTracking, {
+      method: "PATCH",
+      body: input,
+    });
+  }
+
+  async markEpisodes(itemId: string, input: MarkEpisodesInput): Promise<SeriesTracking> {
+    return this.request(`/library/${itemId}/episodes/batch`, SeriesTracking, {
       method: "PATCH",
       body: input,
     });

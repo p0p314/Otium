@@ -17,6 +17,7 @@ import {
 } from "../src/modules/library/domain";
 import { GetSeriesTrackingUseCase } from "../src/modules/library/application/get-series-tracking.usecase";
 import { ToggleEpisodeWatchedUseCase } from "../src/modules/library/application/toggle-episode-watched.usecase";
+import { ToggleEpisodesWatchedUseCase } from "../src/modules/library/application/toggle-episodes-watched.usecase";
 import { SeriesTrackingController } from "../src/modules/library/presentation/series-tracking.controller";
 
 const TOKEN = "tok";
@@ -56,9 +57,23 @@ class InMemorySeriesRepo implements SeriesTrackingRepository {
   async isEpisodeOfMedia(_mediaId: string, episodeId: string): Promise<boolean> {
     return this.seasons.some((s) => s.episodes.some((e) => e.id === episodeId));
   }
+  async countEpisodesOfMedia(_mediaId: string, episodeIds: readonly string[]): Promise<number> {
+    const all = new Set(this.seasons.flatMap((s) => s.episodes.map((e) => e.id)));
+    return episodeIds.filter((id) => all.has(id)).length;
+  }
   async setEpisodeWatched(_itemId: string, episodeId: string, watched: boolean): Promise<void> {
     if (watched) this.watched.add(episodeId);
     else this.watched.delete(episodeId);
+  }
+  async setEpisodesWatched(
+    _itemId: string,
+    episodeIds: readonly string[],
+    watched: boolean,
+  ): Promise<void> {
+    for (const id of episodeIds) {
+      if (watched) this.watched.add(id);
+      else this.watched.delete(id);
+    }
   }
   async setStatus(_itemId: string, status: WatchStatus): Promise<void> {
     this.status = status;
@@ -98,6 +113,7 @@ describe("Series tracking (e2e)", () => {
       providers: [
         GetSeriesTrackingUseCase,
         ToggleEpisodeWatchedUseCase,
+        ToggleEpisodesWatchedUseCase,
         AuthGuard,
         { provide: SERIES_TRACKING_REPOSITORY, useClass: InMemorySeriesRepo },
         { provide: MEDIA_CATALOG_PROVIDER, useValue: provider },
@@ -150,5 +166,27 @@ describe("Series tracking (e2e)", () => {
     expect(res.body.watchedEpisodes).toBe(2);
     expect(res.body.nextEpisode).toBeNull();
     expect(res.body.status).toBe("COMPLETED");
+  });
+
+  it("démarque puis marque toute la série vue en un seul appel (batch)", async () => {
+    await auth(request(server()).patch(`/library/${ITEM_ID}/episodes/batch`)).send({
+      episodeIds: ["s1e1", "s1e2"],
+      watched: false,
+    });
+    const res = await auth(request(server()).patch(`/library/${ITEM_ID}/episodes/batch`)).send({
+      episodeIds: ["s1e1", "s1e2"],
+      watched: true,
+    });
+    expect(res.status).toBe(200);
+    expect(res.body.watchedEpisodes).toBe(2);
+    expect(res.body.status).toBe("COMPLETED");
+  });
+
+  it("rejette un épisode étranger dans le batch (404)", async () => {
+    const res = await auth(request(server()).patch(`/library/${ITEM_ID}/episodes/batch`)).send({
+      episodeIds: ["s1e1", "inconnu"],
+      watched: true,
+    });
+    expect(res.status).toBe(404);
   });
 });

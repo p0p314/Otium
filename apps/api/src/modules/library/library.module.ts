@@ -24,6 +24,7 @@ import {
 } from "./application/review.usecases";
 import { SetWatchStatusUseCase } from "./application/set-watch-status.usecase";
 import { ToggleEpisodeWatchedUseCase } from "./application/toggle-episode-watched.usecase";
+import { ToggleEpisodesWatchedUseCase } from "./application/toggle-episodes-watched.usecase";
 import { ToggleFavoriteUseCase } from "./application/toggle-favorite.usecase";
 import {
   LIBRARY_REPOSITORY,
@@ -54,6 +55,7 @@ import { SeriesTrackingController } from "./presentation/series-tracking.control
     GetSeriesTrackingUseCase,
     GetHomeDashboardUseCase,
     ToggleEpisodeWatchedUseCase,
+    ToggleEpisodesWatchedUseCase,
     GetReviewUseCase,
     SaveReviewUseCase,
     DeleteReviewUseCase,

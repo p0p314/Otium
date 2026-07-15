@@ -85,6 +85,13 @@ export class PrismaSeriesTrackingRepository implements SeriesTrackingRepository 
     );
   }
 
+  async countEpisodesOfMedia(mediaId: string, episodeIds: readonly string[]): Promise<number> {
+    if (episodeIds.length === 0) return 0;
+    return this.prisma.episode.count({
+      where: { id: { in: [...episodeIds] }, season: { mediaId } },
+    });
+  }
+
   async setEpisodeWatched(itemId: string, episodeId: string, watched: boolean): Promise<void> {
     if (watched) {
       await this.prisma.watchedEpisode.upsert({
@@ -95,6 +102,24 @@ export class PrismaSeriesTrackingRepository implements SeriesTrackingRepository 
     } else {
       await this.prisma.watchedEpisode.deleteMany({
         where: { libraryItemId: itemId, episodeId },
+      });
+    }
+  }
+
+  async setEpisodesWatched(
+    itemId: string,
+    episodeIds: readonly string[],
+    watched: boolean,
+  ): Promise<void> {
+    if (episodeIds.length === 0) return;
+    if (watched) {
+      await this.prisma.watchedEpisode.createMany({
+        data: episodeIds.map((episodeId) => ({ libraryItemId: itemId, episodeId })),
+        skipDuplicates: true,
+      });
+    } else {
+      await this.prisma.watchedEpisode.deleteMany({
+        where: { libraryItemId: itemId, episodeId: { in: [...episodeIds] } },
       });
     }
   }

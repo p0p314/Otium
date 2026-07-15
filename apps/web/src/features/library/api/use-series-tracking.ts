@@ -1,4 +1,4 @@
-import type { MarkEpisodeInput } from "@otium/types";
+import type { MarkEpisodeInput, MarkEpisodesInput, SeriesTracking } from "@otium/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../../lib/api";
 import { useAuth } from "../../auth/api/use-auth";
@@ -14,10 +14,13 @@ export function useSeriesTracking(itemId: string) {
   });
 }
 
-export function useMarkEpisode(itemId: string) {
+function useTrackingMutation<TInput>(
+  itemId: string,
+  mutationFn: (input: TInput) => Promise<SeriesTracking>,
+) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: MarkEpisodeInput) => api.markEpisode(itemId, input),
+    mutationFn,
     onSuccess: (tracking) => {
       // La réponse contient l'état à jour → on met le cache à jour sans refetch.
       queryClient.setQueryData(trackingKey(itemId), tracking);
@@ -26,4 +29,13 @@ export function useMarkEpisode(itemId: string) {
       queryClient.invalidateQueries({ queryKey: ["home-dashboard"] });
     },
   });
+}
+
+export function useMarkEpisode(itemId: string) {
+  return useTrackingMutation(itemId, (input: MarkEpisodeInput) => api.markEpisode(itemId, input));
+}
+
+/** Marque/démarque plusieurs épisodes (saison ou série complète) en un appel. */
+export function useMarkEpisodes(itemId: string) {
+  return useTrackingMutation(itemId, (input: MarkEpisodesInput) => api.markEpisodes(itemId, input));
 }
