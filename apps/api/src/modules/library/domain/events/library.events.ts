@@ -63,6 +63,30 @@ export class SeriesCompleted extends DomainEvent {
   }
 }
 
+export class WatchStatusChanged extends DomainEvent {
+  readonly name = "WatchStatusChanged";
+  constructor(
+    userId: string,
+    mediaId: string,
+    private readonly status: string,
+  ) {
+    super(userId, mediaId);
+  }
+  payload(): Record<string, unknown> {
+    return { status: this.status };
+  }
+}
+
+export class MovieCompleted extends DomainEvent {
+  readonly name = "MovieCompleted";
+  constructor(userId: string, mediaId: string) {
+    super(userId, mediaId);
+  }
+  payload(): Record<string, unknown> {
+    return {};
+  }
+}
+
 export class MediaRated extends DomainEvent {
   readonly name = "MediaRated";
   constructor(
@@ -84,5 +108,59 @@ export class ReviewSaved extends DomainEvent {
   }
   payload(): Record<string, unknown> {
     return {};
+  }
+}
+
+export class ListCreated extends DomainEvent {
+  readonly name = "ListCreated";
+  constructor(
+    userId: string,
+    private readonly listId: string,
+  ) {
+    super(userId);
+  }
+  payload(): Record<string, unknown> {
+    return { listId: this.listId };
+  }
+}
+
+export class ListDeleted extends DomainEvent {
+  readonly name = "ListDeleted";
+  constructor(
+    userId: string,
+    private readonly listId: string,
+  ) {
+    super(userId);
+  }
+  payload(): Record<string, unknown> {
+    return { listId: this.listId };
+  }
+}
+
+export class ListItemAdded extends DomainEvent {
+  readonly name = "ListItemAdded";
+  constructor(
+    userId: string,
+    private readonly listId: string,
+    private readonly externalId: string,
+  ) {
+    super(userId);
+  }
+  payload(): Record<string, unknown> {
+    return { listId: this.listId, externalId: this.externalId };
+  }
+}
+
+export class ListItemRemoved extends DomainEvent {
+  readonly name = "ListItemRemoved";
+  constructor(
+    userId: string,
+    private readonly listId: string,
+    private readonly externalId: string,
+  ) {
+    super(userId);
+  }
+  payload(): Record<string, unknown> {
+    return { listId: this.listId, externalId: this.externalId };
   }
 }

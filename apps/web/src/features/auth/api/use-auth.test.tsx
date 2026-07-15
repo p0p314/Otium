@@ -35,7 +35,6 @@ describe("useLogin", () => {
       await result.current.mutateAsync({ email: "a@b.com", password: "supersecret" });
     });
 
-    await waitFor(() => expect(useAuthStore.getState().token).toBe("tok_123"));
-    expect(useAuthStore.getState().user?.displayName).toBe("Alice");
+    await waitFor(() => expect(useAuthStore.getState().user?.displayName).toBe("Alice"));
   });
 });

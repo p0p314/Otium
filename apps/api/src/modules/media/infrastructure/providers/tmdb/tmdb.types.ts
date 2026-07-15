@@ -8,7 +8,8 @@ export interface TmdbSearchResponse {
 
 export interface TmdbSearchItem {
   id: number;
-  media_type: string;
+  // Absent des endpoints typés (ex. /trending/movie) ; déduit par `fallbackMediaType`.
+  media_type?: string;
   title?: string;
   name?: string;
   release_date?: string;

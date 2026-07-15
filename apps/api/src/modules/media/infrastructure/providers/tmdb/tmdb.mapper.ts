@@ -14,9 +14,17 @@ function parseYear(date: string | undefined): number | null {
   return Number.isNaN(year) ? null : year;
 }
 
-/** Convertit un item TMDB en modèle catalogue normalisé, ou `null` si non pertinent. */
-export function toCatalogMedia(item: TmdbSearchItem, imageBaseUrl: string): CatalogMedia | null {
-  const type = TYPE_BY_MEDIA_TYPE[item.media_type];
+/**
+ * Convertit un item TMDB en modèle catalogue normalisé, ou `null` si non pertinent.
+ * `fallbackMediaType` sert aux endpoints typés (ex. `/trending/movie`) dont les items
+ * n'exposent pas `media_type`.
+ */
+export function toCatalogMedia(
+  item: TmdbSearchItem,
+  imageBaseUrl: string,
+  fallbackMediaType?: string,
+): CatalogMedia | null {
+  const type = TYPE_BY_MEDIA_TYPE[item.media_type ?? fallbackMediaType ?? ""];
   if (!type) return null; // écarte les personnes et types non supportés
 
   const title = item.title ?? item.name;

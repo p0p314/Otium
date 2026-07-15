@@ -8,6 +8,7 @@ import type {
   CatalogSeriesDetails,
   MediaCatalogProvider,
   MediaCatalogSearchParams,
+  MediaCatalogTrendingParams,
 } from "../../../domain";
 import { toCatalogMedia, toCatalogSeason } from "./tmdb.mapper";
 import type { TmdbSearchResponse, TmdbSeasonDetails, TmdbTvDetails } from "./tmdb.types";
@@ -44,6 +45,34 @@ export class TmdbProvider implements MediaCatalogProvider {
     if (params.type) {
       items = items.filter((m) => m.type === params.type);
     }
+
+    const result: CatalogSearchResult = {
+      items,
+      page: raw.page,
+      pageSize: params.pageSize,
+      total: raw.total_results,
+    };
+    await this.cacheSet(cacheKey, result);
+    return result;
+  }
+
+  async getTrending(params: MediaCatalogTrendingParams): Promise<CatalogSearchResult> {
+    const tmdbType =
+      params.type === "MOVIE" ? "movie" : params.type === "SERIES" ? "tv" : "all";
+    const cacheKey = `tmdb:trending:${tmdbType}:${params.page}`;
+    const cached = await this.cacheGet<CatalogSearchResult>(cacheKey);
+    if (cached) return cached;
+
+    const imageBaseUrl = this.config.get("TMDB_IMAGE_BASE_URL", { infer: true });
+    const raw = await this.authedGet<TmdbSearchResponse>(
+      `/trending/${tmdbType}/week?language=fr-FR&page=${params.page}`,
+    );
+
+    // Les endpoints typés (movie/tv) n'exposent pas `media_type` : on le fournit en repli.
+    const fallback = tmdbType === "all" ? undefined : tmdbType;
+    const items = raw.results
+      .map((item) => toCatalogMedia(item, imageBaseUrl, fallback))
+      .filter((m): m is NonNullable<typeof m> => m !== null);
 
     const result: CatalogSearchResult = {
       items,

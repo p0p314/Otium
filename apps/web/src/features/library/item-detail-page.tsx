@@ -1,4 +1,3 @@
-import type { WatchStatus } from "@otium/types";
 import { Skeleton } from "@otium/ui";
 import { Link, useParams } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
@@ -6,14 +5,9 @@ import { useLibraryItem, useRateMedia } from "./api/use-item-detail";
 import { RatingControl } from "./components/rating-control";
 import { ReviewEditor } from "./components/review-editor";
 import { SeriesTrackingSection } from "./components/series-tracking-section";
-
-const STATUS_LABEL: Record<WatchStatus, string> = {
-  PLANNED: "À voir",
-  IN_PROGRESS: "En cours",
-  COMPLETED: "Terminée",
-  DROPPED: "Abandonnée",
-  PAUSED: "En pause",
-};
+import { StatusSelect } from "./components/status-select";
+import { statusLabel } from "./status";
+import { AddToListControl } from "../lists/components/add-to-list-control";
 
 const TYPE_LABEL = { MOVIE: "Film", SERIES: "Série" } as const;
 
@@ -59,10 +53,21 @@ export function ItemDetailPage() {
             <h1 className="text-2xl font-bold tracking-tight">{item.media.title}</h1>
             <p className="mt-1 text-sm text-muted-foreground">
               {TYPE_LABEL[item.media.type]}
-              {item.media.year ? ` · ${item.media.year}` : ""} · {STATUS_LABEL[item.status]}
+              {item.media.year ? ` · ${item.media.year}` : ""} ·{" "}
+              {statusLabel(item.status, item.media.type)}
             </p>
           </div>
         </div>
+      </div>
+
+      <div className="space-y-2">
+        <h2 className="text-sm font-semibold">Statut</h2>
+        <StatusSelect itemId={itemId} type={item.media.type} value={item.status} />
+      </div>
+
+      <div className="space-y-2">
+        <h2 className="text-sm font-semibold">Ajouter à une liste</h2>
+        <AddToListControl media={item.media} />
       </div>
 
       <div className="space-y-2">

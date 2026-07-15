@@ -21,8 +21,9 @@ export function useMarkEpisode(itemId: string) {
     onSuccess: (tracking) => {
       // La réponse contient l'état à jour → on met le cache à jour sans refetch.
       queryClient.setQueryData(trackingKey(itemId), tracking);
-      // Le statut de l'élément a pu changer (IN_PROGRESS/COMPLETED).
+      // Le statut de l'élément et la progression d'accueil ont pu changer.
       queryClient.invalidateQueries({ queryKey: ["library"] });
+      queryClient.invalidateQueries({ queryKey: ["home-dashboard"] });
     },
   });
 }

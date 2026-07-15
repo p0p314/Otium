@@ -12,10 +12,13 @@ import {
   type LibraryItem,
   type LibraryRepository,
   type MediaDescriptor,
+  SERIES_TRACKING_REPOSITORY,
 } from "../src/modules/library/domain";
 import { AddMediaToLibraryUseCase } from "../src/modules/library/application/add-media-to-library.usecase";
+import { GetHomeDashboardUseCase } from "../src/modules/library/application/get-home-dashboard.usecase";
 import { GetLibraryUseCase } from "../src/modules/library/application/get-library.usecase";
 import { RemoveFromLibraryUseCase } from "../src/modules/library/application/remove-from-library.usecase";
+import { SetWatchStatusUseCase } from "../src/modules/library/application/set-watch-status.usecase";
 import { ToggleFavoriteUseCase } from "../src/modules/library/application/toggle-favorite.usecase";
 import { GetLibraryItemUseCase } from "../src/modules/library/application/get-library-item.usecase";
 import { RateMediaUseCase } from "../src/modules/library/application/rate-media.usecase";
@@ -63,6 +66,16 @@ class InMemoryLibraryRepository implements LibraryRepository {
     this.items.set(itemId, updated);
     return updated;
   }
+  async setStatus(
+    _userId: string,
+    itemId: string,
+    status: LibraryItem["status"],
+  ): Promise<LibraryItem> {
+    const item = this.items.get(itemId)!;
+    const updated = { ...item, status };
+    this.items.set(itemId, updated);
+    return updated;
+  }
   async setRating(_userId: string, itemId: string, rating: number | null): Promise<LibraryItem> {
     const item = this.items.get(itemId)!;
     const updated = { ...item, rating };
@@ -104,8 +117,11 @@ describe("Library (e2e)", () => {
         RemoveFromLibraryUseCase,
         ToggleFavoriteUseCase,
         RateMediaUseCase,
+        SetWatchStatusUseCase,
+        GetHomeDashboardUseCase,
         AuthGuard,
         { provide: LIBRARY_REPOSITORY, useClass: InMemoryLibraryRepository },
+        { provide: SERIES_TRACKING_REPOSITORY, useValue: { listInProgress: async () => [] } },
         { provide: EVENT_PUBLISHER, useValue: { publish: async () => undefined, publishAll: async () => undefined } },
         {
           provide: SESSION_STORE,

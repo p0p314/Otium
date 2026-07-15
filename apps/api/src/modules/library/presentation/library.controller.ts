@@ -11,8 +11,10 @@ import {
 } from "@nestjs/common";
 import {
   AddToLibraryInput,
+  type HomeDashboard,
   type LibraryItem as LibraryItemDto,
   RateMediaInput,
+  SetWatchStatusInput,
   ToggleFavoriteInput,
 } from "@otium/types";
 import { ZodValidationPipe } from "../../../shared/presentation/zod-validation.pipe";
@@ -22,10 +24,12 @@ import {
 } from "../../authentication/presentation/auth.guard";
 import { CurrentUser } from "../../authentication/presentation/current-user.decorator";
 import { AddMediaToLibraryUseCase } from "../application/add-media-to-library.usecase";
+import { GetHomeDashboardUseCase } from "../application/get-home-dashboard.usecase";
 import { GetLibraryUseCase } from "../application/get-library.usecase";
 import { GetLibraryItemUseCase } from "../application/get-library-item.usecase";
 import { RateMediaUseCase } from "../application/rate-media.usecase";
 import { RemoveFromLibraryUseCase } from "../application/remove-from-library.usecase";
+import { SetWatchStatusUseCase } from "../application/set-watch-status.usecase";
 import { ToggleFavoriteUseCase } from "../application/toggle-favorite.usecase";
 import { toLibraryItemDto } from "./library.mapper";
 
@@ -39,12 +43,20 @@ export class LibraryController {
     private readonly removeMedia: RemoveFromLibraryUseCase,
     private readonly toggleFavorite: ToggleFavoriteUseCase,
     private readonly rateMedia: RateMediaUseCase,
+    private readonly setWatchStatus: SetWatchStatusUseCase,
+    private readonly getHomeDashboard: GetHomeDashboardUseCase,
   ) {}
 
   @Get()
   async list(@CurrentUser() user: AuthenticatedUser): Promise<LibraryItemDto[]> {
     const items = await this.getLibrary.execute(user.id);
     return items.map(toLibraryItemDto);
+  }
+
+  /** Tableau de bord de l'accueil (séries en cours + laissées de côté). */
+  @Get("home")
+  async home(@CurrentUser() user: AuthenticatedUser): Promise<HomeDashboard> {
+    return this.getHomeDashboard.execute(user.id);
   }
 
   @Get(":itemId")
@@ -83,6 +95,20 @@ export class LibraryController {
       userId: user.id,
       itemId,
       isFavorite: input.isFavorite,
+    });
+    return toLibraryItemDto(item);
+  }
+
+  @Patch(":itemId/status")
+  async status(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("itemId") itemId: string,
+    @Body(new ZodValidationPipe(SetWatchStatusInput)) input: SetWatchStatusInput,
+  ): Promise<LibraryItemDto> {
+    const item = await this.setWatchStatus.execute({
+      userId: user.id,
+      itemId,
+      status: input.status,
     });
     return toLibraryItemDto(item);
   }

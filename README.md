@@ -14,13 +14,19 @@ TMDB, PostgreSQL, Redis) ; `typecheck`, `lint`, `test` (~85 tests) et `build` pa
 
 Fonctionnalités disponibles :
 
-- **Recherche** de films/séries (via TMDB, abstraction de fournisseur + cache Redis).
-- **Authentification** (inscription/connexion, hachage bcrypt, sessions Redis, routes protégées).
-- **Bibliothèque** : ajout/retrait, statut, favoris (au niveau `Media` générique).
+- **Recherche** de films/séries (via TMDB, abstraction de fournisseur + cache Redis), avec
+  **mise en avant des tendances** du moment sous la barre de recherche.
+- **Authentification** (inscription/connexion, hachage bcrypt, sessions Redis, routes protégées),
+  jeton de session en **cookie httpOnly** (durcissement anti-XSS).
+- **Bibliothèque** : ajout/retrait, statut (**vu / à voir**…), favoris (au niveau `Media`),
+  affichage **par catégorie** (Films / Séries).
+- **Accueil personnalisé** : séries **en cours** et séries **laissées de côté** (> 1 mois).
+- **Listes personnalisées** : création/suppression de listes, ajout/retrait de films et séries.
 - **Suivi de séries** : saisons/épisodes, épisodes vus, progression, **reprise automatique**.
 - **Notation** (0–10) et **avis** (texte), au niveau `Media`.
-- **Événements de domaine** journalisés (`MediaAdded`, `EpisodeWatched`, `MediaRated`…) —
-  socle des futures statistiques/recommandations.
+- **Validation i18n** : messages d'erreur Zod en français, partagés front/back.
+- **Événements de domaine** journalisés (`MediaAdded`, `EpisodeWatched`, `MediaRated`,
+  `WatchStatusChanged`, `MovieCompleted`…) — socle des futures statistiques/recommandations.
 
 Prochaines étapes : voir [roadmap](docs/roadmap.md) (polish i18n/sécurité, stats/reco, Meilisearch,
 nouveaux types de médias).

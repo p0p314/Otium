@@ -1,9 +1,15 @@
 import {
   type AddToLibraryInput,
+  type AddToListInput,
   AuthSession,
   AuthUser,
+  type CreateListInput,
+  HomeDashboard,
   LibraryItem,
+  ListDetail,
+  ListSummary,
   type LoginInput,
+  type RenameListInput,
   type MarkEpisodeInput,
   type RateMediaInput,
   type RegisterInput,
@@ -13,7 +19,9 @@ import {
   type SearchMediaQuery,
   SearchMediaResult,
   SeriesTracking,
+  type SetWatchStatusInput,
   type ToggleFavoriteInput,
+  type TrendingMediaQuery,
 } from "@otium/types";
 import { z } from "zod";
 import { ApiError } from "./errors.js";
@@ -23,7 +31,10 @@ export interface OtiumClientOptions {
   baseUrl: string;
   /** `fetch` injectable (tests, environnements sans global fetch). */
   fetch?: typeof globalThis.fetch;
-  /** Fournit un jeton d'auth par requête (session). */
+  /**
+   * Fournit un jeton d'auth par requête (session), en repli du cookie httpOnly.
+   * Optionnel : le web s'appuie sur le cookie ; les clients mobiles fournissent le jeton.
+   */
   getToken?: () => string | null | undefined;
 }
 
@@ -55,6 +66,15 @@ export class OtiumClient {
     return this.request(`/media/search?${params.toString()}`, SearchMediaResult);
   }
 
+  async getTrending(query: TrendingMediaQuery): Promise<SearchMediaResult> {
+    const params = new URLSearchParams({
+      page: String(query.page),
+      pageSize: String(query.pageSize),
+    });
+    if (query.type) params.set("type", query.type);
+    return this.request(`/media/trending?${params.toString()}`, SearchMediaResult);
+  }
+
   // --- Authentification ---
 
   async register(input: RegisterInput): Promise<AuthSession> {
@@ -75,6 +95,10 @@ export class OtiumClient {
 
   async getLibrary(): Promise<LibraryItem[]> {
     return this.request("/library", z.array(LibraryItem));
+  }
+
+  async getHomeDashboard(): Promise<HomeDashboard> {
+    return this.request("/library/home", HomeDashboard);
   }
 
   async getLibraryItem(itemId: string): Promise<LibraryItem> {
@@ -113,6 +137,50 @@ export class OtiumClient {
     });
   }
 
+  async setWatchStatus(itemId: string, input: SetWatchStatusInput): Promise<LibraryItem> {
+    return this.request(`/library/${itemId}/status`, LibraryItem, {
+      method: "PATCH",
+      body: input,
+    });
+  }
+
+  // --- Listes personnalisées ---
+
+  async getLists(): Promise<ListSummary[]> {
+    return this.request("/lists", z.array(ListSummary));
+  }
+
+  async getList(listId: string): Promise<ListDetail> {
+    return this.request(`/lists/${listId}`, ListDetail);
+  }
+
+  async createList(input: CreateListInput): Promise<ListSummary> {
+    return this.request("/lists", ListSummary, { method: "POST", body: input });
+  }
+
+  async renameList(listId: string, input: RenameListInput): Promise<ListSummary> {
+    return this.request(`/lists/${listId}`, ListSummary, { method: "PATCH", body: input });
+  }
+
+  async deleteList(listId: string): Promise<void> {
+    await this.request(`/lists/${listId}`, z.void(), { method: "DELETE" });
+  }
+
+  async addToList(listId: string, input: AddToListInput): Promise<ListDetail> {
+    return this.request(`/lists/${listId}/items`, ListDetail, { method: "POST", body: input });
+  }
+
+  async removeFromList(
+    listId: string,
+    externalRef: { provider: string; externalId: string },
+  ): Promise<ListDetail> {
+    return this.request(
+      `/lists/${listId}/items/${encodeURIComponent(externalRef.provider)}/${encodeURIComponent(externalRef.externalId)}`,
+      ListDetail,
+      { method: "DELETE" },
+    );
+  }
+
   // --- Suivi de séries ---
 
   async getSeriesTracking(itemId: string): Promise<SeriesTracking> {
@@ -134,6 +202,9 @@ export class OtiumClient {
     const token = this.getToken?.();
     const requestInit: RequestInit = {
       method: init?.method ?? "GET",
+      // Envoie le cookie de session httpOnly (navigateur). Le Bearer reste un repli
+      // pour les clients non-navigateur (mobile) via `getToken`.
+      credentials: "include",
       headers: {
         "content-type": "application/json",
         ...(token ? { authorization: `Bearer ${token}` } : {}),

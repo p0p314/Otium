@@ -4,6 +4,7 @@ import type { EventPublisher } from "../../../shared/domain";
 import type { LibraryItem, LibraryRepository, MediaDescriptor } from "../domain";
 import { AddMediaToLibraryUseCase } from "./add-media-to-library.usecase";
 import { RemoveFromLibraryUseCase } from "./remove-from-library.usecase";
+import { SetWatchStatusUseCase } from "./set-watch-status.usecase";
 import { ToggleFavoriteUseCase } from "./toggle-favorite.usecase";
 
 const media: MediaDescriptor = {
@@ -34,6 +35,7 @@ describe("Library use cases", () => {
       findItem: vi.fn().mockResolvedValue(item),
       remove: vi.fn().mockResolvedValue(undefined),
       setFavorite: vi.fn().mockResolvedValue({ ...item, isFavorite: true }),
+      setStatus: vi.fn().mockResolvedValue({ ...item, status: "COMPLETED" }),
       setRating: vi.fn().mockResolvedValue({ ...item, rating: 8 }),
       getMediaId: vi.fn().mockResolvedValue("media-1"),
     };
@@ -60,6 +62,40 @@ describe("Library use cases", () => {
     await useCase.execute({ userId: "u1", itemId: "item-1" });
     expect(repo.remove).toHaveBeenCalledWith("u1", "item-1");
     expect(vi.mocked(events.publish).mock.calls[0]?.[0]).toMatchObject({ name: "MediaRemoved" });
+  });
+
+  it("marque un film « vu » et émet WatchStatusChanged puis MovieCompleted", async () => {
+    const useCase = new SetWatchStatusUseCase(repo, events);
+    const result = await useCase.execute({ userId: "u1", itemId: "item-1", status: "COMPLETED" });
+
+    expect(result.status).toBe("COMPLETED");
+    expect(repo.setStatus).toHaveBeenCalledWith("u1", "item-1", "COMPLETED");
+    const names = vi.mocked(events.publish).mock.calls.map((c) => (c[0] as { name: string }).name);
+    expect(names).toEqual(["WatchStatusChanged", "MovieCompleted"]);
+  });
+
+  it("ne réémet rien si le statut est inchangé", async () => {
+    vi.mocked(repo.findItem).mockResolvedValue({ ...item, status: "COMPLETED" });
+    const useCase = new SetWatchStatusUseCase(repo, events);
+    await useCase.execute({ userId: "u1", itemId: "item-1", status: "COMPLETED" });
+
+    expect(repo.setStatus).not.toHaveBeenCalled();
+    expect(events.publish).not.toHaveBeenCalled();
+  });
+
+  it("met une série « à voir » sans émettre MovieCompleted", async () => {
+    const seriesItem = {
+      ...item,
+      status: "IN_PROGRESS" as const,
+      media: { ...media, type: "SERIES" as const },
+    };
+    vi.mocked(repo.findItem).mockResolvedValue(seriesItem);
+    vi.mocked(repo.setStatus).mockResolvedValue({ ...seriesItem, status: "PLANNED" });
+    const useCase = new SetWatchStatusUseCase(repo, events);
+    await useCase.execute({ userId: "u1", itemId: "item-1", status: "PLANNED" });
+
+    const names = vi.mocked(events.publish).mock.calls.map((c) => (c[0] as { name: string }).name);
+    expect(names).toEqual(["WatchStatusChanged"]);
   });
 
   it("échoue à retirer un élément inexistant (404)", async () => {

@@ -9,6 +9,7 @@ import { AuthGuard } from "../src/modules/authentication/presentation/auth.guard
 import {
   LIBRARY_REPOSITORY,
   REVIEW_REPOSITORY,
+  SERIES_TRACKING_REPOSITORY,
   type LibraryItem,
   type LibraryRepository,
   type Review,
@@ -17,7 +18,9 @@ import {
 import { GetLibraryUseCase } from "../src/modules/library/application/get-library.usecase";
 import { GetLibraryItemUseCase } from "../src/modules/library/application/get-library-item.usecase";
 import { AddMediaToLibraryUseCase } from "../src/modules/library/application/add-media-to-library.usecase";
+import { GetHomeDashboardUseCase } from "../src/modules/library/application/get-home-dashboard.usecase";
 import { RemoveFromLibraryUseCase } from "../src/modules/library/application/remove-from-library.usecase";
+import { SetWatchStatusUseCase } from "../src/modules/library/application/set-watch-status.usecase";
 import { ToggleFavoriteUseCase } from "../src/modules/library/application/toggle-favorite.usecase";
 import { RateMediaUseCase } from "../src/modules/library/application/rate-media.usecase";
 import {
@@ -62,6 +65,10 @@ class FakeLibraryRepo implements LibraryRepository {
   async setFavorite(): Promise<LibraryItem> {
     return this.item;
   }
+  async setStatus(_u: string, _i: string, status: LibraryItem["status"]): Promise<LibraryItem> {
+    this.item = { ...this.item, status };
+    return this.item;
+  }
   async setRating(_u: string, _i: string, rating: number | null): Promise<LibraryItem> {
     this.item = { ...this.item, rating };
     return this.item;
@@ -104,11 +111,14 @@ describe("Ratings & reviews (e2e)", () => {
         RemoveFromLibraryUseCase,
         ToggleFavoriteUseCase,
         RateMediaUseCase,
+        SetWatchStatusUseCase,
+        GetHomeDashboardUseCase,
         GetReviewUseCase,
         SaveReviewUseCase,
         DeleteReviewUseCase,
         AuthGuard,
         { provide: LIBRARY_REPOSITORY, useClass: FakeLibraryRepo },
+        { provide: SERIES_TRACKING_REPOSITORY, useValue: { listInProgress: async () => [] } },
         { provide: REVIEW_REPOSITORY, useClass: FakeReviewRepo },
         { provide: EVENT_PUBLISHER, useValue: { publish: async () => undefined, publishAll: async () => undefined } },
         { provide: SESSION_STORE, useValue: { resolve: async (t: string) => (t === TOKEN ? USER_ID : null) } },

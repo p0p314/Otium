@@ -11,6 +11,12 @@ export interface MediaCatalogSearchParams {
   readonly type?: CatalogMediaType;
 }
 
+export interface MediaCatalogTrendingParams {
+  readonly page: number;
+  readonly pageSize: number;
+  readonly type?: CatalogMediaType;
+}
+
 /**
  * Port du catalogue de médias. Le domaine dépend de cette interface, jamais d'un
  * fournisseur concret. Les adapters (TMDB, TVMaze…) l'implémentent en infrastructure,
@@ -19,6 +25,8 @@ export interface MediaCatalogSearchParams {
 export interface MediaCatalogProvider {
   readonly name: string;
   search(params: MediaCatalogSearchParams): Promise<CatalogSearchResult>;
+  /** Tendances du moment (films/séries), pour la mise en avant. */
+  getTrending(params: MediaCatalogTrendingParams): Promise<CatalogSearchResult>;
   /** Structure saisons/épisodes d'une série, par identifiant externe. */
   getSeriesDetails(externalId: string): Promise<CatalogSeriesDetails>;
 }

@@ -19,3 +19,11 @@ export const Paginated = <T extends z.ZodTypeAny>(item: T) =>
 
 export const SearchMediaResult = Paginated(MediaSummary);
 export type SearchMediaResult = z.infer<typeof SearchMediaResult>;
+
+/** Tendances du moment (films/séries), pour la mise en avant sous la recherche. */
+export const TrendingMediaQuery = z.object({
+  type: MediaType.optional(),
+  page: z.coerce.number().int().positive().default(1),
+  pageSize: z.coerce.number().int().positive().max(50).default(20),
+});
+export type TrendingMediaQuery = z.infer<typeof TrendingMediaQuery>;

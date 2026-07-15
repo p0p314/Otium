@@ -1,8 +1,16 @@
 import { buttonVariants } from "@otium/ui";
 import { Link } from "@tanstack/react-router";
+import { useAuth } from "../features/auth/api/use-auth";
+import { HomeDashboard } from "../features/home/home-dashboard";
 
-/** Page d'accueil : accroche + accès à la recherche. */
+/** Page d'accueil : tableau de bord si connecté, accroche marketing sinon. */
 export function HomePage() {
+  const { user, isAuthenticated } = useAuth();
+
+  if (isAuthenticated && user) {
+    return <HomeDashboard displayName={user.displayName} />;
+  }
+
   return (
     <section className="flex flex-col items-start gap-6 py-10">
       <span className="rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
@@ -18,6 +26,9 @@ export function HomePage() {
       <div className="flex gap-3">
         <Link to="/search" className={buttonVariants({ size: "lg" })}>
           Commencer
+        </Link>
+        <Link to="/register" className={buttonVariants({ variant: "outline", size: "lg" })}>
+          Créer un compte
         </Link>
       </div>
     </section>

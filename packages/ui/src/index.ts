@@ -3,6 +3,8 @@ export { Button, buttonVariants } from "./components/button";
 export type { ButtonProps } from "./components/button";
 export { Input } from "./components/input";
 export type { InputProps } from "./components/input";
+export { Select } from "./components/select";
+export type { SelectProps } from "./components/select";
 export { Skeleton } from "./components/skeleton";
 export { ThemeProvider, useTheme } from "./theme/theme-provider";
 export type { Theme } from "./theme/theme-provider";

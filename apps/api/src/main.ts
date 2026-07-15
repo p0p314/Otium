@@ -2,12 +2,15 @@ import "reflect-metadata";
 import { Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { NestFactory } from "@nestjs/core";
+import { setupFrenchZodErrors } from "@otium/types";
 import type { NextFunction, Request, Response } from "express";
 import helmet from "helmet";
 import { AppModule } from "./app.module";
 import type { Env } from "./shared/infrastructure/config/env";
 
 async function bootstrap(): Promise<void> {
+  // Messages de validation Zod en français (pipe de validation + config).
+  setupFrenchZodErrors();
   const app = await NestFactory.create(AppModule, { bufferLogs: false });
   const config = app.get(ConfigService<Env, true>);
 

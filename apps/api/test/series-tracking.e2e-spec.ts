@@ -63,6 +63,9 @@ class InMemorySeriesRepo implements SeriesTrackingRepository {
   async setStatus(_itemId: string, status: WatchStatus): Promise<void> {
     this.status = status;
   }
+  async listInProgress(): Promise<[]> {
+    return [];
+  }
 }
 
 const provider = {

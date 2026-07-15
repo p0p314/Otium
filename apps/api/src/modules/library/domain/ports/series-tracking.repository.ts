@@ -22,6 +22,20 @@ export interface TrackingContext {
 }
 
 /**
+ * Instantané de progression d'une série pour l'accueil : saisons/épisodes,
+ * épisodes vus et date de dernière activité. Assemblé en une requête (éco-conception).
+ */
+export interface SeriesProgressRecord {
+  readonly itemId: string;
+  readonly title: string;
+  readonly posterUrl: string | null;
+  readonly status: WatchStatus;
+  readonly seasons: readonly SeasonRef[];
+  readonly watchedIds: ReadonlySet<string>;
+  readonly lastWatchedAt: Date | null;
+}
+
+/**
  * Port de persistance du suivi de séries : structure saisons/épisodes (partagée entre
  * utilisateurs) et progression (épisodes vus, propre à un élément de bibliothèque).
  */
@@ -34,6 +48,8 @@ export interface SeriesTrackingRepository {
   isEpisodeOfMedia(mediaId: string, episodeId: string): Promise<boolean>;
   setEpisodeWatched(itemId: string, episodeId: string, watched: boolean): Promise<void>;
   setStatus(itemId: string, status: WatchStatus): Promise<void>;
+  /** Progression de toutes les séries en cours d'un utilisateur (accueil). */
+  listInProgress(userId: string): Promise<SeriesProgressRecord[]>;
 }
 
 export const SERIES_TRACKING_REPOSITORY = Symbol("SERIES_TRACKING_REPOSITORY");

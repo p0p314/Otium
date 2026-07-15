@@ -29,7 +29,7 @@ function wrapper({ children }: { children: ReactNode }) {
 
 describe("useMarkEpisode", () => {
   beforeEach(() => {
-    useAuthStore.getState().setSession({ id: "u", email: "a@b.com", displayName: "A" }, "tok");
+    useAuthStore.getState().setSession({ id: "u", email: "a@b.com", displayName: "A" });
     vi.mocked(api.markEpisode).mockReset();
   });
 
