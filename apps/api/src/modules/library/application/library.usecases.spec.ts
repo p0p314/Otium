@@ -1,6 +1,7 @@
 import { NotFoundException } from "@nestjs/common";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { EventPublisher } from "../../../shared/domain";
+import type { MediaCatalogProvider } from "../../media/domain";
 import type { LibraryItem, LibraryRepository, MediaDescriptor } from "../domain";
 import { AddMediaToLibraryUseCase } from "./add-media-to-library.usecase";
 import { RemoveFromLibraryUseCase } from "./remove-from-library.usecase";
@@ -27,6 +28,7 @@ const item: LibraryItem = {
 describe("Library use cases", () => {
   let repo: LibraryRepository;
   let events: EventPublisher;
+  let catalog: MediaCatalogProvider;
 
   beforeEach(() => {
     repo = {
@@ -40,14 +42,40 @@ describe("Library use cases", () => {
       getMediaId: vi.fn().mockResolvedValue("media-1"),
     };
     events = { publish: vi.fn().mockResolvedValue(undefined), publishAll: vi.fn() };
+    // Par défaut : l'enrichissement échoue (dégradation gracieuse — média inchangé).
+    catalog = {
+      name: "fake",
+      search: vi.fn(),
+      getTrending: vi.fn(),
+      getMediaDetails: vi.fn().mockRejectedValue(new Error("no details")),
+      getSeriesDetails: vi.fn(),
+    };
   });
 
   it("ajoute un média et émet MediaAdded", async () => {
-    const useCase = new AddMediaToLibraryUseCase(repo, events);
+    const useCase = new AddMediaToLibraryUseCase(repo, events, catalog);
     const result = await useCase.execute({ userId: "u1", media });
     expect(result).toBe(item);
     expect(repo.add).toHaveBeenCalledWith("u1", media);
     expect(vi.mocked(events.publish).mock.calls[0]?.[0]).toMatchObject({ name: "MediaAdded" });
+  });
+
+  it("enrichit le média (genres + durée) via le catalogue avant l'ajout", async () => {
+    vi.mocked(catalog.getMediaDetails).mockResolvedValue({
+      genres: [
+        { id: "18", label: "Drame" },
+        { id: "878", label: "Science-Fiction" },
+      ],
+      runtimeMinutes: 155,
+    } as unknown as Awaited<ReturnType<MediaCatalogProvider["getMediaDetails"]>>);
+
+    await new AddMediaToLibraryUseCase(repo, events, catalog).execute({ userId: "u1", media });
+
+    expect(catalog.getMediaDetails).toHaveBeenCalledWith("MOVIE", "1");
+    expect(repo.add).toHaveBeenCalledWith(
+      "u1",
+      expect.objectContaining({ genres: ["Drame", "Science-Fiction"], runtimeMinutes: 155 }),
+    );
   });
 
   it("bascule le favori et émet FavoriteAdded", async () => {

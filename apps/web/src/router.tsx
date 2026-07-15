@@ -1,4 +1,5 @@
 import { createRootRoute, createRoute, createRouter, redirect } from "@tanstack/react-router";
+import { lazy } from "react";
 import { LoginPage } from "./features/auth/login-page";
 import { RegisterPage } from "./features/auth/register-page";
 import { LibraryPage } from "./features/library/library-page";
@@ -7,6 +8,11 @@ import { ListsPage } from "./features/lists/lists-page";
 import { ListDetailPage } from "./features/lists/list-detail-page";
 import { MediaDetailPage } from "./features/media-detail/media-detail-page";
 import { SearchPage } from "./features/media-search/search-page";
+
+// Chargée à la demande : isole recharts dans un chunk séparé (éco-conception).
+const StatsPage = lazy(() =>
+  import("./features/stats/stats-page").then((m) => ({ default: m.StatsPage })),
+);
 import { RootLayout } from "./routes/root-layout";
 import { HomePage } from "./routes/home";
 import { useAuthStore } from "./stores/auth-store";
@@ -78,6 +84,13 @@ const mediaDetailRoute = createRoute({
   component: MediaDetailPage,
 });
 
+const statsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/stats",
+  beforeLoad: requireAuth,
+  component: StatsPage,
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   searchRoute,
@@ -88,6 +101,7 @@ const routeTree = rootRoute.addChildren([
   listsRoute,
   listDetailRoute,
   mediaDetailRoute,
+  statsRoute,
 ]);
 
 export const router = createRouter({ routeTree });

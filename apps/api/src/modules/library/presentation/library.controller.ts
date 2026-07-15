@@ -31,7 +31,7 @@ import { RateMediaUseCase } from "../application/rate-media.usecase";
 import { RemoveFromLibraryUseCase } from "../application/remove-from-library.usecase";
 import { SetWatchStatusUseCase } from "../application/set-watch-status.usecase";
 import { ToggleFavoriteUseCase } from "../application/toggle-favorite.usecase";
-import { toLibraryItemDto } from "./library.mapper";
+import { toLibraryItemDto, toMediaDescriptor } from "./library.mapper";
 
 @Controller("library")
 @UseGuards(AuthGuard)
@@ -72,7 +72,10 @@ export class LibraryController {
     @CurrentUser() user: AuthenticatedUser,
     @Body(new ZodValidationPipe(AddToLibraryInput)) input: AddToLibraryInput,
   ): Promise<LibraryItemDto> {
-    const item = await this.addMedia.execute({ userId: user.id, media: input.media });
+    const item = await this.addMedia.execute({
+      userId: user.id,
+      media: toMediaDescriptor(input.media),
+    });
     return toLibraryItemDto(item);
   }
 

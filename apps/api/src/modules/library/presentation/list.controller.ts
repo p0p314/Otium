@@ -28,6 +28,7 @@ import {
   RemoveMediaFromListUseCase,
   RenameListUseCase,
 } from "../application/list.usecases";
+import { toMediaDescriptor } from "./library.mapper";
 import { toListDetailDto, toListSummaryDto } from "./list.mapper";
 
 @Controller("lists")
@@ -89,7 +90,7 @@ export class ListController {
     @Param("listId") listId: string,
     @Body(new ZodValidationPipe(AddToListInput)) input: AddToListInput,
   ): Promise<ListDetailDto> {
-    const detail = await this.addMedia.execute(user.id, listId, input.media);
+    const detail = await this.addMedia.execute(user.id, listId, toMediaDescriptor(input.media));
     return toListDetailDto(detail);
   }
 

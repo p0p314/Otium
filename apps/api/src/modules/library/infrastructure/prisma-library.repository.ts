@@ -25,9 +25,17 @@ export class PrismaLibraryRepository implements LibraryRepository {
         posterUrl: media.posterUrl,
         externalProvider: media.externalRef.provider,
         externalId: media.externalRef.externalId,
-        genres: [],
+        genres: media.genres ? [...media.genres] : [],
+        runtimeMinutes: media.runtimeMinutes ?? null,
       },
-      update: { title: media.title, year: media.year, posterUrl: media.posterUrl },
+      update: {
+        title: media.title,
+        year: media.year,
+        posterUrl: media.posterUrl,
+        // Enrichit un média déjà présent mais sans genres/durée (ajout antérieur).
+        ...(media.genres && media.genres.length > 0 ? { genres: [...media.genres] } : {}),
+        ...(media.runtimeMinutes != null ? { runtimeMinutes: media.runtimeMinutes } : {}),
+      },
     });
 
     const item = await this.prisma.libraryItem.upsert({

@@ -1,5 +1,6 @@
-import { Button, buttonVariants } from "@otium/ui";
+import { Button, Skeleton, buttonVariants } from "@otium/ui";
 import { Link, Outlet, useNavigate } from "@tanstack/react-router";
+import { Suspense } from "react";
 import { useAuth, useLogout } from "../features/auth/api/use-auth";
 import { ThemeToggle } from "../components/theme-toggle";
 
@@ -38,6 +39,12 @@ export function RootLayout() {
                   >
                     Mes listes
                   </Link>
+                  <Link
+                    to="/stats"
+                    className="text-muted-foreground transition-colors hover:text-foreground [&.active]:text-foreground"
+                  >
+                    Statistiques
+                  </Link>
                 </>
               ) : null}
             </nav>
@@ -73,7 +80,9 @@ export function RootLayout() {
         </div>
       </header>
       <main className="mx-auto max-w-5xl px-4 py-10">
-        <Outlet />
+        <Suspense fallback={<Skeleton className="h-64 w-full" />}>
+          <Outlet />
+        </Suspense>
       </main>
     </div>
   );

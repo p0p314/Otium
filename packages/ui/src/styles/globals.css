@@ -35,6 +35,13 @@
     --ring: 262 60% 52%;
 
     --radius: 0.65rem;
+
+    /* Couleurs de graphiques (palette data-viz validée CVD — voir skill dataviz). */
+    --chart-cat-1: #2a78d6; /* catégorie 1 (films) — bleu */
+    --chart-cat-2: #008300; /* catégorie 2 (séries) — vert */
+    --chart-series: #2a78d6; /* magnitude (genres, activité) — teinte unique bleue */
+    --chart-grid: #e1e0d9;
+    --chart-axis: #898781;
   }
 
   .dark {
@@ -62,6 +69,13 @@
     --border: 240 6% 22%;
     --input: 240 6% 22%;
     --ring: 262 70% 68%;
+
+    /* Steps sombres de la palette data-viz (re-stepés pour la surface sombre). */
+    --chart-cat-1: #3987e5;
+    --chart-cat-2: #008300;
+    --chart-series: #3987e5;
+    --chart-grid: #2c2c2a;
+    --chart-axis: #898781;
   }
 
   * {
