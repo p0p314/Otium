@@ -40,7 +40,12 @@ Objectif atteint : un utilisateur s'inscrit, cherche, ajoute, note/commente et s
 - [x] **Mise en avant dans la recherche** — tendances du moment (films/séries) sous la barre
   (`GET /media/trending`, TMDB `trending`).
 
-**Reste (polish MVP → V1)** : recherche du **détail film** (page dédiée), mesure des métriques.
+- [x] **Fiche média détaillée** — page unique `/media/:type/:externalId` (backdrop, note TMDB,
+  synopsis, genres, durée/saisons, casting, réalisateur/créateurs, sociétés, plateformes),
+  partagée entre la recherche et la bibliothèque, avec actions perso contextualisées
+  (`GET /media/:type/:externalId`, `append_to_response` TMDB, cache Redis).
+
+**Reste (polish MVP → V1)** : mesure des métriques.
 
 **Métriques MVP** : « recherche → ajout » p95 < 3 s ; reprise exacte 100 % ; LCP mobile < 2,5 s.
 

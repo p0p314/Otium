@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { toCatalogMedia } from "./tmdb.mapper";
-import type { TmdbSearchItem } from "./tmdb.types";
+import { toCatalogMedia, toCatalogMovieDetails, toCatalogTvDetails } from "./tmdb.mapper";
+import type { TmdbMovieDetailsFull, TmdbSearchItem, TmdbTvDetailsFull } from "./tmdb.types";
 
 const IMG = "https://img/w342";
+const ROOT = "https://image.tmdb.org/t/p/";
 
 describe("toCatalogMedia", () => {
   it("mappe un film", () => {
@@ -45,5 +46,80 @@ describe("toCatalogMedia", () => {
   it("gère une date absente", () => {
     const result = toCatalogMedia({ id: 2, media_type: "movie", title: "Sans date" }, IMG);
     expect(result?.year).toBeNull();
+  });
+});
+
+describe("toCatalogMovieDetails", () => {
+  const movie: TmdbMovieDetailsFull = {
+    id: 438631,
+    title: "Dune",
+    original_title: "Dune",
+    overview: "Paul Atreides…",
+    poster_path: "/p.jpg",
+    backdrop_path: "/b.jpg",
+    vote_average: 7.8,
+    vote_count: 1200,
+    release_date: "2021-09-15",
+    status: "Released",
+    runtime: 155,
+    genres: [{ id: 878, name: "Science-Fiction" }],
+    production_companies: [{ name: "Legendary", logo_path: "/l.png" }],
+    credits: {
+      cast: [{ name: "Timothée Chalamet", character: "Paul", profile_path: "/tc.jpg", order: 0 }],
+      crew: [
+        { name: "Denis Villeneuve", job: "Director" },
+        { name: "Autre", job: "Producer" },
+      ],
+    },
+    "watch/providers": {
+      results: { FR: { flatrate: [{ provider_name: "Netflix", logo_path: "/n.png" }] } },
+    },
+  };
+
+  it("mappe les champs riches, le réalisateur et les plateformes (FR)", () => {
+    const d = toCatalogMovieDetails(movie, ROOT, "FR");
+    expect(d.type).toBe("MOVIE");
+    expect(d.title).toBe("Dune");
+    expect(d.backdropUrl).toBe("https://image.tmdb.org/t/p/w780/b.jpg");
+    expect(d.posterUrl).toBe("https://image.tmdb.org/t/p/w342/p.jpg");
+    expect(d.rating).toBe(7.8);
+    expect(d.runtimeMinutes).toBe(155);
+    expect(d.numberOfSeasons).toBeNull();
+    expect(d.genres).toEqual([{ id: "878", label: "Science-Fiction" }]);
+    expect(d.directors).toEqual(["Denis Villeneuve"]);
+    expect(d.cast[0]).toEqual({
+      name: "Timothée Chalamet",
+      character: "Paul",
+      profileUrl: "https://image.tmdb.org/t/p/w185/tc.jpg",
+    });
+    expect(d.watchProviders).toEqual([
+      { name: "Netflix", logoUrl: "https://image.tmdb.org/t/p/w154/n.png" },
+    ]);
+  });
+
+  it("note nulle quand aucun vote", () => {
+    const d = toCatalogMovieDetails({ ...movie, vote_average: 0, vote_count: 0 }, ROOT, "FR");
+    expect(d.rating).toBeNull();
+  });
+});
+
+describe("toCatalogTvDetails", () => {
+  it("mappe une série (créateurs, saisons/épisodes)", () => {
+    const tv: TmdbTvDetailsFull = {
+      id: 1399,
+      name: "Game of Thrones",
+      original_name: "Game of Thrones",
+      number_of_seasons: 8,
+      number_of_episodes: 73,
+      created_by: [{ name: "David Benioff" }, { name: "D. B. Weiss" }],
+      genres: [{ id: 18, name: "Drame" }],
+    };
+    const d = toCatalogTvDetails(tv, ROOT, "FR");
+    expect(d.type).toBe("SERIES");
+    expect(d.numberOfSeasons).toBe(8);
+    expect(d.numberOfEpisodes).toBe(73);
+    expect(d.runtimeMinutes).toBeNull();
+    expect(d.directors).toEqual(["David Benioff", "D. B. Weiss"]);
+    expect(d.watchProviders).toEqual([]);
   });
 });

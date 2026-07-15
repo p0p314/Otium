@@ -5,6 +5,7 @@ import { LibraryPage } from "./features/library/library-page";
 import { ItemDetailPage } from "./features/library/item-detail-page";
 import { ListsPage } from "./features/lists/lists-page";
 import { ListDetailPage } from "./features/lists/list-detail-page";
+import { MediaDetailPage } from "./features/media-detail/media-detail-page";
 import { SearchPage } from "./features/media-search/search-page";
 import { RootLayout } from "./routes/root-layout";
 import { HomePage } from "./routes/home";
@@ -70,6 +71,13 @@ const listDetailRoute = createRoute({
   component: ListDetailPage,
 });
 
+// Fiche média publique (accessible depuis la recherche sans être connecté).
+const mediaDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/media/$type/$externalId",
+  component: MediaDetailPage,
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   searchRoute,
@@ -79,6 +87,7 @@ const routeTree = rootRoute.addChildren([
   itemDetailRoute,
   listsRoute,
   listDetailRoute,
+  mediaDetailRoute,
 ]);
 
 export const router = createRouter({ routeTree });

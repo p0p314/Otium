@@ -9,6 +9,7 @@ function fakeProvider(): MediaCatalogProvider {
     name: "fake",
     search: vi.fn().mockResolvedValue(emptyResult),
     getTrending: vi.fn().mockResolvedValue(emptyResult),
+    getMediaDetails: vi.fn(),
     getSeriesDetails: vi.fn().mockResolvedValue({ seasons: [] }),
   };
 }

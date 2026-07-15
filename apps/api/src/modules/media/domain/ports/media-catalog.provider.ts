@@ -1,4 +1,5 @@
 import type {
+  CatalogMediaDetails,
   CatalogMediaType,
   CatalogSearchResult,
   CatalogSeriesDetails,
@@ -27,6 +28,8 @@ export interface MediaCatalogProvider {
   search(params: MediaCatalogSearchParams): Promise<CatalogSearchResult>;
   /** Tendances du moment (films/séries), pour la mise en avant. */
   getTrending(params: MediaCatalogTrendingParams): Promise<CatalogSearchResult>;
+  /** Fiche détaillée d'un média (film ou série) par type + identifiant externe. */
+  getMediaDetails(type: CatalogMediaType, externalId: string): Promise<CatalogMediaDetails>;
   /** Structure saisons/épisodes d'une série, par identifiant externe. */
   getSeriesDetails(externalId: string): Promise<CatalogSeriesDetails>;
 }

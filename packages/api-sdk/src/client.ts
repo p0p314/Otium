@@ -12,6 +12,8 @@ import {
   type RenameListInput,
   type MarkEpisodeInput,
   type MarkEpisodesInput,
+  MediaDetails,
+  type MediaType,
   type RateMediaInput,
   type RegisterInput,
   Review,
@@ -82,6 +84,13 @@ export class OtiumClient {
     });
     if (query.type) params.set("type", query.type);
     return this.request(`/media/trending?${params.toString()}`, SearchMediaResult);
+  }
+
+  async getMediaDetails(type: MediaType, externalId: string): Promise<MediaDetails> {
+    return this.request(
+      `/media/${type}/${encodeURIComponent(externalId)}`,
+      MediaDetails,
+    );
   }
 
   // --- Authentification ---

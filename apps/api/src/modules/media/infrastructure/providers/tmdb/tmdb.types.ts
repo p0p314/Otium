@@ -29,3 +29,86 @@ export interface TmdbSeasonDetails {
     runtime?: number | null;
   }[];
 }
+
+// --- Fiche détaillée (append_to_response=credits,watch/providers) ---
+
+export interface TmdbGenre {
+  id: number;
+  name: string;
+}
+
+export interface TmdbCompany {
+  name: string;
+  logo_path?: string | null;
+}
+
+export interface TmdbCastMember {
+  name: string;
+  character?: string;
+  profile_path?: string | null;
+  order?: number;
+}
+
+export interface TmdbCrewMember {
+  name: string;
+  job?: string;
+}
+
+export interface TmdbCredits {
+  cast?: TmdbCastMember[];
+  crew?: TmdbCrewMember[];
+}
+
+export interface TmdbProviderEntry {
+  provider_name: string;
+  logo_path?: string | null;
+}
+
+export interface TmdbWatchProviderRegion {
+  flatrate?: TmdbProviderEntry[];
+  rent?: TmdbProviderEntry[];
+  buy?: TmdbProviderEntry[];
+}
+
+export interface TmdbWatchProviders {
+  results?: Record<string, TmdbWatchProviderRegion | undefined>;
+}
+
+export interface TmdbMovieDetailsFull {
+  id: number;
+  title?: string;
+  original_title?: string;
+  overview?: string;
+  poster_path?: string | null;
+  backdrop_path?: string | null;
+  vote_average?: number;
+  vote_count?: number;
+  release_date?: string;
+  status?: string;
+  runtime?: number | null;
+  genres?: TmdbGenre[];
+  production_companies?: TmdbCompany[];
+  credits?: TmdbCredits;
+  "watch/providers"?: TmdbWatchProviders;
+}
+
+export interface TmdbTvDetailsFull {
+  id: number;
+  name?: string;
+  original_name?: string;
+  overview?: string;
+  poster_path?: string | null;
+  backdrop_path?: string | null;
+  vote_average?: number;
+  vote_count?: number;
+  first_air_date?: string;
+  status?: string;
+  number_of_seasons?: number;
+  number_of_episodes?: number;
+  episode_run_time?: number[];
+  genres?: TmdbGenre[];
+  production_companies?: TmdbCompany[];
+  created_by?: { name: string }[];
+  credits?: TmdbCredits;
+  "watch/providers"?: TmdbWatchProviders;
+}

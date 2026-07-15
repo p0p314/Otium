@@ -83,8 +83,8 @@ export function LibraryPage() {
             <li key={item.id} className="group">
               <div className="relative aspect-[2/3] overflow-hidden rounded-lg bg-muted">
                 <Link
-                  to="/library/$itemId"
-                  params={{ itemId: item.id }}
+                  to="/media/$type/$externalId"
+                  params={{ type: item.media.type, externalId: item.media.externalRef.externalId }}
                   aria-label={`Ouvrir ${item.media.title}`}
                   className="block h-full w-full"
                 >
@@ -128,8 +128,8 @@ export function LibraryPage() {
                 </div>
               </div>
               <Link
-                to="/library/$itemId"
-                params={{ itemId: item.id }}
+                to="/media/$type/$externalId"
+                params={{ type: item.media.type, externalId: item.media.externalRef.externalId }}
                 className="mt-2 line-clamp-1 block text-sm font-medium hover:text-primary"
               >
                 {item.media.title}

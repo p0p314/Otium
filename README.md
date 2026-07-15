@@ -16,6 +16,8 @@ Fonctionnalités disponibles :
 
 - **Recherche** de films/séries (via TMDB, abstraction de fournisseur + cache Redis), avec
   **mise en avant des tendances** du moment sous la barre de recherche.
+- **Fiche média détaillée** (page unique recherche/bibliothèque) : backdrop, note TMDB, synopsis,
+  genres, durée/saisons, casting, réalisateur/créateurs, sociétés de production, plateformes.
 - **Authentification** (inscription/connexion, hachage bcrypt, sessions Redis, routes protégées),
   jeton de session en **cookie httpOnly** (durcissement anti-XSS).
 - **Bibliothèque** : ajout/retrait, statut (**vu / à voir**…), favoris (au niveau `Media`),

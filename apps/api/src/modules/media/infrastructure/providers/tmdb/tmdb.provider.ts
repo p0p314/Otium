@@ -4,14 +4,27 @@ import type { Env } from "../../../../../shared/infrastructure/config/env";
 import { HttpClient } from "../../../../../shared/infrastructure/http/http-client";
 import { RedisService } from "../../../../../shared/infrastructure/redis/redis.service";
 import type {
+  CatalogMediaDetails,
+  CatalogMediaType,
   CatalogSearchResult,
   CatalogSeriesDetails,
   MediaCatalogProvider,
   MediaCatalogSearchParams,
   MediaCatalogTrendingParams,
 } from "../../../domain";
-import { toCatalogMedia, toCatalogSeason } from "./tmdb.mapper";
-import type { TmdbSearchResponse, TmdbSeasonDetails, TmdbTvDetails } from "./tmdb.types";
+import {
+  toCatalogMedia,
+  toCatalogMovieDetails,
+  toCatalogSeason,
+  toCatalogTvDetails,
+} from "./tmdb.mapper";
+import type {
+  TmdbMovieDetailsFull,
+  TmdbSearchResponse,
+  TmdbSeasonDetails,
+  TmdbTvDetails,
+  TmdbTvDetailsFull,
+} from "./tmdb.types";
 
 /**
  * Adapter TMDB du port `MediaCatalogProvider`. Normalise les réponses TMDB vers le
@@ -82,6 +95,43 @@ export class TmdbProvider implements MediaCatalogProvider {
     };
     await this.cacheSet(cacheKey, result);
     return result;
+  }
+
+  async getMediaDetails(
+    type: CatalogMediaType,
+    externalId: string,
+  ): Promise<CatalogMediaDetails> {
+    const cacheKey = `tmdb:details:${type}:${externalId}`;
+    const cached = await this.cacheGet<CatalogMediaDetails>(cacheKey);
+    if (cached) return cached;
+
+    const imageRoot = this.imageRoot();
+    // Un seul appel réseau (crédits + plateformes agrégés) — éco-conception.
+    const append = "append_to_response=credits,watch/providers";
+    const result =
+      type === "MOVIE"
+        ? toCatalogMovieDetails(
+            await this.authedGet<TmdbMovieDetailsFull>(
+              `/movie/${externalId}?language=fr-FR&${append}`,
+            ),
+            imageRoot,
+            "FR",
+          )
+        : toCatalogTvDetails(
+            await this.authedGet<TmdbTvDetailsFull>(`/tv/${externalId}?language=fr-FR&${append}`),
+            imageRoot,
+            "FR",
+          );
+
+    await this.cacheSet(cacheKey, result);
+    return result;
+  }
+
+  /** Racine des images TMDB (sans segment de taille), dérivée de la base configurée. */
+  private imageRoot(): string {
+    const base = this.config.get("TMDB_IMAGE_BASE_URL", { infer: true });
+    const trimmed = base.replace(/\/(w\d+|original)\/?$/, "/");
+    return trimmed.endsWith("/") ? trimmed : `${trimmed}/`;
   }
 
   async getSeriesDetails(externalId: string): Promise<CatalogSeriesDetails> {
