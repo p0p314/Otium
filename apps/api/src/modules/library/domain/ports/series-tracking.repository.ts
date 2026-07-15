@@ -46,7 +46,15 @@ export interface SeriesTrackingRepository {
   getSeasons(mediaId: string): Promise<SeasonRef[]>;
   getWatchedEpisodeIds(itemId: string): Promise<Set<string>>;
   isEpisodeOfMedia(mediaId: string, episodeId: string): Promise<boolean>;
+  /** Nombre d'épisodes (parmi `episodeIds`) appartenant réellement au média. */
+  countEpisodesOfMedia(mediaId: string, episodeIds: readonly string[]): Promise<number>;
   setEpisodeWatched(itemId: string, episodeId: string, watched: boolean): Promise<void>;
+  /** Marque/démarque plusieurs épisodes en une opération (saison/série complète). */
+  setEpisodesWatched(
+    itemId: string,
+    episodeIds: readonly string[],
+    watched: boolean,
+  ): Promise<void>;
   setStatus(itemId: string, status: WatchStatus): Promise<void>;
   /** Progression de toutes les séries en cours d'un utilisateur (accueil). */
   listInProgress(userId: string): Promise<SeriesProgressRecord[]>;

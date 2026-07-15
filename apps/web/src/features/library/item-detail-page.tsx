@@ -5,8 +5,8 @@ import { useLibraryItem, useRateMedia } from "./api/use-item-detail";
 import { RatingControl } from "./components/rating-control";
 import { ReviewEditor } from "./components/review-editor";
 import { SeriesTrackingSection } from "./components/series-tracking-section";
+import { StatusBadge } from "./components/status-badge";
 import { StatusSelect } from "./components/status-select";
-import { statusLabel } from "./status";
 import { AddToListControl } from "../lists/components/add-to-list-control";
 
 const TYPE_LABEL = { MOVIE: "Film", SERIES: "Série" } as const;
@@ -53,9 +53,11 @@ export function ItemDetailPage() {
             <h1 className="text-2xl font-bold tracking-tight">{item.media.title}</h1>
             <p className="mt-1 text-sm text-muted-foreground">
               {TYPE_LABEL[item.media.type]}
-              {item.media.year ? ` · ${item.media.year}` : ""} ·{" "}
-              {statusLabel(item.status, item.media.type)}
+              {item.media.year ? ` · ${item.media.year}` : ""}
             </p>
+            <div className="mt-2">
+              <StatusBadge status={item.status} type={item.media.type} />
+            </div>
           </div>
         </div>
       </div>

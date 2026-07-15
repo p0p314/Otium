@@ -4,7 +4,7 @@ import { Link } from "@tanstack/react-router";
 import { Heart, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useLibrary, useRemoveFromLibrary, useToggleFavorite } from "./api/use-library";
-import { statusLabel } from "./status";
+import { StatusBadge } from "./components/status-badge";
 
 const GRID = "grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5";
 
@@ -82,17 +82,28 @@ export function LibraryPage() {
           {items.map((item) => (
             <li key={item.id} className="group">
               <div className="relative aspect-[2/3] overflow-hidden rounded-lg bg-muted">
-                {item.media.posterUrl ? (
-                  <img
-                    src={item.media.posterUrl}
-                    alt={`Affiche de ${item.media.title}`}
-                    loading="lazy"
-                    className="h-full w-full object-cover"
+                <Link
+                  to="/library/$itemId"
+                  params={{ itemId: item.id }}
+                  aria-label={`Ouvrir ${item.media.title}`}
+                  className="block h-full w-full"
+                >
+                  {item.media.posterUrl ? (
+                    <img
+                      src={item.media.posterUrl}
+                      alt={`Affiche de ${item.media.title}`}
+                      loading="lazy"
+                      className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
+                    />
+                  ) : null}
+                </Link>
+                <div className="pointer-events-none absolute inset-x-1 bottom-1 flex justify-center">
+                  <StatusBadge
+                    status={item.status}
+                    type={item.media.type}
+                    className="bg-background/85 backdrop-blur"
                   />
-                ) : null}
-                <span className="absolute inset-x-1 bottom-1 rounded bg-background/80 px-1.5 py-0.5 text-center text-[10px] font-medium text-foreground backdrop-blur">
-                  {statusLabel(item.status, item.media.type)}
-                </span>
+                </div>
                 <div className="absolute inset-x-1 top-1 flex justify-between opacity-0 transition-opacity group-hover:opacity-100">
                   <Button
                     variant={item.isFavorite ? "primary" : "secondary"}

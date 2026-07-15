@@ -34,3 +34,10 @@ export const MarkEpisodeInput = z.object({
   watched: z.boolean(),
 });
 export type MarkEpisodeInput = z.infer<typeof MarkEpisodeInput>;
+
+/** Marquage en masse (saison complète, série complète) en une seule requête. */
+export const MarkEpisodesInput = z.object({
+  episodeIds: z.array(z.string().min(1)).min(1).max(2000),
+  watched: z.boolean(),
+});
+export type MarkEpisodesInput = z.infer<typeof MarkEpisodesInput>;
