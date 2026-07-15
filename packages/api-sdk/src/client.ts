@@ -36,6 +36,12 @@ export interface OtiumClientOptions {
    * Optionnel : le web s'appuie sur le cookie ; les clients mobiles fournissent le jeton.
    */
   getToken?: () => string | null | undefined;
+  /**
+   * Appelé quand une requête renvoie 401 : la session (cookie/jeton) est absente ou
+   * expirée. Permet au web de purger l'état local « connecté » désynchronisé et de
+   * rediriger vers la connexion. Non déclenché pour la connexion/inscription elles-mêmes.
+   */
+  onUnauthorized?: () => void;
 }
 
 /**
@@ -46,6 +52,7 @@ export class OtiumClient {
   private readonly baseUrl: string;
   private readonly fetchImpl: typeof globalThis.fetch;
   private readonly getToken: (() => string | null | undefined) | undefined;
+  private readonly onUnauthorized: (() => void) | undefined;
 
   constructor(options: OtiumClientOptions) {
     this.baseUrl = options.baseUrl.replace(/\/$/, "");
@@ -54,6 +61,7 @@ export class OtiumClient {
     // implement interface Window ». On lie donc le fetch global par défaut à globalThis.
     this.fetchImpl = options.fetch ?? globalThis.fetch.bind(globalThis);
     this.getToken = options.getToken;
+    this.onUnauthorized = options.onUnauthorized;
   }
 
   async searchMedia(query: SearchMediaQuery): Promise<SearchMediaResult> {
@@ -217,8 +225,17 @@ export class OtiumClient {
 
     const payload: unknown = await response.json().catch(() => undefined);
     if (!response.ok) {
+      // Session absente/expirée sur une route protégée : on notifie pour purger l'état
+      // local. On ignore les 401 de la connexion/inscription (mauvais identifiants).
+      if (response.status === 401 && !this.isAuthEntryPoint(path)) {
+        this.onUnauthorized?.();
+      }
       throw new ApiError(response.status, `Requête ${path} échouée`, payload);
     }
     return schema.parse(payload);
+  }
+
+  private isAuthEntryPoint(path: string): boolean {
+    return path.startsWith("/auth/login") || path.startsWith("/auth/register");
   }
 }

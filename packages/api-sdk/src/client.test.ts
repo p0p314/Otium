@@ -45,4 +45,24 @@ describe("OtiumClient", () => {
 
     await expect(client.getLibrary()).rejects.toBeInstanceOf(ApiError);
   });
+
+  it("notifie onUnauthorized sur un 401 d'une route protégée", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ message: "nope" }, 401));
+    const onUnauthorized = vi.fn();
+    const client = new OtiumClient({ baseUrl: "http://api.test", fetch: fetchMock, onUnauthorized });
+
+    await expect(client.getLibrary()).rejects.toBeInstanceOf(ApiError);
+    expect(onUnauthorized).toHaveBeenCalledOnce();
+  });
+
+  it("ne notifie pas onUnauthorized sur un 401 de connexion (mauvais identifiants)", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ message: "bad creds" }, 401));
+    const onUnauthorized = vi.fn();
+    const client = new OtiumClient({ baseUrl: "http://api.test", fetch: fetchMock, onUnauthorized });
+
+    await expect(
+      client.login({ email: "a@b.com", password: "supersecret" }),
+    ).rejects.toBeInstanceOf(ApiError);
+    expect(onUnauthorized).not.toHaveBeenCalled();
+  });
 });

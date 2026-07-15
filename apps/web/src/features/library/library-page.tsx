@@ -2,7 +2,7 @@ import type { MediaType } from "@otium/types";
 import { Button, Select, Skeleton, buttonVariants } from "@otium/ui";
 import { Link } from "@tanstack/react-router";
 import { Heart, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLibrary, useRemoveFromLibrary, useToggleFavorite } from "./api/use-library";
 import { statusLabel } from "./status";
 
@@ -19,6 +19,23 @@ export function LibraryPage() {
   const remove = useRemoveFromLibrary();
   const toggleFavorite = useToggleFavorite();
   const [category, setCategory] = useState<MediaType>("SERIES");
+
+  const counts: Record<MediaType, number> = {
+    SERIES: (data ?? []).filter((item) => item.media.type === "SERIES").length,
+    MOVIE: (data ?? []).filter((item) => item.media.type === "MOVIE").length,
+  };
+
+  // Au premier chargement, si la catégorie par défaut est vide mais qu'une autre
+  // contient des éléments, on bascule dessus — pour ne jamais paraître « vide » à tort.
+  const autoSelected = useRef(false);
+  useEffect(() => {
+    if (autoSelected.current || !data || data.length === 0) return;
+    autoSelected.current = true;
+    setCategory((currentCategory) => {
+      if (data.some((item) => item.media.type === currentCategory)) return currentCategory;
+      return CATEGORY_ORDER.find((type) => data.some((item) => item.media.type === type)) ?? currentCategory;
+    });
+  }, [data]);
 
   const current = CATEGORIES[category];
   const items = (data ?? []).filter((item) => item.media.type === category);
@@ -38,7 +55,7 @@ export function LibraryPage() {
         >
           {CATEGORY_ORDER.map((value) => (
             <option key={value} value={value}>
-              {CATEGORIES[value].label}
+              {CATEGORIES[value].label} ({counts[value]})
             </option>
           ))}
         </Select>
