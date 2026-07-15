@@ -3,6 +3,7 @@ import { Test } from "@nestjs/testing";
 import request from "supertest";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { EVENT_PUBLISHER } from "../src/shared/domain";
+import { MEDIA_CATALOG_PROVIDER } from "../src/modules/media/domain";
 import { Email, USER_REPOSITORY, User } from "../src/modules/user/domain";
 import { SESSION_STORE } from "../src/modules/authentication/domain/ports/session-store";
 import { AuthGuard } from "../src/modules/authentication/presentation/auth.guard";
@@ -119,6 +120,14 @@ describe("Ratings & reviews (e2e)", () => {
         AuthGuard,
         { provide: LIBRARY_REPOSITORY, useClass: FakeLibraryRepo },
         { provide: SERIES_TRACKING_REPOSITORY, useValue: { listInProgress: async () => [] } },
+        {
+          provide: MEDIA_CATALOG_PROVIDER,
+          useValue: {
+            getMediaDetails: async () => {
+              throw new Error("no details");
+            },
+          },
+        },
         { provide: REVIEW_REPOSITORY, useClass: FakeReviewRepo },
         { provide: EVENT_PUBLISHER, useValue: { publish: async () => undefined, publishAll: async () => undefined } },
         { provide: SESSION_STORE, useValue: { resolve: async (t: string) => (t === TOKEN ? USER_ID : null) } },

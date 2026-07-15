@@ -55,7 +55,10 @@ Objectif atteint : un utilisateur s'inscrit, cherche, ajoute, note/commente et s
    médias (au niveau `Media`), événements `ListCreated`/`ListItemAdded`/`ListItemRemoved`/`ListDeleted`.
 8. **Notation** ✅ + **avis** ✅ + **historique** (à dériver des événements journalisés).
 9. **Recherche avancée** — Postgres FTS, filtres, genres, tri, pagination.
-10. **Statistiques de base** (temps, volumes) alimentées par les événements.
+10. **Statistiques de visionnage** ✅ — tableau de bord `/stats` (`GET /stats`) : totaux
+    (films/séries/épisodes, temps), répartition, genres les plus regardés, activité par mois,
+    note moyenne, records. Agrégations Prisma + builder pur ; graphiques recharts (chunk
+    séparé, palette CVD validée). Genres/durée persistés à l'ajout (enrichissement catalogue).
 11. **Polish UX** — états vides, skeletons partout, animations, accessibilité AA, i18n FR.
 12. **Providers additionnels** (TVMaze/OMDb) via le registry, sans toucher au métier.
 

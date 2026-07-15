@@ -25,6 +25,7 @@ import {
   type SetWatchStatusInput,
   type ToggleFavoriteInput,
   type TrendingMediaQuery,
+  ViewingStats,
 } from "@otium/types";
 import { z } from "zod";
 import { ApiError } from "./errors.js";
@@ -117,6 +118,10 @@ export class OtiumClient {
 
   async getHomeDashboard(): Promise<HomeDashboard> {
     return this.request("/library/home", HomeDashboard);
+  }
+
+  async getViewingStats(): Promise<ViewingStats> {
+    return this.request("/stats", ViewingStats);
   }
 
   async getLibraryItem(itemId: string): Promise<LibraryItem> {

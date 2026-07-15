@@ -12,6 +12,10 @@ export interface MediaDescriptor {
   readonly title: string;
   readonly year: number | null;
   readonly posterUrl: string | null;
+  /** Genres (libellés), renseignés à l'ajout pour alimenter les statistiques. */
+  readonly genres?: readonly string[];
+  /** Durée d'un film en minutes (null/absent pour une série ou si indisponible). */
+  readonly runtimeMinutes?: number | null;
 }
 
 export interface LibraryItem {

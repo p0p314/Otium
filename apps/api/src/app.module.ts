@@ -4,6 +4,7 @@ import { AuthenticationModule } from "./modules/authentication/authentication.mo
 import { HealthModule } from "./modules/health/health.module";
 import { LibraryModule } from "./modules/library/library.module";
 import { MediaModule } from "./modules/media/media.module";
+import { StatsModule } from "./modules/stats/stats.module";
 import { validateEnv } from "./shared/infrastructure/config/env";
 import { EventsModule } from "./shared/infrastructure/events/events.module";
 import { HttpModule } from "./shared/infrastructure/http/http.module";
@@ -26,6 +27,7 @@ import { RedisModule } from "./shared/infrastructure/redis/redis.module";
     MediaModule,
     AuthenticationModule,
     LibraryModule,
+    StatsModule,
   ],
 })
 export class AppModule {}
