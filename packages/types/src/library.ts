@@ -27,3 +27,9 @@ export const RateMediaInput = z.object({
   rating: Rating,
 });
 export type RateMediaInput = z.infer<typeof RateMediaInput>;
+
+/** Change le statut de suivi (ex. film « vu » = COMPLETED, « à voir » = PLANNED). */
+export const SetWatchStatusInput = z.object({
+  status: WatchStatus,
+});
+export type SetWatchStatusInput = z.infer<typeof SetWatchStatusInput>;

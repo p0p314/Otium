@@ -8,6 +8,7 @@ import {
 import type { Request } from "express";
 import { USER_REPOSITORY, type UserRepository } from "../../user/domain";
 import { SESSION_STORE, type SessionStore } from "../domain/ports/session-store";
+import { readSessionCookie } from "./session-cookie";
 
 export interface AuthenticatedUser {
   id: string;
@@ -45,7 +46,13 @@ export class AuthGuard implements CanActivate {
     return true;
   }
 
+  /**
+   * Résout le jeton : cookie httpOnly en priorité (navigateur), sinon en-tête
+   * `Authorization: Bearer` (clients non-navigateur, ex. mobile).
+   */
   private extractToken(request: Request): string | null {
+    const cookieToken = readSessionCookie(request);
+    if (cookieToken) return cookieToken;
     const header = request.headers.authorization;
     if (!header?.startsWith("Bearer ")) return null;
     return header.slice("Bearer ".length).trim() || null;

@@ -35,7 +35,7 @@ const registerRoute = createRoute({
 });
 
 const requireAuth = () => {
-  if (useAuthStore.getState().token === null) {
+  if (useAuthStore.getState().user === null) {
     throw redirect({ to: "/login" });
   }
 };

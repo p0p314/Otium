@@ -27,8 +27,21 @@ Objectif atteint : un utilisateur s'inscrit, cherche, ajoute, note/commente et s
 5. [x] **Films** — statut ; note 0–10 et avis (transversaux `Media`).
 6. [x] **Événements** — `MediaAdded`, `EpisodeWatched`, `MediaRated`, `CommentCreated`… (journal `DomainEvent`).
 
+**Polish livré (2026-07-15)** :
+- [x] **i18n des messages de validation** — carte d'erreurs Zod française partagée front/back
+  (`setupFrenchZodErrors`, `@otium/types`).
+- [x] **Jeton en cookie httpOnly** — session posée/lue via cookie `otium_session` (anti-XSS),
+  repli Bearer pour les clients non-navigateur ; le web ne manipule plus de jeton.
+- [x] **Statut « vu » / « à voir »** — changement de `WatchStatus` au niveau `Media`
+  (`PATCH /library/:id/status`), événements `WatchStatusChanged` / `MovieCompleted`.
+- [x] **Accueil personnalisé** — séries en cours + séries laissées de côté (> 1 mois sans
+  épisode vu) via `GET /library/home`.
+- [x] **Bibliothèque par catégorie** — sélecteur Films / Séries (jamais les deux en même temps).
+- [x] **Mise en avant dans la recherche** — tendances du moment (films/séries) sous la barre
+  (`GET /media/trending`, TMDB `trending`).
+
 **Reste (polish MVP → V1)** : recherche du **détail film** (page dédiée), listes personnalisées,
-i18n des messages de validation (Zod en anglais), jeton en cookie httpOnly, mesure des métriques.
+mesure des métriques.
 
 **Métriques MVP** : « recherche → ajout » p95 < 3 s ; reprise exacte 100 % ; LCP mobile < 2,5 s.
 

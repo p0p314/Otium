@@ -1,7 +1,7 @@
 import { Injectable, InternalServerErrorException } from "@nestjs/common";
 import { type Prisma } from "@prisma/client";
 import { PrismaService } from "../../../shared/infrastructure/prisma/prisma.service";
-import type { LibraryItem, LibraryRepository, MediaDescriptor } from "../domain";
+import type { LibraryItem, LibraryRepository, MediaDescriptor, WatchStatus } from "../domain";
 
 type LibraryItemRow = Prisma.LibraryItemGetPayload<{ include: { media: true } }>;
 
@@ -62,6 +62,13 @@ export class PrismaLibraryRepository implements LibraryRepository {
 
   async setFavorite(userId: string, itemId: string, isFavorite: boolean): Promise<LibraryItem> {
     await this.prisma.libraryItem.updateMany({ where: { id: itemId, userId }, data: { isFavorite } });
+    const updated = await this.findItem(userId, itemId);
+    if (!updated) throw new InternalServerErrorException("Élément introuvable après mise à jour.");
+    return updated;
+  }
+
+  async setStatus(userId: string, itemId: string, status: WatchStatus): Promise<LibraryItem> {
+    await this.prisma.libraryItem.updateMany({ where: { id: itemId, userId }, data: { status } });
     const updated = await this.findItem(userId, itemId);
     if (!updated) throw new InternalServerErrorException("Élément introuvable après mise à jour.");
     return updated;

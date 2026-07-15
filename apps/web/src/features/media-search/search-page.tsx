@@ -4,6 +4,7 @@ import { useDebouncedValue } from "../../hooks/use-debounced-value";
 import { AddToLibraryButton } from "../library/components/add-to-library-button";
 import { MIN_QUERY_LENGTH, useMediaSearch } from "./api/use-media-search";
 import { MediaResults } from "./components/media-results";
+import { TrendingShowcase } from "./components/trending-showcase";
 
 /** Page de recherche : saisie débouncée → hook de données → présentation des résultats. */
 export function SearchPage() {
@@ -34,13 +35,17 @@ export function SearchPage() {
         />
       </div>
 
-      <MediaResults
-        items={data?.items ?? []}
-        isLoading={hasQuery && isLoading}
-        isError={isError}
-        hasQuery={hasQuery}
-        renderAction={(media) => <AddToLibraryButton media={media} />}
-      />
+      {hasQuery ? (
+        <MediaResults
+          items={data?.items ?? []}
+          isLoading={isLoading}
+          isError={isError}
+          hasQuery={hasQuery}
+          renderAction={(media) => <AddToLibraryButton media={media} />}
+        />
+      ) : (
+        <TrendingShowcase />
+      )}
     </section>
   );
 }

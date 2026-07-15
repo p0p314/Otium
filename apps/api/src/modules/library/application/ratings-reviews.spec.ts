@@ -14,6 +14,7 @@ function libraryFake(overrides: Partial<LibraryRepository> = {}): LibraryReposit
     findItem: vi.fn(),
     remove: vi.fn(),
     setFavorite: vi.fn(),
+    setStatus: vi.fn(async (_u, _i, status) => ({ ...item, status })),
     setRating: vi.fn(async (_u, _i, rating) => ({ ...item, rating })),
     getMediaId: vi.fn(async () => "media-1"),
     ...overrides,

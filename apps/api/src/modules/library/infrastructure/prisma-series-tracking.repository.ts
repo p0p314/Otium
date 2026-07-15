@@ -3,6 +3,7 @@ import { PrismaService } from "../../../shared/infrastructure/prisma/prisma.serv
 import type {
   PersistableSeason,
   SeasonRef,
+  SeriesProgressRecord,
   SeriesTrackingRepository,
   TrackingContext,
   WatchStatus,
@@ -100,5 +101,47 @@ export class PrismaSeriesTrackingRepository implements SeriesTrackingRepository 
 
   async setStatus(itemId: string, status: WatchStatus): Promise<void> {
     await this.prisma.libraryItem.update({ where: { id: itemId }, data: { status } });
+  }
+
+  async listInProgress(userId: string): Promise<SeriesProgressRecord[]> {
+    const items = await this.prisma.libraryItem.findMany({
+      where: { userId, status: "IN_PROGRESS", media: { type: "SERIES" } },
+      include: {
+        media: {
+          include: {
+            seasons: {
+              orderBy: { number: "asc" },
+              include: { episodes: { orderBy: { number: "asc" } } },
+            },
+          },
+        },
+        watched: { select: { episodeId: true, watchedAt: true } },
+      },
+    });
+
+    return items.map((item) => {
+      const watchedIds = new Set(item.watched.map((w) => w.episodeId));
+      const lastWatchedAt = item.watched.reduce<Date | null>(
+        (latest, w) => (latest === null || w.watchedAt > latest ? w.watchedAt : latest),
+        null,
+      );
+      return {
+        itemId: item.id,
+        title: item.media.title,
+        posterUrl: item.media.posterUrl,
+        status: item.status,
+        seasons: item.media.seasons.map((s) => ({
+          number: s.number,
+          episodes: s.episodes.map((e) => ({
+            id: e.id,
+            seasonNumber: s.number,
+            number: e.number,
+            title: e.title,
+          })),
+        })),
+        watchedIds,
+        lastWatchedAt,
+      };
+    });
   }
 }

@@ -1,4 +1,4 @@
-import type { SaveReviewInput } from "@otium/types";
+import type { SaveReviewInput, WatchStatus } from "@otium/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../../lib/api";
 import { useAuth } from "../../auth/api/use-auth";
@@ -22,6 +22,18 @@ export function useRateMedia(itemId: string) {
     onSuccess: (item) => {
       queryClient.setQueryData(itemKey(itemId), item);
       queryClient.invalidateQueries({ queryKey: ["library"] });
+    },
+  });
+}
+
+export function useSetWatchStatus(itemId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (status: WatchStatus) => api.setWatchStatus(itemId, { status }),
+    onSuccess: (item) => {
+      queryClient.setQueryData(itemKey(itemId), item);
+      queryClient.invalidateQueries({ queryKey: ["library"] });
+      queryClient.invalidateQueries({ queryKey: ["home-dashboard"] });
     },
   });
 }

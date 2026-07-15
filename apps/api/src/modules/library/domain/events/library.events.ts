@@ -63,6 +63,30 @@ export class SeriesCompleted extends DomainEvent {
   }
 }
 
+export class WatchStatusChanged extends DomainEvent {
+  readonly name = "WatchStatusChanged";
+  constructor(
+    userId: string,
+    mediaId: string,
+    private readonly status: string,
+  ) {
+    super(userId, mediaId);
+  }
+  payload(): Record<string, unknown> {
+    return { status: this.status };
+  }
+}
+
+export class MovieCompleted extends DomainEvent {
+  readonly name = "MovieCompleted";
+  constructor(userId: string, mediaId: string) {
+    super(userId, mediaId);
+  }
+  payload(): Record<string, unknown> {
+    return {};
+  }
+}
+
 export class MediaRated extends DomainEvent {
   readonly name = "MediaRated";
   constructor(

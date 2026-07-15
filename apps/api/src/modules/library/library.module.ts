@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import { AuthenticationModule } from "../authentication/authentication.module";
 import { MediaModule } from "../media/media.module";
 import { AddMediaToLibraryUseCase } from "./application/add-media-to-library.usecase";
+import { GetHomeDashboardUseCase } from "./application/get-home-dashboard.usecase";
 import { GetLibraryUseCase } from "./application/get-library.usecase";
 import { GetLibraryItemUseCase } from "./application/get-library-item.usecase";
 import { GetSeriesTrackingUseCase } from "./application/get-series-tracking.usecase";
@@ -12,6 +13,7 @@ import {
   GetReviewUseCase,
   SaveReviewUseCase,
 } from "./application/review.usecases";
+import { SetWatchStatusUseCase } from "./application/set-watch-status.usecase";
 import { ToggleEpisodeWatchedUseCase } from "./application/toggle-episode-watched.usecase";
 import { ToggleFavoriteUseCase } from "./application/toggle-favorite.usecase";
 import { LIBRARY_REPOSITORY, REVIEW_REPOSITORY, SERIES_TRACKING_REPOSITORY } from "./domain";
@@ -32,7 +34,9 @@ import { SeriesTrackingController } from "./presentation/series-tracking.control
     RemoveFromLibraryUseCase,
     ToggleFavoriteUseCase,
     RateMediaUseCase,
+    SetWatchStatusUseCase,
     GetSeriesTrackingUseCase,
+    GetHomeDashboardUseCase,
     ToggleEpisodeWatchedUseCase,
     GetReviewUseCase,
     SaveReviewUseCase,

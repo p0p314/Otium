@@ -22,7 +22,7 @@ function wrapper({ children }: { children: ReactNode }) {
 
 describe("item detail hooks", () => {
   beforeEach(() => {
-    useAuthStore.getState().setSession({ id: "u", email: "a@b.com", displayName: "A" }, "tok");
+    useAuthStore.getState().setSession({ id: "u", email: "a@b.com", displayName: "A" });
     vi.mocked(api.rateMedia).mockReset();
     vi.mocked(api.saveReview).mockReset();
   });

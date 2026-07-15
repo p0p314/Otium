@@ -1,4 +1,4 @@
-import type { LibraryItem, MediaDescriptor } from "../models/library-item";
+import type { LibraryItem, MediaDescriptor, WatchStatus } from "../models/library-item";
 
 /**
  * Port de persistance de la bibliothèque. L'ajout persiste aussi le média sous-jacent
@@ -11,6 +11,8 @@ export interface LibraryRepository {
   findItem(userId: string, itemId: string): Promise<LibraryItem | null>;
   remove(userId: string, itemId: string): Promise<void>;
   setFavorite(userId: string, itemId: string, isFavorite: boolean): Promise<LibraryItem>;
+  /** Fixe le statut de suivi (ex. film « vu »), scopé à l'utilisateur. */
+  setStatus(userId: string, itemId: string, status: WatchStatus): Promise<LibraryItem>;
   /** Fixe la note (1–10) ou l'efface (`null`). */
   setRating(userId: string, itemId: string, rating: number | null): Promise<LibraryItem>;
   /** Identifiant interne du média d'un élément (pour les avis), ou `null`. */

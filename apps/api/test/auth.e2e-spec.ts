@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { type INestApplication } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import { Test } from "@nestjs/testing";
 import request from "supertest";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -75,6 +76,7 @@ describe("Authentication (e2e)", () => {
         { provide: PASSWORD_HASHER, useValue: fakeHasher },
         { provide: SESSION_STORE, useValue: sessions },
         { provide: EVENT_PUBLISHER, useValue: { publish: async () => undefined, publishAll: async () => undefined } },
+        { provide: ConfigService, useValue: { get: () => "test" } },
       ],
     }).compile();
     app = moduleRef.createNestApplication();
@@ -94,6 +96,9 @@ describe("Authentication (e2e)", () => {
     expect(res.body.user).toMatchObject({ email: "alice@example.com", displayName: "Alice" });
     expect(typeof res.body.token).toBe("string");
     expect(res.body.user.passwordHash).toBeUndefined();
+    // Le jeton est aussi posé dans un cookie httpOnly (durcissement anti-XSS).
+    const cookies = res.headers["set-cookie"] as unknown as string[];
+    expect(cookies.some((c) => /otium_session=.+/.test(c) && /HttpOnly/i.test(c))).toBe(true);
   });
 
   it("e-mail déjà utilisé → 409", async () => {

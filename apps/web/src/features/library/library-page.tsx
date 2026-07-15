@@ -1,21 +1,47 @@
-import { Button, Skeleton, buttonVariants } from "@otium/ui";
+import type { MediaType } from "@otium/types";
+import { Button, Select, Skeleton, buttonVariants } from "@otium/ui";
 import { Link } from "@tanstack/react-router";
 import { Heart, Trash2 } from "lucide-react";
+import { useState } from "react";
 import { useLibrary, useRemoveFromLibrary, useToggleFavorite } from "./api/use-library";
+import { statusLabel } from "./status";
 
 const GRID = "grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5";
-const TYPE_LABEL = { MOVIE: "Film", SERIES: "Série" } as const;
+
+const CATEGORY_ORDER: MediaType[] = ["SERIES", "MOVIE"];
+const CATEGORIES: Record<MediaType, { label: string; empty: string }> = {
+  SERIES: { label: "Séries", empty: "Aucune série suivie pour le moment." },
+  MOVIE: { label: "Films", empty: "Aucun film suivi pour le moment." },
+};
 
 export function LibraryPage() {
   const { data, isLoading } = useLibrary();
   const remove = useRemoveFromLibrary();
   const toggleFavorite = useToggleFavorite();
+  const [category, setCategory] = useState<MediaType>("SERIES");
+
+  const current = CATEGORIES[category];
+  const items = (data ?? []).filter((item) => item.media.type === category);
 
   return (
     <section className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Ma bibliothèque</h1>
-        <p className="text-muted-foreground">Vos films et séries suivis.</p>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Ma bibliothèque</h1>
+          <p className="text-muted-foreground">Vos films et séries suivis, par catégorie.</p>
+        </div>
+        <Select
+          aria-label="Catégorie"
+          className="max-w-[10rem]"
+          value={category}
+          onChange={(event) => setCategory(event.target.value as MediaType)}
+        >
+          {CATEGORY_ORDER.map((value) => (
+            <option key={value} value={value}>
+              {CATEGORIES[value].label}
+            </option>
+          ))}
+        </Select>
       </div>
 
       {isLoading ? (
@@ -24,9 +50,9 @@ export function LibraryPage() {
             <Skeleton key={i} className="aspect-[2/3] w-full" />
           ))}
         </div>
-      ) : !data || data.length === 0 ? (
+      ) : items.length === 0 ? (
         <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed py-16 text-center">
-          <p className="font-medium">Votre bibliothèque est vide</p>
+          <p className="font-medium">{current.empty}</p>
           <p className="max-w-xs text-sm text-muted-foreground">
             Recherchez un titre et ajoutez-le pour commencer à le suivre.
           </p>
@@ -36,7 +62,7 @@ export function LibraryPage() {
         </div>
       ) : (
         <ul className={GRID}>
-          {data.map((item) => (
+          {items.map((item) => (
             <li key={item.id} className="group">
               <div className="relative aspect-[2/3] overflow-hidden rounded-lg bg-muted">
                 {item.media.posterUrl ? (
@@ -47,6 +73,9 @@ export function LibraryPage() {
                     className="h-full w-full object-cover"
                   />
                 ) : null}
+                <span className="absolute inset-x-1 bottom-1 rounded bg-background/80 px-1.5 py-0.5 text-center text-[10px] font-medium text-foreground backdrop-blur">
+                  {statusLabel(item.status, item.media.type)}
+                </span>
                 <div className="absolute inset-x-1 top-1 flex justify-between opacity-0 transition-opacity group-hover:opacity-100">
                   <Button
                     variant={item.isFavorite ? "primary" : "secondary"}
@@ -78,8 +107,7 @@ export function LibraryPage() {
                 {item.media.title}
               </Link>
               <p className="text-xs text-muted-foreground">
-                {TYPE_LABEL[item.media.type]}
-                {item.media.year ? ` · ${item.media.year}` : ""}
+                {item.media.year ? item.media.year : "—"}
                 {item.rating ? ` · ★ ${item.rating}/10` : ""}
               </p>
             </li>

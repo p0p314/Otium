@@ -6,15 +6,14 @@ import { useAuthStore } from "../../../stores/auth-store";
 /** État de session courant (lecture). */
 export function useAuth() {
   const user = useAuthStore((s) => s.user);
-  const token = useAuthStore((s) => s.token);
-  return { user, token, isAuthenticated: token !== null };
+  return { user, isAuthenticated: user !== null };
 }
 
 export function useRegister() {
   const setSession = useAuthStore((s) => s.setSession);
   return useMutation({
     mutationFn: (input: RegisterInput) => api.register(input),
-    onSuccess: (session) => setSession(session.user, session.token),
+    onSuccess: (session) => setSession(session.user),
   });
 }
 
@@ -22,7 +21,7 @@ export function useLogin() {
   const setSession = useAuthStore((s) => s.setSession);
   return useMutation({
     mutationFn: (input: LoginInput) => api.login(input),
-    onSuccess: (session) => setSession(session.user, session.token),
+    onSuccess: (session) => setSession(session.user),
   });
 }
 
