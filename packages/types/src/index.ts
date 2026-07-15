@@ -2,6 +2,7 @@ export * from "./auth.js";
 export * from "./home.js";
 export * from "./i18n.js";
 export * from "./media.js";
+export * from "./media-details.js";
 export * from "./library.js";
 export * from "./list.js";
 export * from "./review.js";

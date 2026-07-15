@@ -47,3 +47,46 @@ export interface CatalogSeason {
 export interface CatalogSeriesDetails {
   readonly seasons: readonly CatalogSeason[];
 }
+
+export interface CatalogCastMember {
+  readonly name: string;
+  readonly character: string | null;
+  readonly profileUrl: string | null;
+}
+
+export interface CatalogCompany {
+  readonly name: string;
+  readonly logoUrl: string | null;
+}
+
+export interface CatalogWatchProvider {
+  readonly name: string;
+  readonly logoUrl: string | null;
+}
+
+/**
+ * Fiche détaillée normalisée d'un média (film ou série). Modèle générique : champs
+ * communs + champs spécifiques nullables. Aucune dépendance à un fournisseur concret.
+ */
+export interface CatalogMediaDetails {
+  readonly externalRef: CatalogExternalRef;
+  readonly type: CatalogMediaType;
+  readonly title: string;
+  readonly originalTitle: string | null;
+  readonly posterUrl: string | null;
+  readonly backdropUrl: string | null;
+  readonly overview: string | null;
+  readonly genres: readonly CatalogGenre[];
+  readonly rating: number | null;
+  readonly voteCount: number;
+  readonly releaseDate: string | null;
+  readonly year: number | null;
+  readonly status: string | null;
+  readonly runtimeMinutes: number | null;
+  readonly numberOfSeasons: number | null;
+  readonly numberOfEpisodes: number | null;
+  readonly cast: readonly CatalogCastMember[];
+  readonly directors: readonly string[];
+  readonly productionCompanies: readonly CatalogCompany[];
+  readonly watchProviders: readonly CatalogWatchProvider[];
+}
