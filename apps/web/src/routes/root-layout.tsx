@@ -25,12 +25,20 @@ export function RootLayout() {
                 Rechercher
               </Link>
               {isAuthenticated ? (
-                <Link
-                  to="/library"
-                  className="text-muted-foreground transition-colors hover:text-foreground [&.active]:text-foreground"
-                >
-                  Ma bibliothèque
-                </Link>
+                <>
+                  <Link
+                    to="/library"
+                    className="text-muted-foreground transition-colors hover:text-foreground [&.active]:text-foreground"
+                  >
+                    Ma bibliothèque
+                  </Link>
+                  <Link
+                    to="/lists"
+                    className="text-muted-foreground transition-colors hover:text-foreground [&.active]:text-foreground"
+                  >
+                    Mes listes
+                  </Link>
+                </>
               ) : null}
             </nav>
           </div>

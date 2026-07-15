@@ -7,6 +7,7 @@ import { ReviewEditor } from "./components/review-editor";
 import { SeriesTrackingSection } from "./components/series-tracking-section";
 import { StatusSelect } from "./components/status-select";
 import { statusLabel } from "./status";
+import { AddToListControl } from "../lists/components/add-to-list-control";
 
 const TYPE_LABEL = { MOVIE: "Film", SERIES: "Série" } as const;
 
@@ -62,6 +63,11 @@ export function ItemDetailPage() {
       <div className="space-y-2">
         <h2 className="text-sm font-semibold">Statut</h2>
         <StatusSelect itemId={itemId} type={item.media.type} value={item.status} />
+      </div>
+
+      <div className="space-y-2">
+        <h2 className="text-sm font-semibold">Ajouter à une liste</h2>
+        <AddToListControl media={item.media} />
       </div>
 
       <div className="space-y-2">

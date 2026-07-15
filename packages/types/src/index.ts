@@ -3,6 +3,7 @@ export * from "./home.js";
 export * from "./i18n.js";
 export * from "./media.js";
 export * from "./library.js";
+export * from "./list.js";
 export * from "./review.js";
 export * from "./search.js";
 export * from "./series.js";

@@ -40,14 +40,14 @@ Objectif atteint : un utilisateur s'inscrit, cherche, ajoute, note/commente et s
 - [x] **Mise en avant dans la recherche** — tendances du moment (films/séries) sous la barre
   (`GET /media/trending`, TMDB `trending`).
 
-**Reste (polish MVP → V1)** : recherche du **détail film** (page dédiée), listes personnalisées,
-mesure des métriques.
+**Reste (polish MVP → V1)** : recherche du **détail film** (page dédiée), mesure des métriques.
 
 **Métriques MVP** : « recherche → ajout » p95 < 3 s ; reprise exacte 100 % ; LCP mobile < 2,5 s.
 
 ## V1 — « une vraie bibliothèque personnelle »
 
-7. **Favoris** ✅ + **listes personnalisées** (listes à faire).
+7. **Favoris** ✅ + **listes personnalisées** ✅ — CRUD de listes (`/lists`), ajout/retrait de
+   médias (au niveau `Media`), événements `ListCreated`/`ListItemAdded`/`ListItemRemoved`/`ListDeleted`.
 8. **Notation** ✅ + **avis** ✅ + **historique** (à dériver des événements journalisés).
 9. **Recherche avancée** — Postgres FTS, filtres, genres, tri, pagination.
 10. **Statistiques de base** (temps, volumes) alimentées par les événements.

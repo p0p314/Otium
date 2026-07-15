@@ -3,6 +3,8 @@ import { LoginPage } from "./features/auth/login-page";
 import { RegisterPage } from "./features/auth/register-page";
 import { LibraryPage } from "./features/library/library-page";
 import { ItemDetailPage } from "./features/library/item-detail-page";
+import { ListsPage } from "./features/lists/lists-page";
+import { ListDetailPage } from "./features/lists/list-detail-page";
 import { SearchPage } from "./features/media-search/search-page";
 import { RootLayout } from "./routes/root-layout";
 import { HomePage } from "./routes/home";
@@ -54,6 +56,20 @@ const itemDetailRoute = createRoute({
   component: ItemDetailPage,
 });
 
+const listsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/lists",
+  beforeLoad: requireAuth,
+  component: ListsPage,
+});
+
+const listDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/lists/$listId",
+  beforeLoad: requireAuth,
+  component: ListDetailPage,
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   searchRoute,
@@ -61,6 +77,8 @@ const routeTree = rootRoute.addChildren([
   registerRoute,
   libraryRoute,
   itemDetailRoute,
+  listsRoute,
+  listDetailRoute,
 ]);
 
 export const router = createRouter({ routeTree });

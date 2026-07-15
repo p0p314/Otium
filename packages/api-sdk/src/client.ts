@@ -1,10 +1,15 @@
 import {
   type AddToLibraryInput,
+  type AddToListInput,
   AuthSession,
   AuthUser,
+  type CreateListInput,
   HomeDashboard,
   LibraryItem,
+  ListDetail,
+  ListSummary,
   type LoginInput,
+  type RenameListInput,
   type MarkEpisodeInput,
   type RateMediaInput,
   type RegisterInput,
@@ -137,6 +142,43 @@ export class OtiumClient {
       method: "PATCH",
       body: input,
     });
+  }
+
+  // --- Listes personnalisées ---
+
+  async getLists(): Promise<ListSummary[]> {
+    return this.request("/lists", z.array(ListSummary));
+  }
+
+  async getList(listId: string): Promise<ListDetail> {
+    return this.request(`/lists/${listId}`, ListDetail);
+  }
+
+  async createList(input: CreateListInput): Promise<ListSummary> {
+    return this.request("/lists", ListSummary, { method: "POST", body: input });
+  }
+
+  async renameList(listId: string, input: RenameListInput): Promise<ListSummary> {
+    return this.request(`/lists/${listId}`, ListSummary, { method: "PATCH", body: input });
+  }
+
+  async deleteList(listId: string): Promise<void> {
+    await this.request(`/lists/${listId}`, z.void(), { method: "DELETE" });
+  }
+
+  async addToList(listId: string, input: AddToListInput): Promise<ListDetail> {
+    return this.request(`/lists/${listId}/items`, ListDetail, { method: "POST", body: input });
+  }
+
+  async removeFromList(
+    listId: string,
+    externalRef: { provider: string; externalId: string },
+  ): Promise<ListDetail> {
+    return this.request(
+      `/lists/${listId}/items/${encodeURIComponent(externalRef.provider)}/${encodeURIComponent(externalRef.externalId)}`,
+      ListDetail,
+      { method: "DELETE" },
+    );
   }
 
   // --- Suivi de séries ---

@@ -21,6 +21,7 @@ Fonctionnalités disponibles :
 - **Bibliothèque** : ajout/retrait, statut (**vu / à voir**…), favoris (au niveau `Media`),
   affichage **par catégorie** (Films / Séries).
 - **Accueil personnalisé** : séries **en cours** et séries **laissées de côté** (> 1 mois).
+- **Listes personnalisées** : création/suppression de listes, ajout/retrait de films et séries.
 - **Suivi de séries** : saisons/épisodes, épisodes vus, progression, **reprise automatique**.
 - **Notation** (0–10) et **avis** (texte), au niveau `Media`.
 - **Validation i18n** : messages d'erreur Zod en français, partagés front/back.

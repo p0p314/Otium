@@ -1,5 +1,7 @@
 export * from "./models/library-item";
+export * from "./models/custom-list";
 export * from "./ports/library.repository";
+export * from "./ports/list.repository";
 export * from "./ports/series-tracking.repository";
 export * from "./ports/review.repository";
 export * from "./events/library.events";

@@ -110,3 +110,57 @@ export class ReviewSaved extends DomainEvent {
     return {};
   }
 }
+
+export class ListCreated extends DomainEvent {
+  readonly name = "ListCreated";
+  constructor(
+    userId: string,
+    private readonly listId: string,
+  ) {
+    super(userId);
+  }
+  payload(): Record<string, unknown> {
+    return { listId: this.listId };
+  }
+}
+
+export class ListDeleted extends DomainEvent {
+  readonly name = "ListDeleted";
+  constructor(
+    userId: string,
+    private readonly listId: string,
+  ) {
+    super(userId);
+  }
+  payload(): Record<string, unknown> {
+    return { listId: this.listId };
+  }
+}
+
+export class ListItemAdded extends DomainEvent {
+  readonly name = "ListItemAdded";
+  constructor(
+    userId: string,
+    private readonly listId: string,
+    private readonly externalId: string,
+  ) {
+    super(userId);
+  }
+  payload(): Record<string, unknown> {
+    return { listId: this.listId, externalId: this.externalId };
+  }
+}
+
+export class ListItemRemoved extends DomainEvent {
+  readonly name = "ListItemRemoved";
+  constructor(
+    userId: string,
+    private readonly listId: string,
+    private readonly externalId: string,
+  ) {
+    super(userId);
+  }
+  payload(): Record<string, unknown> {
+    return { listId: this.listId, externalId: this.externalId };
+  }
+}
