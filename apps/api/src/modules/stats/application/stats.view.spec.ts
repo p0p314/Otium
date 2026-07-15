@@ -42,6 +42,8 @@ describe("buildViewingStats", () => {
 
     expect(stats.totals.episodesWatched).toBe(3);
     expect(stats.totals.totalMinutes).toBe(42 + 42 + 30 + 155);
+    expect(stats.totals.seriesMinutes).toBe(42 + 42 + 30);
+    expect(stats.totals.movieMinutes).toBe(155);
     expect(stats.totals.averageRating).toBe(7.5);
     expect(stats.breakdown).toEqual({ movies: 3, series: 2 });
     expect(stats.topGenres[0]).toEqual({ label: "Drame", count: 2 });

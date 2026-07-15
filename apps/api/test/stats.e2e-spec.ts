@@ -20,6 +20,8 @@ const stats: ViewingStats = {
     seriesDropped: 0,
     episodesWatched: 37,
     totalMinutes: 2100,
+    movieMinutes: 600,
+    seriesMinutes: 1500,
     averageRating: 7.8,
   },
   breakdown: { movies: 5, series: 3 },

@@ -32,7 +32,9 @@ export function buildViewingStats(raw: StatsRawData, now: Date): ViewingStats {
   for (const e of raw.episodes) addActivity(e.watchedAt, e.minutes);
   for (const m of raw.completedMovies) addActivity(m.completedAt, m.minutes);
 
-  const totalMinutes = [...monthMinutes.values()].reduce((sum, m) => sum + m, 0);
+  const seriesMinutes = raw.episodes.reduce((sum, e) => sum + e.minutes, 0);
+  const movieMinutes = raw.completedMovies.reduce((sum, m) => sum + m.minutes, 0);
+  const totalMinutes = seriesMinutes + movieMinutes;
 
   const activityByMonth = lastMonths(now, MONTHS_WINDOW).map((month) => ({
     month,
@@ -64,6 +66,8 @@ export function buildViewingStats(raw: StatsRawData, now: Date): ViewingStats {
       seriesDropped: raw.seriesDropped,
       episodesWatched: raw.episodes.length,
       totalMinutes,
+      movieMinutes,
+      seriesMinutes,
       averageRating: raw.averageRating,
     },
     breakdown: { movies: raw.movies, series: raw.series },

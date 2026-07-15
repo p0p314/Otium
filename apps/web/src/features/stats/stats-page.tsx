@@ -18,7 +18,7 @@ import { MonthlyActivityChart } from "./components/monthly-activity-chart";
 import { StatTile } from "./components/stat-tile";
 import { TopGenresChart } from "./components/top-genres-chart";
 import { TypeBreakdownChart } from "./components/type-breakdown-chart";
-import { formatMinutes, monthLong } from "./lib/format";
+import { formatLongDuration, formatMinutes, monthLong } from "./lib/format";
 
 const ICON = "h-4 w-4";
 
@@ -67,7 +67,7 @@ export function StatsPage() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
             <StatTile
               label="Films vus"
               value={data.totals.moviesCompleted}
@@ -84,14 +84,30 @@ export function StatsPage() {
               icon={<ListVideo className={ICON} />}
             />
             <StatTile
-              label="Temps total"
-              value={formatMinutes(data.totals.totalMinutes)}
-              icon={<Clock className={ICON} />}
-            />
-            <StatTile
               label="Note moyenne"
               value={data.totals.averageRating != null ? `${data.totals.averageRating.toFixed(1)}/10` : "—"}
               icon={<Star className={ICON} />}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <StatTile
+              label="Temps total"
+              value={formatLongDuration(data.totals.totalMinutes)}
+              hint={formatMinutes(data.totals.totalMinutes)}
+              icon={<Clock className={ICON} />}
+            />
+            <StatTile
+              label="Temps films"
+              value={formatLongDuration(data.totals.movieMinutes)}
+              hint={formatMinutes(data.totals.movieMinutes)}
+              icon={<Film className={ICON} />}
+            />
+            <StatTile
+              label="Temps séries"
+              value={formatLongDuration(data.totals.seriesMinutes)}
+              hint={formatMinutes(data.totals.seriesMinutes)}
+              icon={<Tv className={ICON} />}
             />
           </div>
 

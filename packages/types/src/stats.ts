@@ -29,6 +29,10 @@ export const ViewingStats = z.object({
     seriesDropped: z.number().int().nonnegative(),
     episodesWatched: z.number().int().nonnegative(),
     totalMinutes: z.number().int().nonnegative(),
+    /** Temps de visionnage des films seuls (minutes). */
+    movieMinutes: z.number().int().nonnegative(),
+    /** Temps de visionnage des séries seules (minutes). */
+    seriesMinutes: z.number().int().nonnegative(),
     averageRating: z.number().nullable(),
   }),
   breakdown: z.object({
