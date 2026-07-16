@@ -10,3 +10,4 @@ export * from "./review.js";
 export * from "./search.js";
 export * from "./stats.js";
 export * from "./series.js";
+export * from "./upcoming.js";

@@ -21,7 +21,10 @@ async function resolveMediaId(
 
 @Injectable()
 export class GetReviewUseCase {
-  constructor(@Inject(LIBRARY_REPOSITORY) private readonly library: LibraryRepository, @Inject(REVIEW_REPOSITORY) private readonly reviews: ReviewRepository) {}
+  constructor(
+    @Inject(LIBRARY_REPOSITORY) private readonly library: LibraryRepository,
+    @Inject(REVIEW_REPOSITORY) private readonly reviews: ReviewRepository,
+  ) {}
 
   async execute(userId: string, itemId: string): Promise<Review | null> {
     const mediaId = await resolveMediaId(this.library, userId, itemId);
@@ -47,7 +50,10 @@ export class SaveReviewUseCase {
 
 @Injectable()
 export class DeleteReviewUseCase {
-  constructor(@Inject(LIBRARY_REPOSITORY) private readonly library: LibraryRepository, @Inject(REVIEW_REPOSITORY) private readonly reviews: ReviewRepository) {}
+  constructor(
+    @Inject(LIBRARY_REPOSITORY) private readonly library: LibraryRepository,
+    @Inject(REVIEW_REPOSITORY) private readonly reviews: ReviewRepository,
+  ) {}
 
   async execute(userId: string, itemId: string): Promise<void> {
     const mediaId = await resolveMediaId(this.library, userId, itemId);

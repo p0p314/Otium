@@ -15,7 +15,7 @@ export class GetHomeDashboardUseCase implements UseCase<string, HomeDashboard> {
   ) {}
 
   async execute(userId: string): Promise<HomeDashboard> {
-    const records = await this.repo.listInProgress(userId);
+    const records = await this.repo.listTrackedSeries(userId);
     return buildHomeDashboard(records, new Date());
   }
 }

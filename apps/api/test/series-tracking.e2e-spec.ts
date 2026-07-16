@@ -45,6 +45,7 @@ class InMemorySeriesRepo implements SeriesTrackingRepository {
         seasonNumber: s.number,
         number: e.number,
         title: e.title,
+        airDate: e.airDate,
       })),
     }));
   }
@@ -78,7 +79,7 @@ class InMemorySeriesRepo implements SeriesTrackingRepository {
   async setStatus(_itemId: string, status: WatchStatus): Promise<void> {
     this.status = status;
   }
-  async listInProgress(): Promise<[]> {
+  async listTrackedSeries(): Promise<[]> {
     return [];
   }
 }

@@ -26,11 +26,7 @@ export class MediaRemoved extends DomainEvent {
 
 export class FavoriteChanged extends DomainEvent {
   readonly name: "FavoriteAdded" | "FavoriteRemoved";
-  constructor(
-    userId: string,
-    mediaId: string,
-    isFavorite: boolean,
-  ) {
+  constructor(userId: string, mediaId: string, isFavorite: boolean) {
     super(userId, mediaId);
     this.name = isFavorite ? "FavoriteAdded" : "FavoriteRemoved";
   }

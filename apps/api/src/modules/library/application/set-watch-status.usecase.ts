@@ -64,7 +64,9 @@ export class SetWatchStatusUseCase implements UseCase<SetWatchStatusInput, Libra
         runtimeMinutes: details.runtimeMinutes ?? null,
       });
     } catch (error) {
-      this.logger.warn(`Durée du film indisponible (backfill ignoré) : ${(error as Error).message}`);
+      this.logger.warn(
+        `Durée du film indisponible (backfill ignoré) : ${(error as Error).message}`,
+      );
     }
   }
 }

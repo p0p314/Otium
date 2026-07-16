@@ -20,6 +20,7 @@ import { GetLibraryUseCase } from "../src/modules/library/application/get-librar
 import { GetLibraryItemUseCase } from "../src/modules/library/application/get-library-item.usecase";
 import { AddMediaToLibraryUseCase } from "../src/modules/library/application/add-media-to-library.usecase";
 import { GetHomeDashboardUseCase } from "../src/modules/library/application/get-home-dashboard.usecase";
+import { GetUpcomingUseCase } from "../src/modules/library/application/get-upcoming.usecase";
 import { RemoveFromLibraryUseCase } from "../src/modules/library/application/remove-from-library.usecase";
 import { SetWatchStatusUseCase } from "../src/modules/library/application/set-watch-status.usecase";
 import { ToggleFavoriteUseCase } from "../src/modules/library/application/toggle-favorite.usecase";
@@ -115,12 +116,16 @@ describe("Ratings & reviews (e2e)", () => {
         RateMediaUseCase,
         SetWatchStatusUseCase,
         GetHomeDashboardUseCase,
+        GetUpcomingUseCase,
         GetReviewUseCase,
         SaveReviewUseCase,
         DeleteReviewUseCase,
         AuthGuard,
         { provide: LIBRARY_REPOSITORY, useClass: FakeLibraryRepo },
-        { provide: SERIES_TRACKING_REPOSITORY, useValue: { listInProgress: async () => [] } },
+        {
+          provide: SERIES_TRACKING_REPOSITORY,
+          useValue: { listTrackedSeries: async () => [], getContext: async () => null },
+        },
         {
           provide: MEDIA_CATALOG_PROVIDER,
           useValue: {

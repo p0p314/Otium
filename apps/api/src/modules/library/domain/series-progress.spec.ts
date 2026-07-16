@@ -1,19 +1,29 @@
 import { describe, expect, it } from "vitest";
-import { isComplete, nextUnwatched, orderedEpisodes, totalEpisodes, type SeasonRef } from "./series-progress";
+import {
+  airedCount,
+  hasUnwatchedAired,
+  isComplete,
+  nextUnwatched,
+  nextUnwatchedAired,
+  orderedEpisodes,
+  type SeasonRef,
+  totalEpisodes,
+  upcomingEpisodes,
+} from "./series-progress";
 
 const seasons: SeasonRef[] = [
   {
     number: 2,
     episodes: [
-      { id: "s2e1", seasonNumber: 2, number: 1, title: "" },
-      { id: "s2e2", seasonNumber: 2, number: 2, title: "" },
+      { id: "s2e1", seasonNumber: 2, number: 1, title: "", airDate: null },
+      { id: "s2e2", seasonNumber: 2, number: 2, title: "", airDate: null },
     ],
   },
   {
     number: 1,
     episodes: [
-      { id: "s1e2", seasonNumber: 1, number: 2, title: "" },
-      { id: "s1e1", seasonNumber: 1, number: 1, title: "" },
+      { id: "s1e2", seasonNumber: 1, number: 2, title: "", airDate: null },
+      { id: "s1e1", seasonNumber: 1, number: 1, title: "", airDate: null },
     ],
   },
 ];
@@ -30,7 +40,6 @@ describe("progression de série", () => {
   it("nextUnwatched = premier épisode non vu dans l'ordre", () => {
     expect(nextUnwatched(seasons, new Set(["s1e1"]))?.id).toBe("s1e2");
     expect(nextUnwatched(seasons, new Set())?.id).toBe("s1e1");
-    // saute un trou : s1e1 et s1e2 vus, s2e1 non vu
     expect(nextUnwatched(seasons, new Set(["s1e1", "s1e2"]))?.id).toBe("s2e1");
   });
 
@@ -42,5 +51,43 @@ describe("progression de série", () => {
 
   it("série vide n'est pas 'complète'", () => {
     expect(isComplete([], new Set())).toBe(false);
+  });
+});
+
+describe("dates de diffusion (sorti / à venir)", () => {
+  const NOW = new Date("2026-07-15T00:00:00.000Z");
+  const past = new Date("2026-07-01T00:00:00.000Z");
+  const future = new Date("2026-08-01T00:00:00.000Z");
+  const dated: SeasonRef[] = [
+    {
+      number: 1,
+      episodes: [
+        { id: "e1", seasonNumber: 1, number: 1, title: "", airDate: past },
+        { id: "e2", seasonNumber: 1, number: 2, title: "", airDate: past },
+        { id: "e3", seasonNumber: 1, number: 3, title: "", airDate: future },
+      ],
+    },
+  ];
+
+  it("compte uniquement les épisodes sortis (airDate null = sorti)", () => {
+    expect(airedCount(dated, NOW)).toBe(2);
+    expect(airedCount(seasons, NOW)).toBe(4); // toutes dates nulles → sorties
+  });
+
+  it("nextUnwatchedAired ignore les épisodes non encore sortis", () => {
+    // e1, e2 vus → prochain non vu est e3 (à venir) → pas de reprise « sortie »
+    expect(nextUnwatchedAired(dated, new Set(["e1", "e2"]), NOW)).toBeNull();
+    // e1 vu → e2 (sorti) est la reprise
+    expect(nextUnwatchedAired(dated, new Set(["e1"]), NOW)?.id).toBe("e2");
+  });
+
+  it("hasUnwatchedAired reflète un épisode sorti restant à voir", () => {
+    expect(hasUnwatchedAired(dated, new Set(["e1"]), NOW)).toBe(true);
+    expect(hasUnwatchedAired(dated, new Set(["e1", "e2"]), NOW)).toBe(false);
+  });
+
+  it("upcomingEpisodes liste les diffusions futures, triées", () => {
+    expect(upcomingEpisodes(dated, NOW).map((e) => e.id)).toEqual(["e3"]);
+    expect(upcomingEpisodes(seasons, NOW)).toEqual([]); // aucune date → rien à venir
   });
 });

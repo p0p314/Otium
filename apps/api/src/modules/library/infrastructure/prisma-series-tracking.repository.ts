@@ -47,8 +47,13 @@ export class PrismaSeriesTrackingRepository implements SeriesTrackingRepository 
             number: episode.number,
             title: episode.title,
             runtimeMinutes: episode.runtimeMinutes,
+            airDate: episode.airDate,
           },
-          update: { title: episode.title, runtimeMinutes: episode.runtimeMinutes },
+          update: {
+            title: episode.title,
+            runtimeMinutes: episode.runtimeMinutes,
+            airDate: episode.airDate,
+          },
         });
       }
     }
@@ -67,6 +72,7 @@ export class PrismaSeriesTrackingRepository implements SeriesTrackingRepository 
         seasonNumber: s.number,
         number: e.number,
         title: e.title,
+        airDate: e.airDate,
       })),
     }));
   }
@@ -80,9 +86,7 @@ export class PrismaSeriesTrackingRepository implements SeriesTrackingRepository 
   }
 
   async isEpisodeOfMedia(mediaId: string, episodeId: string): Promise<boolean> {
-    return (
-      (await this.prisma.episode.count({ where: { id: episodeId, season: { mediaId } } })) > 0
-    );
+    return (await this.prisma.episode.count({ where: { id: episodeId, season: { mediaId } } })) > 0;
   }
 
   async countEpisodesOfMedia(mediaId: string, episodeIds: readonly string[]): Promise<number> {
@@ -128,9 +132,9 @@ export class PrismaSeriesTrackingRepository implements SeriesTrackingRepository 
     await this.prisma.libraryItem.update({ where: { id: itemId }, data: { status } });
   }
 
-  async listInProgress(userId: string): Promise<SeriesProgressRecord[]> {
+  async listTrackedSeries(userId: string): Promise<SeriesProgressRecord[]> {
     const items = await this.prisma.libraryItem.findMany({
-      where: { userId, status: "IN_PROGRESS", media: { type: "SERIES" } },
+      where: { userId, media: { type: "SERIES" } },
       include: {
         media: {
           include: {
@@ -162,6 +166,7 @@ export class PrismaSeriesTrackingRepository implements SeriesTrackingRepository 
             seasonNumber: s.number,
             number: e.number,
             title: e.title,
+            airDate: e.airDate,
           })),
         })),
         watchedIds,

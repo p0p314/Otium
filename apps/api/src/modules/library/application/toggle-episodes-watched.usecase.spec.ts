@@ -32,7 +32,7 @@ function makeRepo(status: WatchStatus = "PLANNED") {
     saveSeasons: vi.fn(),
     setEpisodeWatched: vi.fn(),
     isEpisodeOfMedia: vi.fn(),
-    listInProgress: vi.fn(),
+    listTrackedSeries: vi.fn(),
   } as unknown as SeriesTrackingRepository;
 }
 

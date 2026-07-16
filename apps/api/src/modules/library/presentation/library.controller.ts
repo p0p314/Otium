@@ -13,18 +13,17 @@ import {
   AddToLibraryInput,
   type HomeDashboard,
   type LibraryItem as LibraryItemDto,
+  type UpcomingDashboard,
   RateMediaInput,
   SetWatchStatusInput,
   ToggleFavoriteInput,
 } from "@otium/types";
 import { ZodValidationPipe } from "../../../shared/presentation/zod-validation.pipe";
-import {
-  AuthGuard,
-  type AuthenticatedUser,
-} from "../../authentication/presentation/auth.guard";
+import { AuthGuard, type AuthenticatedUser } from "../../authentication/presentation/auth.guard";
 import { CurrentUser } from "../../authentication/presentation/current-user.decorator";
 import { AddMediaToLibraryUseCase } from "../application/add-media-to-library.usecase";
 import { GetHomeDashboardUseCase } from "../application/get-home-dashboard.usecase";
+import { GetUpcomingUseCase } from "../application/get-upcoming.usecase";
 import { GetLibraryUseCase } from "../application/get-library.usecase";
 import { GetLibraryItemUseCase } from "../application/get-library-item.usecase";
 import { RateMediaUseCase } from "../application/rate-media.usecase";
@@ -45,6 +44,7 @@ export class LibraryController {
     private readonly rateMedia: RateMediaUseCase,
     private readonly setWatchStatus: SetWatchStatusUseCase,
     private readonly getHomeDashboard: GetHomeDashboardUseCase,
+    private readonly getUpcoming: GetUpcomingUseCase,
   ) {}
 
   @Get()
@@ -53,10 +53,16 @@ export class LibraryController {
     return items.map(toLibraryItemDto);
   }
 
-  /** Tableau de bord de l'accueil (séries en cours + laissées de côté). */
+  /** Tableau de bord de l'accueil (à reprendre + à commencer, par type de média). */
   @Get("home")
   async home(@CurrentUser() user: AuthenticatedUser): Promise<HomeDashboard> {
     return this.getHomeDashboard.execute(user.id);
+  }
+
+  /** Agenda « À venir » : épisodes à diffusion future des séries suivies. */
+  @Get("upcoming")
+  async upcoming(@CurrentUser() user: AuthenticatedUser): Promise<UpcomingDashboard> {
+    return this.getUpcoming.execute(user.id);
   }
 
   @Get(":itemId")

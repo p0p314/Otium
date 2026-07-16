@@ -73,6 +73,8 @@ model Episode {
   number         Int
   title          String
   runtimeMinutes Int?
+  /** Date de diffusion (fournie par le catalogue). Null = inconnue → considérée « sortie ». */
+  airDate        DateTime?
   watchedBy      WatchedEpisode[]
 
   @@unique([seasonId, number])

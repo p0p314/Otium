@@ -115,6 +115,7 @@ export function toCatalogSeason(seasonNumber: number, season: TmdbSeasonDetails)
       number: e.episode_number,
       title: e.name && e.name.trim() ? e.name : `Épisode ${e.episode_number}`,
       runtimeMinutes: e.runtime ?? null,
+      airDate: e.air_date && e.air_date.trim() ? e.air_date : null,
     })),
   };
 }
