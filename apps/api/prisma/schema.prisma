@@ -44,6 +44,8 @@ model Media {
   runtimeMinutes   Int?
   /** Date de sortie (film). Null = inconnue. Alimente l'agenda « À venir ». */
   releaseDate      DateTime?
+  /** Dernière synchro de la structure saisons/épisodes (séries). Null = jamais. Garde-fou de fraîcheur du rafraîchissement « À venir ». */
+  episodesSyncedAt DateTime?
   externalProvider String
   externalId       String
   genres           String[]

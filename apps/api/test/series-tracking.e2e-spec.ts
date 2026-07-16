@@ -82,6 +82,10 @@ class InMemorySeriesRepo implements SeriesTrackingRepository {
   async listTrackedSeries(): Promise<[]> {
     return [];
   }
+  async listSeriesNeedingSync(): Promise<[]> {
+    return [];
+  }
+  async markEpisodesSynced(): Promise<void> {}
 }
 
 const provider = {

@@ -21,6 +21,7 @@ import { GetLibraryItemUseCase } from "../src/modules/library/application/get-li
 import { AddMediaToLibraryUseCase } from "../src/modules/library/application/add-media-to-library.usecase";
 import { GetHomeDashboardUseCase } from "../src/modules/library/application/get-home-dashboard.usecase";
 import { GetUpcomingUseCase } from "../src/modules/library/application/get-upcoming.usecase";
+import { RefreshTrackedSeriesUseCase } from "../src/modules/library/application/refresh-tracked-series.usecase";
 import { RemoveFromLibraryUseCase } from "../src/modules/library/application/remove-from-library.usecase";
 import { SetWatchStatusUseCase } from "../src/modules/library/application/set-watch-status.usecase";
 import { ToggleFavoriteUseCase } from "../src/modules/library/application/toggle-favorite.usecase";
@@ -120,6 +121,7 @@ describe("Ratings & reviews (e2e)", () => {
         SetWatchStatusUseCase,
         GetHomeDashboardUseCase,
         GetUpcomingUseCase,
+        RefreshTrackedSeriesUseCase,
         GetReviewUseCase,
         SaveReviewUseCase,
         DeleteReviewUseCase,
@@ -127,12 +129,20 @@ describe("Ratings & reviews (e2e)", () => {
         { provide: LIBRARY_REPOSITORY, useClass: FakeLibraryRepo },
         {
           provide: SERIES_TRACKING_REPOSITORY,
-          useValue: { listTrackedSeries: async () => [], getContext: async () => null },
+          useValue: {
+            listTrackedSeries: async () => [],
+            getContext: async () => null,
+            listSeriesNeedingSync: async () => [],
+            markEpisodesSynced: async () => undefined,
+          },
         },
         {
           provide: MEDIA_CATALOG_PROVIDER,
           useValue: {
             getMediaDetails: async () => {
+              throw new Error("no details");
+            },
+            getSeriesDetails: async () => {
               throw new Error("no details");
             },
           },

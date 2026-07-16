@@ -18,6 +18,7 @@ import {
 import { AddMediaToLibraryUseCase } from "../src/modules/library/application/add-media-to-library.usecase";
 import { GetHomeDashboardUseCase } from "../src/modules/library/application/get-home-dashboard.usecase";
 import { GetUpcomingUseCase } from "../src/modules/library/application/get-upcoming.usecase";
+import { RefreshTrackedSeriesUseCase } from "../src/modules/library/application/refresh-tracked-series.usecase";
 import { GetLibraryUseCase } from "../src/modules/library/application/get-library.usecase";
 import { RemoveFromLibraryUseCase } from "../src/modules/library/application/remove-from-library.usecase";
 import { SetWatchStatusUseCase } from "../src/modules/library/application/set-watch-status.usecase";
@@ -126,16 +127,25 @@ describe("Library (e2e)", () => {
         SetWatchStatusUseCase,
         GetHomeDashboardUseCase,
         GetUpcomingUseCase,
+        RefreshTrackedSeriesUseCase,
         AuthGuard,
         { provide: LIBRARY_REPOSITORY, useClass: InMemoryLibraryRepository },
         {
           provide: SERIES_TRACKING_REPOSITORY,
-          useValue: { listTrackedSeries: async () => [], getContext: async () => null },
+          useValue: {
+            listTrackedSeries: async () => [],
+            getContext: async () => null,
+            listSeriesNeedingSync: async () => [],
+            markEpisodesSynced: async () => undefined,
+          },
         },
         {
           provide: MEDIA_CATALOG_PROVIDER,
           useValue: {
             getMediaDetails: async () => {
+              throw new Error("no details");
+            },
+            getSeriesDetails: async () => {
               throw new Error("no details");
             },
           },

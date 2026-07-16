@@ -8,6 +8,7 @@ import { GetLibraryUseCase } from "./application/get-library.usecase";
 import { GetLibraryItemUseCase } from "./application/get-library-item.usecase";
 import { GetSeriesTrackingUseCase } from "./application/get-series-tracking.usecase";
 import { MarkWatchedEpisodesByNumberUseCase } from "./application/mark-watched-episodes-by-number.usecase";
+import { RefreshTrackedSeriesUseCase } from "./application/refresh-tracked-series.usecase";
 import {
   AddMediaToListUseCase,
   CreateListUseCase,
@@ -58,6 +59,7 @@ import { SeriesTrackingController } from "./presentation/series-tracking.control
     MarkWatchedEpisodesByNumberUseCase,
     GetHomeDashboardUseCase,
     GetUpcomingUseCase,
+    RefreshTrackedSeriesUseCase,
     ToggleEpisodeWatchedUseCase,
     ToggleEpisodesWatchedUseCase,
     GetReviewUseCase,
