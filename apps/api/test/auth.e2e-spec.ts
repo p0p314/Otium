@@ -10,6 +10,7 @@ import { PASSWORD_HASHER } from "../src/modules/authentication/domain/ports/pass
 import { SESSION_STORE, type Session } from "../src/modules/authentication/domain/ports/session-store";
 import { RegisterUserUseCase } from "../src/modules/authentication/application/register-user.usecase";
 import { LoginUserUseCase } from "../src/modules/authentication/application/login-user.usecase";
+import { UpdateProfileUseCase } from "../src/modules/authentication/application/update-profile.usecase";
 import { AuthGuard } from "../src/modules/authentication/presentation/auth.guard";
 import { AuthController } from "../src/modules/authentication/presentation/auth.controller";
 
@@ -37,6 +38,12 @@ class InMemoryUserRepository implements UserRepository {
     });
     this.byId.set(id, created);
     return created;
+  }
+  async updateProfile(userId: string, data: { displayName?: string; email?: Email }): Promise<User> {
+    const current = this.byId.get(userId)!;
+    if (data.displayName !== undefined) current.rename(data.displayName);
+    if (data.email !== undefined) current.changeEmail(data.email);
+    return current;
   }
 }
 
@@ -71,6 +78,7 @@ describe("Authentication (e2e)", () => {
       providers: [
         RegisterUserUseCase,
         LoginUserUseCase,
+        UpdateProfileUseCase,
         AuthGuard,
         { provide: USER_REPOSITORY, useValue: users },
         { provide: PASSWORD_HASHER, useValue: fakeHasher },
@@ -123,6 +131,23 @@ describe("Authentication (e2e)", () => {
     const me = await request(server()).get("/auth/me").set("authorization", `Bearer ${token}`);
     expect(me.status).toBe(200);
     expect(me.body.email).toBe("alice@example.com");
+  });
+
+  it("met à jour le profil via PATCH /me", async () => {
+    const login = await request(server())
+      .post("/auth/login")
+      .send({ email: "alice@example.com", password: "supersecret" });
+    const token = login.body.token as string;
+
+    const patch = await request(server())
+      .patch("/auth/me")
+      .set("authorization", `Bearer ${token}`)
+      .send({ displayName: "Alice B." });
+    expect(patch.status).toBe(200);
+    expect(patch.body.displayName).toBe("Alice B.");
+
+    const me = await request(server()).get("/auth/me").set("authorization", `Bearer ${token}`);
+    expect(me.body.displayName).toBe("Alice B.");
   });
 
   it("mauvais mot de passe → 401", async () => {

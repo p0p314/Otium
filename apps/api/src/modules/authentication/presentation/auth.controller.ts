@@ -5,6 +5,7 @@ import {
   Get,
   HttpCode,
   Inject,
+  Patch,
   Post,
   Req,
   Res,
@@ -17,6 +18,7 @@ import {
   type AuthUser,
   LoginInput,
   RegisterInput,
+  UpdateProfileInput,
 } from "@otium/types";
 import type { Response } from "express";
 import type { Env } from "../../../shared/infrastructure/config/env";
@@ -25,6 +27,7 @@ import type { AuthResult } from "../application/auth-result";
 import { EmailAlreadyUsedError, InvalidCredentialsError } from "../application/errors";
 import { LoginUserUseCase } from "../application/login-user.usecase";
 import { RegisterUserUseCase } from "../application/register-user.usecase";
+import { UpdateProfileUseCase } from "../application/update-profile.usecase";
 import { SESSION_STORE, type SessionStore } from "../domain/ports/session-store";
 import { AuthGuard, type AuthenticatedUser, type RequestWithUser } from "./auth.guard";
 import { CurrentUser } from "./current-user.decorator";
@@ -35,6 +38,7 @@ export class AuthController {
   constructor(
     private readonly registerUser: RegisterUserUseCase,
     private readonly loginUser: LoginUserUseCase,
+    private readonly updateProfile: UpdateProfileUseCase,
     @Inject(SESSION_STORE) private readonly sessions: SessionStore,
     private readonly config: ConfigService<Env, true>,
   ) {}
@@ -74,6 +78,20 @@ export class AuthController {
   @UseGuards(AuthGuard)
   me(@CurrentUser() user: AuthenticatedUser): AuthUser {
     return user;
+  }
+
+  @Patch("me")
+  @UseGuards(AuthGuard)
+  async updateMe(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body(new ZodValidationPipe(UpdateProfileInput)) input: UpdateProfileInput,
+  ): Promise<AuthUser> {
+    try {
+      return await this.updateProfile.execute({ userId: user.id, ...input });
+    } catch (error) {
+      if (error instanceof EmailAlreadyUsedError) throw new ConflictException(error.message);
+      throw error;
+    }
   }
 
   @Post("logout")

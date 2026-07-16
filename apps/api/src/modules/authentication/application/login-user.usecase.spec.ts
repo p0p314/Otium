@@ -23,6 +23,7 @@ describe("LoginUserUseCase", () => {
       findById: vi.fn(),
       existsByEmail: vi.fn(),
       create: vi.fn(),
+      updateProfile: vi.fn(),
     };
     hasher = { hash: vi.fn(), verify: vi.fn().mockResolvedValue(true) };
     sessions = {

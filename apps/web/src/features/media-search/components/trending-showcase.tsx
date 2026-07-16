@@ -1,4 +1,5 @@
 import type { MediaType } from "@otium/types";
+import { useSearchSettingsStore } from "../../../stores/search-settings-store";
 import { AddToLibraryButton } from "../../library/components/add-to-library-button";
 import { useTrending } from "../api/use-trending";
 import { MediaResults } from "./media-results";
@@ -24,10 +25,11 @@ function TrendingRow({ title, type }: { title: string; type: MediaType }) {
  * met en avant les films et séries du moment (tendances TMDB).
  */
 export function TrendingShowcase() {
+  const { movies, series } = useSearchSettingsStore();
   return (
     <div className="space-y-8">
-      <TrendingRow title="Séries du moment" type="SERIES" />
-      <TrendingRow title="Films du moment" type="MOVIE" />
+      {series ? <TrendingRow title="Séries du moment" type="SERIES" /> : null}
+      {movies ? <TrendingRow title="Films du moment" type="MOVIE" /> : null}
     </div>
   );
 }

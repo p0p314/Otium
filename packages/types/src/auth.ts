@@ -26,6 +26,14 @@ export const AuthUser = z.object({
 });
 export type AuthUser = z.infer<typeof AuthUser>;
 
+/** Mise à jour du profil : nom affiché et/ou e-mail (au moins un des deux). */
+export const UpdateProfileInput = z
+  .object({ displayName: displayName.optional(), email: email.optional() })
+  .refine((data) => data.displayName !== undefined || data.email !== undefined, {
+    message: "Renseignez au moins un champ à mettre à jour.",
+  });
+export type UpdateProfileInput = z.infer<typeof UpdateProfileInput>;
+
 /** Réponse d'authentification : l'utilisateur + un jeton de session opaque. */
 export const AuthSession = z.object({
   user: AuthUser,

@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import { UserModule } from "../user/user.module";
 import { LoginUserUseCase } from "./application/login-user.usecase";
 import { RegisterUserUseCase } from "./application/register-user.usecase";
+import { UpdateProfileUseCase } from "./application/update-profile.usecase";
 import { PASSWORD_HASHER } from "./domain/ports/password-hasher";
 import { SESSION_STORE } from "./domain/ports/session-store";
 import { BcryptPasswordHasher } from "./infrastructure/bcrypt-password-hasher";
@@ -15,6 +16,7 @@ import { AuthGuard } from "./presentation/auth.guard";
   providers: [
     RegisterUserUseCase,
     LoginUserUseCase,
+    UpdateProfileUseCase,
     AuthGuard,
     { provide: PASSWORD_HASHER, useClass: BcryptPasswordHasher },
     { provide: SESSION_STORE, useClass: RedisSessionStore },
