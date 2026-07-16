@@ -3,6 +3,7 @@ import {
   type AddToListInput,
   AuthSession,
   AuthUser,
+  type ChangePasswordInput,
   type CreateListInput,
   HomeDashboard,
   ImportReport,
@@ -111,6 +112,11 @@ export class OtiumClient {
   /** Met à jour le profil (nom affiché et/ou e-mail). */
   async updateProfile(input: UpdateProfileInput): Promise<AuthUser> {
     return this.request("/auth/me", AuthUser, { method: "PATCH", body: input });
+  }
+
+  /** Change le mot de passe (l'actuel est vérifié côté serveur). */
+  async changePassword(input: ChangePasswordInput): Promise<void> {
+    await this.request("/auth/password", z.void(), { method: "PUT", body: input });
   }
 
   async logout(): Promise<void> {

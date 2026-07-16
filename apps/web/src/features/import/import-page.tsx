@@ -113,9 +113,14 @@ export function ImportPage() {
       </div>
 
       <ol className="space-y-1 rounded-xl border bg-card p-4 text-sm text-muted-foreground">
-        <li>1. Dans TV Time, demandez l'export de vos données personnelles (RGPD).</li>
         <li>
-          2. Vous recevez une archive <code className="text-foreground">.zip</code> par e-mail.
+          1. Sur TV Time, ouvrez la page de vos données personnelles (RGPD) et lancez la préparation
+          de l'export.
+        </li>
+        <li>
+          2. <strong className="font-medium text-foreground">Téléchargez</strong> l'archive{" "}
+          <code className="text-foreground">.zip</code> proposée sur cette page (elle n'est pas
+          envoyée par e-mail).
         </li>
         <li>3. Déposez-la ci-dessous : films et séries vus (et « à voir ») seront importés.</li>
       </ol>

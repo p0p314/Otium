@@ -3,6 +3,7 @@ import { UserModule } from "../user/user.module";
 import { LoginUserUseCase } from "./application/login-user.usecase";
 import { RegisterUserUseCase } from "./application/register-user.usecase";
 import { UpdateProfileUseCase } from "./application/update-profile.usecase";
+import { ChangePasswordUseCase } from "./application/change-password.usecase";
 import { PASSWORD_HASHER } from "./domain/ports/password-hasher";
 import { SESSION_STORE } from "./domain/ports/session-store";
 import { BcryptPasswordHasher } from "./infrastructure/bcrypt-password-hasher";
@@ -17,6 +18,7 @@ import { AuthGuard } from "./presentation/auth.guard";
     RegisterUserUseCase,
     LoginUserUseCase,
     UpdateProfileUseCase,
+    ChangePasswordUseCase,
     AuthGuard,
     { provide: PASSWORD_HASHER, useClass: BcryptPasswordHasher },
     { provide: SESSION_STORE, useClass: RedisSessionStore },

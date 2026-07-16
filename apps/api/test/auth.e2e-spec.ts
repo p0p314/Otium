@@ -7,10 +7,14 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { EVENT_PUBLISHER } from "../src/shared/domain";
 import { Email, USER_REPOSITORY, User, type UserRepository } from "../src/modules/user/domain";
 import { PASSWORD_HASHER } from "../src/modules/authentication/domain/ports/password-hasher";
-import { SESSION_STORE, type Session } from "../src/modules/authentication/domain/ports/session-store";
+import {
+  SESSION_STORE,
+  type Session,
+} from "../src/modules/authentication/domain/ports/session-store";
 import { RegisterUserUseCase } from "../src/modules/authentication/application/register-user.usecase";
 import { LoginUserUseCase } from "../src/modules/authentication/application/login-user.usecase";
 import { UpdateProfileUseCase } from "../src/modules/authentication/application/update-profile.usecase";
+import { ChangePasswordUseCase } from "../src/modules/authentication/application/change-password.usecase";
 import { AuthGuard } from "../src/modules/authentication/presentation/auth.guard";
 import { AuthController } from "../src/modules/authentication/presentation/auth.controller";
 
@@ -39,11 +43,25 @@ class InMemoryUserRepository implements UserRepository {
     this.byId.set(id, created);
     return created;
   }
-  async updateProfile(userId: string, data: { displayName?: string; email?: Email }): Promise<User> {
+  async updateProfile(
+    userId: string,
+    data: { displayName?: string; email?: Email },
+  ): Promise<User> {
     const current = this.byId.get(userId)!;
     if (data.displayName !== undefined) current.rename(data.displayName);
     if (data.email !== undefined) current.changeEmail(data.email);
     return current;
+  }
+  async updatePassword(userId: string, passwordHash: string): Promise<void> {
+    const current = this.byId.get(userId)!;
+    this.byId.set(
+      userId,
+      User.rehydrate(userId, {
+        email: current.email,
+        passwordHash,
+        displayName: current.displayName,
+      }),
+    );
   }
 }
 
@@ -79,11 +97,15 @@ describe("Authentication (e2e)", () => {
         RegisterUserUseCase,
         LoginUserUseCase,
         UpdateProfileUseCase,
+        ChangePasswordUseCase,
         AuthGuard,
         { provide: USER_REPOSITORY, useValue: users },
         { provide: PASSWORD_HASHER, useValue: fakeHasher },
         { provide: SESSION_STORE, useValue: sessions },
-        { provide: EVENT_PUBLISHER, useValue: { publish: async () => undefined, publishAll: async () => undefined } },
+        {
+          provide: EVENT_PUBLISHER,
+          useValue: { publish: async () => undefined, publishAll: async () => undefined },
+        },
         { provide: ConfigService, useValue: { get: () => "test" } },
       ],
     }).compile();
@@ -150,6 +172,32 @@ describe("Authentication (e2e)", () => {
     expect(me.body.displayName).toBe("Alice B.");
   });
 
+  it("change le mot de passe puis reconnecte avec le nouveau", async () => {
+    // Utilisateur dédié (l'état est partagé entre tests : on ne touche pas à Alice).
+    const reg = await request(server())
+      .post("/auth/register")
+      .send({ email: "bob@example.com", password: "bob-initial", displayName: "Bob" });
+    const token = reg.body.token as string;
+
+    // Mauvais mot de passe actuel → 400 (et surtout pas 401 : on ne déconnecte pas).
+    const wrong = await request(server())
+      .put("/auth/password")
+      .set("authorization", `Bearer ${token}`)
+      .send({ currentPassword: "faux-mdp", newPassword: "bob-nouveau-1" });
+    expect(wrong.status).toBe(400);
+
+    const ok = await request(server())
+      .put("/auth/password")
+      .set("authorization", `Bearer ${token}`)
+      .send({ currentPassword: "bob-initial", newPassword: "bob-nouveau-1" });
+    expect(ok.status).toBe(204);
+
+    const relogin = await request(server())
+      .post("/auth/login")
+      .send({ email: "bob@example.com", password: "bob-nouveau-1" });
+    expect(relogin.status).toBe(200);
+  });
+
   it("mauvais mot de passe → 401", async () => {
     const res = await request(server())
       .post("/auth/login")
@@ -167,7 +215,11 @@ describe("Authentication (e2e)", () => {
       .send({ email: "alice@example.com", password: "supersecret" });
     const token = login.body.token as string;
 
-    expect((await request(server()).post("/auth/logout").set("authorization", `Bearer ${token}`)).status).toBe(204);
-    expect((await request(server()).get("/auth/me").set("authorization", `Bearer ${token}`)).status).toBe(401);
+    expect(
+      (await request(server()).post("/auth/logout").set("authorization", `Bearer ${token}`)).status,
+    ).toBe(204);
+    expect(
+      (await request(server()).get("/auth/me").set("authorization", `Bearer ${token}`)).status,
+    ).toBe(401);
   });
 });

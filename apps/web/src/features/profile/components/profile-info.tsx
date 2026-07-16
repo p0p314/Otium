@@ -6,6 +6,7 @@ import { LogOut } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { useAuth, useLogout, useUpdateProfile } from "../../auth/api/use-auth";
 import { Field } from "../../auth/components/field";
+import { ChangePassword } from "./change-password";
 
 /** Onglet « Profil » : édition du nom affiché et de l'e-mail + déconnexion. */
 export function ProfileInfo() {
@@ -63,6 +64,8 @@ export function ProfileInfo() {
           {update.isPending ? "Enregistrement…" : "Enregistrer"}
         </Button>
       </form>
+
+      <ChangePassword />
 
       <div className="border-t pt-4">
         <Button

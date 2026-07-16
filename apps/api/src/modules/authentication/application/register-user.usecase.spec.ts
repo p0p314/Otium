@@ -20,6 +20,7 @@ describe("RegisterUserUseCase", () => {
   beforeEach(() => {
     users = {
       updateProfile: vi.fn(),
+      updatePassword: vi.fn(),
       existsByEmail: vi.fn().mockResolvedValue(false),
       create: vi.fn(async (u: User) =>
         User.rehydrate("user-1", {
@@ -32,7 +33,11 @@ describe("RegisterUserUseCase", () => {
       findById: vi.fn(),
     };
     hasher = { hash: vi.fn().mockResolvedValue("hashed"), verify: vi.fn() };
-    sessions = { create: vi.fn(async (id: string) => makeSession(id)), resolve: vi.fn(), revoke: vi.fn() };
+    sessions = {
+      create: vi.fn(async (id: string) => makeSession(id)),
+      resolve: vi.fn(),
+      revoke: vi.fn(),
+    };
     events = { publish: vi.fn().mockResolvedValue(undefined), publishAll: vi.fn() };
     useCase = new RegisterUserUseCase(users, hasher, sessions, events);
   });

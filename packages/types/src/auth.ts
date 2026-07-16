@@ -34,6 +34,13 @@ export const UpdateProfileInput = z
   });
 export type UpdateProfileInput = z.infer<typeof UpdateProfileInput>;
 
+/** Changement de mot de passe : l'actuel (vérifié) + le nouveau. */
+export const ChangePasswordInput = z.object({
+  currentPassword: z.string().min(1),
+  newPassword: password,
+});
+export type ChangePasswordInput = z.infer<typeof ChangePasswordInput>;
+
 /** Réponse d'authentification : l'utilisateur + un jeton de session opaque. */
 export const AuthSession = z.object({
   user: AuthUser,
