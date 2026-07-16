@@ -8,6 +8,8 @@ export interface EpisodeRef {
   readonly seasonNumber: number;
   readonly number: number;
   readonly title: string;
+  /** Date de diffusion, ou null si inconnue (alors considérée « sortie »). */
+  readonly airDate: Date | null;
 }
 
 export interface SeasonRef {
@@ -38,4 +40,42 @@ export function nextUnwatched(
 export function isComplete(seasons: readonly SeasonRef[], watched: ReadonlySet<string>): boolean {
   const total = totalEpisodes(seasons);
   return total > 0 && nextUnwatched(seasons, watched) === null;
+}
+
+/**
+ * Un épisode est **sorti** si sa date de diffusion est passée. Une date inconnue
+ * (`null`) est considérée comme sortie : mieux vaut la proposer que la masquer.
+ */
+export function isAired(episode: EpisodeRef, now: Date): boolean {
+  return episode.airDate === null || episode.airDate.getTime() <= now.getTime();
+}
+
+/** Nombre d'épisodes déjà sortis. */
+export function airedCount(seasons: readonly SeasonRef[], now: Date): number {
+  return orderedEpisodes(seasons).filter((e) => isAired(e, now)).length;
+}
+
+/** Premier épisode **sorti et non vu** dans l'ordre (reprise), ou `null`. */
+export function nextUnwatchedAired(
+  seasons: readonly SeasonRef[],
+  watched: ReadonlySet<string>,
+  now: Date,
+): EpisodeRef | null {
+  return orderedEpisodes(seasons).find((e) => !watched.has(e.id) && isAired(e, now)) ?? null;
+}
+
+/** Vrai s'il reste au moins un épisode **sorti** non vu. */
+export function hasUnwatchedAired(
+  seasons: readonly SeasonRef[],
+  watched: ReadonlySet<string>,
+  now: Date,
+): boolean {
+  return nextUnwatchedAired(seasons, watched, now) !== null;
+}
+
+/** Épisodes **à venir** (diffusion future connue), triés par date croissante. */
+export function upcomingEpisodes(seasons: readonly SeasonRef[], now: Date): EpisodeRef[] {
+  return orderedEpisodes(seasons)
+    .filter((e) => e.airDate !== null && e.airDate.getTime() > now.getTime())
+    .sort((a, b) => (a.airDate as Date).getTime() - (b.airDate as Date).getTime());
 }

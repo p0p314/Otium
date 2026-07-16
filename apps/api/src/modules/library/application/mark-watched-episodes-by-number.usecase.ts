@@ -7,6 +7,7 @@ import {
   SERIES_TRACKING_REPOSITORY,
   type SeriesTrackingRepository,
 } from "../domain";
+import { toPersistableSeasons } from "./series-structure.mapper";
 
 /** Un épisode désigné par sa numérotation d'origine (saison, numéro). */
 export interface EpisodeNumberRef {
@@ -53,7 +54,7 @@ export class MarkWatchedEpisodesByNumberUseCase implements UseCase<
 
     if (!(await this.repo.hasEpisodes(ctx.mediaId))) {
       const details = await this.catalog.getSeriesDetails(ctx.externalId);
-      await this.repo.saveSeasons(ctx.mediaId, details.seasons);
+      await this.repo.saveSeasons(ctx.mediaId, toPersistableSeasons(details.seasons));
     }
 
     const seasons = await this.repo.getSeasons(ctx.mediaId);

@@ -35,7 +35,7 @@ describe("MarkWatchedEpisodesByNumberUseCase", () => {
       isEpisodeOfMedia: vi.fn(),
       countEpisodesOfMedia: vi.fn(),
       setEpisodeWatched: vi.fn(),
-      listInProgress: vi.fn(),
+      listTrackedSeries: vi.fn(),
     } as unknown as SeriesTrackingRepository;
     catalog = {
       name: "fake",

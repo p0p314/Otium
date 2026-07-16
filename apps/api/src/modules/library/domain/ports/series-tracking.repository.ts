@@ -6,6 +6,8 @@ export interface PersistableEpisode {
   readonly number: number;
   readonly title: string;
   readonly runtimeMinutes: number | null;
+  /** Date de diffusion, ou null si inconnue. */
+  readonly airDate: Date | null;
 }
 
 export interface PersistableSeason {
@@ -56,8 +58,11 @@ export interface SeriesTrackingRepository {
     watched: boolean,
   ): Promise<void>;
   setStatus(itemId: string, status: WatchStatus): Promise<void>;
-  /** Progression de toutes les séries en cours d'un utilisateur (accueil). */
-  listInProgress(userId: string): Promise<SeriesProgressRecord[]>;
+  /**
+   * Progression de **toutes** les séries de la bibliothèque d'un utilisateur (tous
+   * statuts), structure saisons/épisodes incluse. Base de l'accueil et de « À venir ».
+   */
+  listTrackedSeries(userId: string): Promise<SeriesProgressRecord[]>;
 }
 
 export const SERIES_TRACKING_REPOSITORY = Symbol("SERIES_TRACKING_REPOSITORY");

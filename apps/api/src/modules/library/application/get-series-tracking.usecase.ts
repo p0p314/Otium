@@ -1,11 +1,9 @@
 import { Inject, Injectable, NotFoundException } from "@nestjs/common";
 import type { UseCase } from "../../../shared/application/use-case";
 import { MEDIA_CATALOG_PROVIDER, type MediaCatalogProvider } from "../../media/domain";
-import {
-  SERIES_TRACKING_REPOSITORY,
-  type SeriesTrackingRepository,
-} from "../domain";
+import { SERIES_TRACKING_REPOSITORY, type SeriesTrackingRepository } from "../domain";
 import { buildSeriesTrackingView, type SeriesTrackingView } from "./series-tracking.view";
+import { toPersistableSeasons } from "./series-structure.mapper";
 
 export interface GetSeriesTrackingInput {
   userId: string;
@@ -17,7 +15,10 @@ export interface GetSeriesTrackingInput {
  * depuis le fournisseur (puis la persiste) si elle n'est pas encore en base.
  */
 @Injectable()
-export class GetSeriesTrackingUseCase implements UseCase<GetSeriesTrackingInput, SeriesTrackingView> {
+export class GetSeriesTrackingUseCase implements UseCase<
+  GetSeriesTrackingInput,
+  SeriesTrackingView
+> {
   constructor(
     @Inject(SERIES_TRACKING_REPOSITORY) private readonly repo: SeriesTrackingRepository,
     @Inject(MEDIA_CATALOG_PROVIDER) private readonly catalog: MediaCatalogProvider,
@@ -29,7 +30,7 @@ export class GetSeriesTrackingUseCase implements UseCase<GetSeriesTrackingInput,
 
     if (!(await this.repo.hasEpisodes(ctx.mediaId))) {
       const details = await this.catalog.getSeriesDetails(ctx.externalId);
-      await this.repo.saveSeasons(ctx.mediaId, details.seasons);
+      await this.repo.saveSeasons(ctx.mediaId, toPersistableSeasons(details.seasons));
     }
 
     const [seasons, watched] = await Promise.all([

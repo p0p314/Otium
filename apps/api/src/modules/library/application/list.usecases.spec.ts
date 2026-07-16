@@ -32,10 +32,14 @@ describe("List use cases", () => {
 
   beforeEach(() => {
     repo = {
-      create: vi.fn().mockResolvedValue({ id: "list-1", name: "L", itemCount: 0, createdAt: new Date() }),
+      create: vi
+        .fn()
+        .mockResolvedValue({ id: "list-1", name: "L", itemCount: 0, createdAt: new Date() }),
       findByUser: vi.fn().mockResolvedValue([]),
       findDetail: vi.fn().mockResolvedValue(detail),
-      rename: vi.fn().mockResolvedValue({ id: "list-1", name: "L2", itemCount: 0, createdAt: new Date() }),
+      rename: vi
+        .fn()
+        .mockResolvedValue({ id: "list-1", name: "L2", itemCount: 0, createdAt: new Date() }),
       remove: vi.fn().mockResolvedValue(true),
       addMedia: vi.fn().mockResolvedValue(detail),
       removeMedia: vi.fn().mockResolvedValue(detail),

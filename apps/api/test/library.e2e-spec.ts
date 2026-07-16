@@ -17,6 +17,7 @@ import {
 } from "../src/modules/library/domain";
 import { AddMediaToLibraryUseCase } from "../src/modules/library/application/add-media-to-library.usecase";
 import { GetHomeDashboardUseCase } from "../src/modules/library/application/get-home-dashboard.usecase";
+import { GetUpcomingUseCase } from "../src/modules/library/application/get-upcoming.usecase";
 import { GetLibraryUseCase } from "../src/modules/library/application/get-library.usecase";
 import { RemoveFromLibraryUseCase } from "../src/modules/library/application/remove-from-library.usecase";
 import { SetWatchStatusUseCase } from "../src/modules/library/application/set-watch-status.usecase";
@@ -121,9 +122,13 @@ describe("Library (e2e)", () => {
         RateMediaUseCase,
         SetWatchStatusUseCase,
         GetHomeDashboardUseCase,
+        GetUpcomingUseCase,
         AuthGuard,
         { provide: LIBRARY_REPOSITORY, useClass: InMemoryLibraryRepository },
-        { provide: SERIES_TRACKING_REPOSITORY, useValue: { listInProgress: async () => [] } },
+        {
+          provide: SERIES_TRACKING_REPOSITORY,
+          useValue: { listTrackedSeries: async () => [], getContext: async () => null },
+        },
         {
           provide: MEDIA_CATALOG_PROVIDER,
           useValue: {
@@ -166,6 +171,16 @@ describe("Library (e2e)", () => {
     const list = await auth(request(server()).get("/library"));
     expect(list.status).toBe(200);
     expect(list.body).toHaveLength(1);
+  });
+
+  it("expose le tableau de bord et l'agenda « à venir » (structure cloisonnée par type)", async () => {
+    const home = await auth(request(server()).get("/library/home"));
+    expect(home.status).toBe(200);
+    expect(home.body).toEqual({ series: { toResume: [], toStart: [] } });
+
+    const upcoming = await auth(request(server()).get("/library/upcoming"));
+    expect(upcoming.status).toBe(200);
+    expect(upcoming.body).toEqual({ series: [] });
   });
 
   it("bascule le favori puis retire l'élément", async () => {

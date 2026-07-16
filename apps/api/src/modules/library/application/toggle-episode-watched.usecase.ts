@@ -22,9 +22,10 @@ export interface ToggleEpisodeWatchedInput {
  * et émet `EpisodeWatched` puis, le cas échéant, `SeriesCompleted`.
  */
 @Injectable()
-export class ToggleEpisodeWatchedUseCase
-  implements UseCase<ToggleEpisodeWatchedInput, SeriesTrackingView>
-{
+export class ToggleEpisodeWatchedUseCase implements UseCase<
+  ToggleEpisodeWatchedInput,
+  SeriesTrackingView
+> {
   constructor(
     @Inject(SERIES_TRACKING_REPOSITORY) private readonly repo: SeriesTrackingRepository,
     @Inject(EVENT_PUBLISHER) private readonly events: EventPublisher,

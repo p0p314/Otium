@@ -36,6 +36,8 @@ export interface CatalogEpisode {
   readonly number: number;
   readonly title: string;
   readonly runtimeMinutes: number | null;
+  /** Date de diffusion ISO (`YYYY-MM-DD`), ou null si inconnue. */
+  readonly airDate: string | null;
 }
 
 export interface CatalogSeason {

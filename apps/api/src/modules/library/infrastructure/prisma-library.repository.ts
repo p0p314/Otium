@@ -69,7 +69,10 @@ export class PrismaLibraryRepository implements LibraryRepository {
   }
 
   async setFavorite(userId: string, itemId: string, isFavorite: boolean): Promise<LibraryItem> {
-    await this.prisma.libraryItem.updateMany({ where: { id: itemId, userId }, data: { isFavorite } });
+    await this.prisma.libraryItem.updateMany({
+      where: { id: itemId, userId },
+      data: { isFavorite },
+    });
     const updated = await this.findItem(userId, itemId);
     if (!updated) throw new InternalServerErrorException("Élément introuvable après mise à jour.");
     return updated;
