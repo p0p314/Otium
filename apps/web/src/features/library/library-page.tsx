@@ -1,5 +1,5 @@
 import type { MediaType } from "@otium/types";
-import { Button, Select, Skeleton, buttonVariants } from "@otium/ui";
+import { Button, Skeleton, buttonVariants, cn } from "@otium/ui";
 import { Link } from "@tanstack/react-router";
 import { Heart, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -33,7 +33,10 @@ export function LibraryPage() {
     autoSelected.current = true;
     setCategory((currentCategory) => {
       if (data.some((item) => item.media.type === currentCategory)) return currentCategory;
-      return CATEGORY_ORDER.find((type) => data.some((item) => item.media.type === type)) ?? currentCategory;
+      return (
+        CATEGORY_ORDER.find((type) => data.some((item) => item.media.type === type)) ??
+        currentCategory
+      );
     });
   }, [data]);
 
@@ -42,23 +45,35 @@ export function LibraryPage() {
 
   return (
     <section className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-4">
+      <div className="space-y-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Ma bibliothèque</h1>
           <p className="text-muted-foreground">Vos films et séries suivis, par catégorie.</p>
         </div>
-        <Select
+        {/* Segmented control : bascule de catégorie en 1 tap (mieux qu'un select sur mobile). */}
+        <div
+          role="tablist"
           aria-label="Catégorie"
-          className="max-w-[10rem]"
-          value={category}
-          onChange={(event) => setCategory(event.target.value as MediaType)}
+          className="inline-flex gap-1 rounded-full bg-muted p-1"
         >
           {CATEGORY_ORDER.map((value) => (
-            <option key={value} value={value}>
-              {CATEGORIES[value].label} ({counts[value]})
-            </option>
+            <button
+              key={value}
+              role="tab"
+              aria-selected={category === value}
+              onClick={() => setCategory(value)}
+              className={cn(
+                "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
+                category === value
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {CATEGORIES[value].label}
+              <span className="ml-1.5 text-xs opacity-70">{counts[value]}</span>
+            </button>
           ))}
-        </Select>
+        </div>
       </div>
 
       {isLoading ? (
@@ -104,7 +119,7 @@ export function LibraryPage() {
                     className="bg-background/85 backdrop-blur"
                   />
                 </div>
-                <div className="absolute inset-x-1 top-1 flex justify-between opacity-0 transition-opacity group-hover:opacity-100">
+                <div className="absolute inset-x-1 top-1 flex justify-between opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100">
                   <Button
                     variant={item.isFavorite ? "primary" : "secondary"}
                     size="icon"
