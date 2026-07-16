@@ -1,10 +1,15 @@
 import type { HomeSeries } from "@otium/types";
-import { Skeleton, buttonVariants } from "@otium/ui";
+import { Skeleton, buttonVariants, cn } from "@otium/ui";
 import { Link } from "@tanstack/react-router";
+import { useState } from "react";
 import { useHomeDashboard } from "./api/use-home";
+import { useUpcoming } from "./api/use-upcoming";
 import { HomeSeriesCard } from "./components/home-series-card";
+import { UpcomingList } from "./components/upcoming-list";
 
 const GRID = "grid gap-3 sm:grid-cols-2";
+
+type Tab = "dashboard" | "upcoming";
 
 function Section({ title, subtitle, series }: { title: string; subtitle: string; series: HomeSeries[] }) {
   if (series.length === 0) return null;
@@ -23,56 +28,94 @@ function Section({ title, subtitle, series }: { title: string; subtitle: string;
   );
 }
 
-/** Accueil connecté : met en avant les séries à reprendre et celles laissées de côté. */
+function EmptyDashboard() {
+  return (
+    <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed py-16 text-center">
+      <p className="font-medium">Rien à suivre pour l'instant</p>
+      <p className="max-w-xs text-sm text-muted-foreground">
+        Ajoutez une série : dès qu'un épisode est sorti, elle apparaît ici (à reprendre ou à
+        commencer).
+      </p>
+      <Link to="/search" className={buttonVariants({ size: "sm" })}>
+        Rechercher une série
+      </Link>
+    </div>
+  );
+}
+
+/** Accueil connecté : tableau de bord (à reprendre / à commencer) et onglet « À venir ». */
 export function HomeDashboard({ displayName }: { displayName: string }) {
-  const { data, isLoading } = useHomeDashboard();
+  const [tab, setTab] = useState<Tab>("dashboard");
+  const dashboard = useHomeDashboard();
+  // Récupéré paresseusement : seulement quand l'onglet « À venir » est ouvert.
+  const upcoming = useUpcoming();
 
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <Skeleton className="h-8 w-56" />
-        <div className={GRID}>
-          {Array.from({ length: 2 }).map((_, i) => (
-            <Skeleton key={i} className="h-28 w-full" />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  const hasContent =
-    data && (data.continueWatching.length > 0 || data.staleSeries.length > 0);
+  const series = dashboard.data?.series;
+  const hasDashboard = series && (series.toResume.length > 0 || series.toStart.length > 0);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Bonjour {displayName}</h1>
         <p className="text-muted-foreground">Reprenez là où vous vous êtes arrêté.</p>
       </div>
 
-      {hasContent ? (
-        <>
-          <Section
-            title="Continuer à regarder"
-            subtitle="Vos séries en cours."
-            series={data.continueWatching}
-          />
-          <Section
-            title="Laissées de côté"
-            subtitle="Pas d'épisode vu depuis un moment — on reprend ?"
-            series={data.staleSeries}
-          />
-        </>
-      ) : (
-        <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed py-16 text-center">
-          <p className="font-medium">Aucune série en cours</p>
-          <p className="max-w-xs text-sm text-muted-foreground">
-            Ajoutez une série et marquez un épisode vu pour la voir apparaître ici.
-          </p>
-          <Link to="/search" className={buttonVariants({ size: "sm" })}>
-            Rechercher une série
-          </Link>
+      {/* Onglets : tableau de bord ou agenda « à venir ». */}
+      <div role="tablist" aria-label="Vue" className="inline-flex gap-1 rounded-full bg-muted p-1">
+        {(
+          [
+            ["dashboard", "À suivre"],
+            ["upcoming", "À venir"],
+          ] as const
+        ).map(([value, label]) => (
+          <button
+            key={value}
+            role="tab"
+            aria-selected={tab === value}
+            onClick={() => setTab(value)}
+            className={cn(
+              "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
+              tab === value
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "dashboard" ? (
+        dashboard.isLoading ? (
+          <div className={GRID}>
+            {Array.from({ length: 2 }).map((_, i) => (
+              <Skeleton key={i} className="h-28 w-full" />
+            ))}
+          </div>
+        ) : hasDashboard ? (
+          <div className="space-y-8">
+            <Section
+              title="À reprendre"
+              subtitle="Séries commencées avec un épisode sorti à voir."
+              series={series.toResume}
+            />
+            <Section
+              title="À commencer"
+              subtitle="Séries pas encore commencées, déjà disponibles."
+              series={series.toStart}
+            />
+          </div>
+        ) : (
+          <EmptyDashboard />
+        )
+      ) : upcoming.isLoading ? (
+        <div className="space-y-2">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} className="h-[88px] w-full rounded-xl" />
+          ))}
         </div>
+      ) : (
+        <UpcomingList episodes={upcoming.data?.series ?? []} />
       )}
     </div>
   );
