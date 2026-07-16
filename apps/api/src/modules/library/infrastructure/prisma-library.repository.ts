@@ -1,7 +1,13 @@
 import { Injectable, InternalServerErrorException } from "@nestjs/common";
 import { type Prisma } from "@prisma/client";
 import { PrismaService } from "../../../shared/infrastructure/prisma/prisma.service";
-import type { LibraryItem, LibraryRepository, MediaDescriptor, WatchStatus } from "../domain";
+import type {
+  LibraryItem,
+  LibraryRepository,
+  MediaDescriptor,
+  UpcomingMovieRecord,
+  WatchStatus,
+} from "../domain";
 
 type LibraryItemRow = Prisma.LibraryItemGetPayload<{ include: { media: true } }>;
 
@@ -27,6 +33,7 @@ export class PrismaLibraryRepository implements LibraryRepository {
         externalId: media.externalRef.externalId,
         genres: media.genres ? [...media.genres] : [],
         runtimeMinutes: media.runtimeMinutes ?? null,
+        releaseDate: media.releaseDate ?? null,
       },
       update: {
         title: media.title,
@@ -35,6 +42,7 @@ export class PrismaLibraryRepository implements LibraryRepository {
         // Enrichit un média déjà présent mais sans genres/durée (ajout antérieur).
         ...(media.genres && media.genres.length > 0 ? { genres: [...media.genres] } : {}),
         ...(media.runtimeMinutes != null ? { runtimeMinutes: media.runtimeMinutes } : {}),
+        ...(media.releaseDate != null ? { releaseDate: media.releaseDate } : {}),
       },
     });
 
@@ -111,6 +119,24 @@ export class PrismaLibraryRepository implements LibraryRepository {
         ...(metadata.genres.length > 0 ? { genres: [...metadata.genres] } : {}),
       },
     });
+  }
+
+  async listUpcomingMovies(userId: string, now: Date): Promise<UpcomingMovieRecord[]> {
+    const rows = await this.prisma.libraryItem.findMany({
+      where: {
+        userId,
+        status: { not: "DROPPED" },
+        media: { type: "MOVIE", releaseDate: { gt: now } },
+      },
+      select: { id: true, media: { select: { title: true, posterUrl: true, releaseDate: true } } },
+      orderBy: { media: { releaseDate: "asc" } },
+    });
+    return rows.map((row) => ({
+      itemId: row.id,
+      title: row.media.title,
+      posterUrl: row.media.posterUrl,
+      releaseDate: row.media.releaseDate as Date,
+    }));
   }
 
   private toDomain(row: LibraryItemRow): LibraryItem {

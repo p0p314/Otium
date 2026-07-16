@@ -13,11 +13,22 @@ export const UpcomingEpisode = z.object({
 });
 export type UpcomingEpisode = z.infer<typeof UpcomingEpisode>;
 
+/** Un film **à venir** (sortie future) présent dans la bibliothèque. */
+export const UpcomingMovie = z.object({
+  itemId: z.string(),
+  title: z.string(),
+  posterUrl: z.string().url().nullable(),
+  /** Date de sortie prévue (ISO). */
+  releaseDate: z.string().datetime(),
+});
+export type UpcomingMovie = z.infer<typeof UpcomingMovie>;
+
 /**
  * Agenda « À venir », **cloisonné par type de média** (jamais mélangés) et extensible
- * (sorties de films, parutions de livres plus tard). V1 : épisodes de séries.
+ * (parutions de livres plus tard). Séries : prochains épisodes ; films : sorties.
  */
 export const UpcomingDashboard = z.object({
   series: z.array(UpcomingEpisode),
+  movies: z.array(UpcomingMovie),
 });
 export type UpcomingDashboard = z.infer<typeof UpcomingDashboard>;

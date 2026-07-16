@@ -65,6 +65,7 @@ export class AddMediaToLibraryUseCase implements UseCase<AddMediaToLibraryInput,
         ...media,
         genres: details.genres.map((g) => g.label),
         runtimeMinutes: details.runtimeMinutes ?? media.runtimeMinutes ?? null,
+        releaseDate: details.releaseDate ? new Date(details.releaseDate) : (media.releaseDate ?? null),
       };
     } catch (error) {
       this.logger.warn(`Enrichissement du média impossible : ${(error as Error).message}`);

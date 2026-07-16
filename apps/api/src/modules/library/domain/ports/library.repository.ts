@@ -1,5 +1,13 @@
 import type { LibraryItem, MediaDescriptor, WatchStatus } from "../models/library-item";
 
+/** Un film de la bibliothèque dont la sortie est à venir (pour l'agenda « À venir »). */
+export interface UpcomingMovieRecord {
+  readonly itemId: string;
+  readonly title: string;
+  readonly posterUrl: string | null;
+  readonly releaseDate: Date;
+}
+
 /**
  * Port de persistance de la bibliothèque. L'ajout persiste aussi le média sous-jacent
  * (upsert par `externalRef`) — le domaine ignore ce détail d'infrastructure.
@@ -26,6 +34,8 @@ export interface LibraryRepository {
     ref: { provider: string; externalId: string },
     metadata: { genres: readonly string[]; runtimeMinutes: number | null },
   ): Promise<void>;
+  /** Films de la bibliothèque dont la date de sortie est postérieure à `now`. */
+  listUpcomingMovies(userId: string, now: Date): Promise<UpcomingMovieRecord[]>;
 }
 
 export const LIBRARY_REPOSITORY = Symbol("LIBRARY_REPOSITORY");

@@ -36,9 +36,10 @@ Objectif atteint : un utilisateur s'inscrit, cherche, ajoute, note/commente et s
   (`PATCH /library/:id/status`), événements `WatchStatusChanged` / `MovieCompleted`.
 - [x] **Accueil personnalisé** — tableau de bord `GET /library/home` cloisonné par type de média :
   **à reprendre** (série commencée avec un épisode sorti non vu) puis **à commencer** (série non
-  commencée déjà disponible). Onglet **« À venir »** (`GET /library/upcoming`) : épisodes à diffusion
-  future des séries suivies. S'appuie sur les **dates de diffusion** (`Episode.airDate`, fournies par
-  TMDB) et la synchronisation de la structure d'une série à l'ajout.
+  commencée déjà disponible). Onglet **« À venir »** (`GET /library/upcoming`), cloisonné par type
+  (sous-onglets **Séries** / **Films**, jamais mélangés) : prochains **épisodes** des séries suivies
+  et prochaines **sorties de films**. S'appuie sur les dates du catalogue TMDB — `Episode.airDate`
+  (séries) et `Media.releaseDate` (films) — synchronisées à l'ajout du média.
 - [x] **Bibliothèque par catégorie** — sélecteur Films / Séries (jamais les deux en même temps).
 - [x] **Mise en avant dans la recherche** — tendances du moment (films/séries) sous la barre
   (`GET /media/trending`, TMDB `trending`).

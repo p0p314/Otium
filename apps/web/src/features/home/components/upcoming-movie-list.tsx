@@ -1,17 +1,17 @@
-import type { UpcomingEpisode } from "@otium/types";
+import type { UpcomingMovie } from "@otium/types";
 import { Link } from "@tanstack/react-router";
 import { CalendarClock } from "lucide-react";
 import { formatUpcomingDate } from "../lib/upcoming-date";
 
-/** Liste des épisodes à venir, triés par date (rendu mobile-first : lignes tactiles). */
-export function UpcomingList({ episodes }: { episodes: UpcomingEpisode[] }) {
-  if (episodes.length === 0) {
+/** Liste des films à venir (sorties), triés par date. Rendu mobile-first. */
+export function UpcomingMovieList({ movies }: { movies: UpcomingMovie[] }) {
+  if (movies.length === 0) {
     return (
       <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed py-16 text-center">
         <CalendarClock className="h-8 w-8 text-muted-foreground" aria-hidden />
-        <p className="font-medium">Rien à l'horizon</p>
+        <p className="font-medium">Aucune sortie à l'horizon</p>
         <p className="max-w-xs text-sm text-muted-foreground">
-          Les prochains épisodes de vos séries suivies apparaîtront ici dès qu'une date est connue.
+          Ajoutez un film pas encore sorti : sa date de sortie apparaîtra ici.
         </p>
       </div>
     );
@@ -20,31 +20,28 @@ export function UpcomingList({ episodes }: { episodes: UpcomingEpisode[] }) {
   const now = new Date();
   return (
     <ul className="space-y-2">
-      {episodes.map((ep) => (
-        <li key={`${ep.itemId}-${ep.seasonNumber}-${ep.number}`}>
+      {movies.map((movie) => (
+        <li key={movie.itemId}>
           <Link
             to="/library/$itemId"
-            params={{ itemId: ep.itemId }}
+            params={{ itemId: movie.itemId }}
             className="group flex items-center gap-3 rounded-xl border bg-card p-3 transition-colors hover:border-primary/50"
           >
             <div className="h-16 w-11 shrink-0 overflow-hidden rounded-md bg-muted">
-              {ep.posterUrl ? (
+              {movie.posterUrl ? (
                 <img
-                  src={ep.posterUrl}
-                  alt={`Affiche de ${ep.seriesTitle}`}
+                  src={movie.posterUrl}
+                  alt={`Affiche de ${movie.title}`}
                   loading="lazy"
                   className="h-full w-full object-cover"
                 />
               ) : null}
             </div>
-            <div className="min-w-0 flex-1">
-              <p className="line-clamp-1 font-medium group-hover:text-primary">{ep.seriesTitle}</p>
-              <p className="line-clamp-1 text-sm text-muted-foreground">
-                S{ep.seasonNumber}E{ep.number} · {ep.title}
-              </p>
-            </div>
+            <p className="min-w-0 flex-1 line-clamp-2 font-medium group-hover:text-primary">
+              {movie.title}
+            </p>
             <span className="shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs font-medium capitalize text-muted-foreground">
-              {formatUpcomingDate(ep.airDate, now)}
+              {formatUpcomingDate(movie.releaseDate, now)}
             </span>
           </Link>
         </li>

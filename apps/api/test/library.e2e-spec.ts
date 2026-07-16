@@ -89,6 +89,9 @@ class InMemoryLibraryRepository implements LibraryRepository {
     return item && item.userId === userId ? `media-${item.media.externalRef.externalId}` : null;
   }
   async backfillMediaMetadata(): Promise<void> {}
+  async listUpcomingMovies(): Promise<[]> {
+    return [];
+  }
 }
 
 const TOKEN = "test-token";
@@ -180,7 +183,7 @@ describe("Library (e2e)", () => {
 
     const upcoming = await auth(request(server()).get("/library/upcoming"));
     expect(upcoming.status).toBe(200);
-    expect(upcoming.body).toEqual({ series: [] });
+    expect(upcoming.body).toEqual({ series: [], movies: [] });
   });
 
   it("bascule le favori puis retire l'élément", async () => {
