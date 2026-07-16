@@ -31,6 +31,7 @@ describe("MarkWatchedEpisodesByNumberUseCase", () => {
       getSeasons: vi.fn(async () => seasons),
       getWatchedEpisodeIds: vi.fn(async () => new Set(["s1e1", "s1e2"])),
       setEpisodesWatched: vi.fn(async () => undefined),
+      setEpisodesWatchedAt: vi.fn(async () => undefined),
       setStatus: vi.fn(async () => undefined),
       isEpisodeOfMedia: vi.fn(),
       countEpisodesOfMedia: vi.fn(),
@@ -70,8 +71,25 @@ describe("MarkWatchedEpisodesByNumberUseCase", () => {
 
     expect(catalog.getSeriesDetails).toHaveBeenCalledWith("e1");
     expect(repo.saveSeasons).toHaveBeenCalled();
-    expect(repo.setEpisodesWatched).toHaveBeenCalledWith("i1", ["s1e1", "s1e2"], true);
+    expect(repo.setEpisodesWatchedAt).toHaveBeenCalledWith("i1", [
+      { episodeId: "s1e1", watchedAt: expect.any(Date) },
+      { episodeId: "s1e2", watchedAt: expect.any(Date) },
+    ]);
     expect(result).toEqual({ marked: 2, unmatched: 1 });
+  });
+
+  it("conserve la date de visionnage fournie (import de l'historique)", async () => {
+    const useCase = new MarkWatchedEpisodesByNumberUseCase(repo, catalog);
+    const watchedAt = new Date("2025-02-03T10:00:00Z");
+    await useCase.execute({
+      userId: "u1",
+      itemId: "i1",
+      episodes: [{ seasonNumber: 1, episodeNumber: 1, watchedAt }],
+    });
+
+    expect(repo.setEpisodesWatchedAt).toHaveBeenCalledWith("i1", [
+      { episodeId: "s1e1", watchedAt },
+    ]);
   });
 
   it("passe la série en COMPLETED quand tous les épisodes sont vus", async () => {

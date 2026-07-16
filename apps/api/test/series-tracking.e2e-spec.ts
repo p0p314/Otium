@@ -76,6 +76,12 @@ class InMemorySeriesRepo implements SeriesTrackingRepository {
       else this.watched.delete(id);
     }
   }
+  async setEpisodesWatchedAt(
+    _itemId: string,
+    entries: readonly { episodeId: string; watchedAt: Date }[],
+  ): Promise<void> {
+    for (const { episodeId } of entries) this.watched.add(episodeId);
+  }
   async setStatus(_itemId: string, status: WatchStatus): Promise<void> {
     this.status = status;
   }

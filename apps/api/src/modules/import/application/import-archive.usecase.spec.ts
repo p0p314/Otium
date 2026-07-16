@@ -45,8 +45,8 @@ const batch: ImportBatch = {
       status: "IN_PROGRESS",
       runtimeMinutes: null,
       watchedEpisodes: [
-        { seasonNumber: 1, episodeNumber: 1 },
-        { seasonNumber: 1, episodeNumber: 2 },
+        { seasonNumber: 1, episodeNumber: 1, watchedAt: new Date("2026-01-10T20:00:00Z") },
+        { seasonNumber: 1, episodeNumber: 2, watchedAt: new Date("2026-01-12T20:00:00Z") },
       ],
     },
   ],

@@ -45,6 +45,22 @@ function runtimeToMinutes(raw: string | undefined): number | null {
   return seconds && seconds > 0 ? Math.round(seconds / 60) : null;
 }
 
+/** Horodatage TV Time (`created_at`, ex. « 2026-04-12 11:57:09 ») → `Date`, ou null si absent/invalide. */
+function parseTimestamp(raw: string | undefined): Date | null {
+  if (!raw || raw.trim() === "") return null;
+  // Format « YYYY-MM-DD HH:MM:SS » : normaliser en ISO pour un parsing déterministe (UTC).
+  const iso = raw.trim().replace(" ", "T") + (raw.includes("Z") ? "" : "Z");
+  const ms = Date.parse(iso);
+  return Number.isNaN(ms) ? null : new Date(ms);
+}
+
+/** Garde la date la plus récente (null = inconnue, dominé par toute date connue). */
+function moreRecent(a: Date | null, b: Date | null): Date | null {
+  if (a === null) return b;
+  if (b === null) return a;
+  return a.getTime() >= b.getTime() ? a : b;
+}
+
 /**
  * Parseur de l'export RGPD **TV Time**. Deux formats coexistent : les films dans
  * `tracking-prod-records.csv` (v1), les séries et le suivi épisode par épisode dans
@@ -115,7 +131,10 @@ export class TvTimeParser implements ImportSourceParser {
         const episodeNumber = parseInt10(row["episode_number"]);
         if (seasonNumber == null || episodeNumber == null) continue;
         const eps = episodesByTitle.get(title) ?? new Map<string, ImportedEpisode>();
-        eps.set(`${seasonNumber}:${episodeNumber}`, { seasonNumber, episodeNumber });
+        const slot = `${seasonNumber}:${episodeNumber}`;
+        // Un épisode vu puis revu : conserver la date de visionnage la plus récente.
+        const watchedAt = moreRecent(eps.get(slot)?.watchedAt ?? null, parseTimestamp(row["created_at"]));
+        eps.set(slot, { seasonNumber, episodeNumber, watchedAt });
         episodesByTitle.set(title, eps);
         known.add(title);
       } else if (key.startsWith("user-series")) {

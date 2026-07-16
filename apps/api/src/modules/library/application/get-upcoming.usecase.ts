@@ -13,8 +13,9 @@ import { buildUpcoming } from "./upcoming.view";
 /**
  * Agenda « À venir » : épisodes à diffusion future des séries suivies **et** sorties
  * futures des films de la bibliothèque. Lecture seule ; assemblage pur cloisonné par
- * type de média délégué à {@link buildUpcoming}. Rafraîchit au préalable la structure
- * des séries périmées (garde-fou de fraîcheur) pour capter les épisodes nouvellement datés.
+ * type de média délégué à {@link buildUpcoming}. Déclenche en **arrière-plan** (sans
+ * bloquer la réponse) la resynchronisation des séries périmées, pour capter les épisodes
+ * nouvellement datés au prochain chargement sans pénaliser la latence perçue.
  */
 @Injectable()
 export class GetUpcomingUseCase implements UseCase<string, UpcomingDashboard> {
@@ -25,7 +26,8 @@ export class GetUpcomingUseCase implements UseCase<string, UpcomingDashboard> {
   ) {}
 
   async execute(userId: string): Promise<UpcomingDashboard> {
-    await this.refresh.execute(userId);
+    // Non bloquant : la resynchronisation (garde-fou de fraîcheur) tourne en tâche de fond.
+    void this.refresh.execute(userId).catch(() => undefined);
     const now = new Date();
     const [series, movies] = await Promise.all([
       this.tracking.listTrackedSeries(userId),

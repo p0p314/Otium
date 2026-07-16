@@ -12,6 +12,8 @@ export type ImportStatus = "PLANNED" | "IN_PROGRESS" | "COMPLETED" | "DROPPED";
 export interface ImportedEpisode {
   readonly seasonNumber: number;
   readonly episodeNumber: number;
+  /** Date réelle du visionnage si l'export la fournit (TV Time `created_at`), sinon null. */
+  readonly watchedAt: Date | null;
 }
 
 /** Un média importé, avant rapprochement au catalogue. */

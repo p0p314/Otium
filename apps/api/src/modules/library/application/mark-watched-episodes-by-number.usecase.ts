@@ -13,6 +13,8 @@ import { toPersistableSeasons } from "./series-structure.mapper";
 export interface EpisodeNumberRef {
   readonly seasonNumber: number;
   readonly episodeNumber: number;
+  /** Date réelle du visionnage si connue (import), sinon la date du jour à la persistance. */
+  readonly watchedAt?: Date | null;
 }
 
 export interface MarkWatchedEpisodesByNumberInput {
@@ -63,14 +65,23 @@ export class MarkWatchedEpisodesByNumberUseCase implements UseCase<
       idByNumber.set(`${episode.seasonNumber}:${episode.number}`, episode.id);
     }
 
-    const matchedIds = new Set<string>();
-    for (const { seasonNumber, episodeNumber } of episodes) {
+    // Rapprochement numéro → id interne, en conservant la date de visionnage la plus récente
+    // par épisode (un même épisode peut apparaître plusieurs fois dans un export).
+    const now = new Date();
+    const watchedAtById = new Map<string, Date>();
+    for (const { seasonNumber, episodeNumber, watchedAt } of episodes) {
       const id = idByNumber.get(`${seasonNumber}:${episodeNumber}`);
-      if (id) matchedIds.add(id);
+      if (!id) continue;
+      const date = watchedAt ?? now;
+      const existing = watchedAtById.get(id);
+      if (!existing || date.getTime() > existing.getTime()) watchedAtById.set(id, date);
     }
 
-    if (matchedIds.size > 0) {
-      await this.repo.setEpisodesWatched(itemId, [...matchedIds], true);
+    if (watchedAtById.size > 0) {
+      await this.repo.setEpisodesWatchedAt(
+        itemId,
+        [...watchedAtById].map(([episodeId, watchedAt]) => ({ episodeId, watchedAt })),
+      );
     }
 
     const watched = await this.repo.getWatchedEpisodeIds(itemId);
@@ -81,6 +92,9 @@ export class MarkWatchedEpisodesByNumberUseCase implements UseCase<
         : "PLANNED";
     if (status !== ctx.status) await this.repo.setStatus(itemId, status);
 
-    return { marked: matchedIds.size, unmatched: episodes.length - matchedIds.size };
+    return {
+      marked: watchedAtById.size,
+      unmatched: episodes.length - watchedAtById.size,
+    };
   }
 }
