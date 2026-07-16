@@ -41,9 +41,10 @@ describe("buildHomeDashboard", () => {
     expect(d.series.toWatch[0]?.nextEpisode?.id).toBe("e2");
   });
 
-  it("« à voir » : série jamais commencée avec au moins un épisode sorti (à commencer)", () => {
+  it("« à commencer » : série jamais commencée avec au moins un épisode sorti", () => {
     const d = buildHomeDashboard([record({ itemId: "fresh", status: "PLANNED" })], NOW);
-    expect(d.series.toWatch.map((s) => s.itemId)).toEqual(["fresh"]);
+    expect(d.series.toStart.map((s) => s.itemId)).toEqual(["fresh"]);
+    expect(d.series.toWatch).toEqual([]);
     expect(d.series.toResume).toEqual([]);
   });
 
@@ -112,7 +113,7 @@ describe("buildHomeDashboard", () => {
     expect(d.series.toResume).toEqual([]);
   });
 
-  it("« à voir » : les séries actives (par récence) précèdent les jamais commencées (par titre)", () => {
+  it("« à voir » triée par récence ; « à commencer » séparée et triée par titre", () => {
     const newer = new Date("2026-07-14T00:00:00.000Z");
     const older = new Date("2026-07-05T00:00:00.000Z");
     const d = buildHomeDashboard(
@@ -124,13 +125,10 @@ describe("buildHomeDashboard", () => {
       ],
       NOW,
     );
-    // Actives d'abord (plus récente en tête), puis jamais commencées triées par titre.
-    expect(d.series.toWatch.map((s) => s.itemId)).toEqual([
-      "active-new",
-      "active-old",
-      "a-neuve",
-      "z-neuve",
-    ]);
+    // Actives (commencées, récentes) → à voir, plus récente en tête.
+    expect(d.series.toWatch.map((s) => s.itemId)).toEqual(["active-new", "active-old"]);
+    // Jamais commencées → à commencer, triées par titre.
+    expect(d.series.toStart.map((s) => s.itemId)).toEqual(["a-neuve", "z-neuve"]);
   });
 
   it("trie « à reprendre » du plus récemment vu au plus ancien", () => {

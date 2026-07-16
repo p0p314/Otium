@@ -100,3 +100,18 @@
     }
   }
 }
+
+/* Changement de thème : révélation circulaire de la nouvelle couleur depuis le bouton
+   (View Transitions API). On neutralise le fondu par défaut ; le clip-path est animé en JS
+   (voir ThemeToggle). La nouvelle capture est révélée par-dessus l'ancienne. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-old(root) {
+  z-index: 0;
+}
+::view-transition-new(root) {
+  z-index: 1;
+}

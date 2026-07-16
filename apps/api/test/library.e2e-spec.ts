@@ -189,7 +189,7 @@ describe("Library (e2e)", () => {
   it("expose le tableau de bord et l'agenda « à venir » (structure cloisonnée par type)", async () => {
     const home = await auth(request(server()).get("/library/home"));
     expect(home.status).toBe(200);
-    expect(home.body).toEqual({ series: { toWatch: [], toResume: [] } });
+    expect(home.body).toEqual({ series: { toWatch: [], toResume: [], toStart: [] } });
 
     const upcoming = await auth(request(server()).get("/library/upcoming"));
     expect(upcoming.status).toBe(200);

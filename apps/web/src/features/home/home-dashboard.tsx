@@ -50,7 +50,9 @@ export function HomeDashboard({ displayName }: { displayName: string }) {
   const upcoming = useUpcoming();
 
   const series = dashboard.data?.series;
-  const hasDashboard = series && (series.toWatch.length > 0 || series.toResume.length > 0);
+  const hasDashboard =
+    series &&
+    (series.toWatch.length > 0 || series.toResume.length > 0 || series.toStart.length > 0);
 
   return (
     <div className="space-y-6">
@@ -95,13 +97,18 @@ export function HomeDashboard({ displayName }: { displayName: string }) {
           <div className="space-y-8">
             <Section
               title="À voir"
-              subtitle="Séries en cours et nouveautés prêtes à démarrer."
+              subtitle="Séries en cours, vues récemment."
               series={series.toWatch}
             />
             <Section
               title="À reprendre"
               subtitle="Séries laissées de côté ce dernier trimestre."
               series={series.toResume}
+            />
+            <Section
+              title="À commencer"
+              subtitle="Séries pas encore commencées, déjà disponibles."
+              series={series.toStart}
             />
           </div>
         ) : (
