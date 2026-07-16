@@ -14,25 +14,28 @@ export function SearchPage() {
   const { data, isLoading, isError } = useMediaSearch(debounced);
 
   return (
-    <section className="space-y-8">
-      <div>
+    <section className="space-y-6">
+      <div className="hidden md:block">
         <h1 className="text-2xl font-bold tracking-tight">Rechercher</h1>
         <p className="text-muted-foreground">Films et séries, propulsés par TMDB.</p>
       </div>
 
-      <div className="relative max-w-xl">
-        <Search
-          className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground"
-          aria-hidden
-        />
-        <input
-          type="search"
-          value={term}
-          onChange={(event) => setTerm(event.target.value)}
-          placeholder="Un titre… (ex. Dune)"
-          aria-label="Rechercher un film ou une série"
-          className="h-11 w-full rounded-lg border border-input bg-background pl-10 pr-4 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        />
+      {/* Barre collante sur mobile (reste accessible en faisant défiler les résultats). */}
+      <div className="sticky top-16 z-10 -mx-4 bg-background/95 px-4 py-3 backdrop-blur md:static md:mx-0 md:max-w-xl md:bg-transparent md:p-0">
+        <div className="relative">
+          <Search
+            className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground"
+            aria-hidden
+          />
+          <input
+            type="search"
+            value={term}
+            onChange={(event) => setTerm(event.target.value)}
+            placeholder="Un titre… (ex. Dune)"
+            aria-label="Rechercher un film ou une série"
+            className="h-12 w-full rounded-full border border-input bg-background pl-11 pr-4 text-base outline-none focus-visible:ring-2 focus-visible:ring-ring md:h-11 md:rounded-lg md:text-sm"
+          />
+        </div>
       </div>
 
       {hasQuery ? (
