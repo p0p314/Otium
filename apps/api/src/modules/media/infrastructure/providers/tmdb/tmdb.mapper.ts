@@ -95,11 +95,13 @@ export function toCatalogMedia(
 
   const title = item.title ?? item.name;
   if (!title) return null;
+  const originalTitle = item.original_title ?? item.original_name ?? null;
 
   return {
     externalRef: { provider: TMDB_PROVIDER, externalId: String(item.id) },
     type,
     title,
+    originalTitle: originalTitle && originalTitle !== title ? originalTitle : null,
     year: parseYear(item.release_date ?? item.first_air_date),
     posterUrl: item.poster_path ? `${imageBaseUrl}${item.poster_path}` : null,
     genres: [],

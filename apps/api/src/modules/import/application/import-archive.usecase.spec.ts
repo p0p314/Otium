@@ -111,7 +111,7 @@ describe("ImportArchiveUseCase", () => {
     );
   }
 
-  it("importe films et séries, ignore les doublons et liste les non-rapprochés", async () => {
+  it("importe films et séries, rafraîchit les doublons et liste les non-rapprochés", async () => {
     const report = await build().execute({
       userId: "u1",
       format: "tvtime",
@@ -124,10 +124,10 @@ describe("ImportArchiveUseCase", () => {
     expect(report.unmatchedSample).toContainEqual({ type: "MOVIE", title: "NoMatch", year: 1999 });
   });
 
-  it("marque « vu » seulement les films COMPLETED", async () => {
+  it("marque « vu » les films COMPLETED (nouveaux comme rafraîchis)", async () => {
     await build().execute({ userId: "u1", format: "tvtime", archive: Buffer.from("") });
-    // Dune (COMPLETED) → un seul appel ; Tenet (PLANNED) n'en déclenche pas.
-    expect(setWatchStatus.execute).toHaveBeenCalledTimes(1);
+    // Dune (nouveau) + Already (déjà présent, rafraîchi) sont COMPLETED ; Tenet (PLANNED) non.
+    expect(setWatchStatus.execute).toHaveBeenCalledTimes(2);
     expect(setWatchStatus.execute).toHaveBeenCalledWith({
       userId: "u1",
       itemId: "item-1",

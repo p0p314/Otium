@@ -6,6 +6,8 @@
 export interface MatchCandidate {
   readonly externalId: string;
   readonly title: string;
+  /** Titre en langue d'origine, si différent du titre localisé (aide au rapprochement). */
+  readonly originalTitle?: string | null;
   readonly year: number | null;
 }
 
@@ -27,6 +29,18 @@ export function normalizeTitle(value: string): string {
     .trim();
 }
 
+/**
+ * Extrait une année (1900–2099) d'un titre — entre parenthèses « Titre (2014) » ou en
+ * suffixe « Titre 2014 » — et renvoie le titre nettoyé. Certaines sources encodent la date
+ * dans le titre, ce qui empêche le rapprochement : on la retire de la requête et on s'en sert
+ * comme signal d'année. Une année seule (« 1984 ») est conservée comme titre.
+ */
+export function extractTitleYear(title: string): { title: string; year: number | null } {
+  const match = title.match(/^(.+?)\s*[([]?\s*((?:19|20)\d{2})\s*[)\]]?\s*$/);
+  if (!match) return { title: title.trim(), year: null };
+  return { title: match[1]!.trim(), year: Number.parseInt(match[2]!, 10) };
+}
+
 function tokenSet(value: string): Set<string> {
   return new Set(normalizeTitle(value).split(" ").filter(Boolean));
 }
@@ -39,14 +53,24 @@ function jaccard(a: Set<string>, b: Set<string>): number {
   return union === 0 ? 0 : inter / union;
 }
 
+/** Similarité titre pure (0..1) : identité normalisée = 1, sinon recouvrement de tokens. */
+function titleSimilarity(query: string, candidate: string): number {
+  return normalizeTitle(query) === normalizeTitle(candidate)
+    ? 1
+    : jaccard(tokenSet(query), tokenSet(candidate));
+}
+
 /**
- * Score de similarité entre une requête et un candidat (0..~1.15). Titre identique
- * = 1 ; sinon recouvrement de tokens (Jaccard). L'année ajuste légèrement le score.
+ * Score de similarité entre une requête et un candidat (0..~1.15). On retient la meilleure
+ * similarité entre le **titre localisé** et le **titre d'origine** du candidat : un import
+ * en anglais (« The 100 ») se rapproche ainsi d'un catalogue localisé (« Les 100 ») via le
+ * titre d'origine. L'année ajuste légèrement le score.
  */
 export function scoreMatch(query: MatchQuery, candidate: MatchCandidate): number {
-  const nq = normalizeTitle(query.title);
-  const nc = normalizeTitle(candidate.title);
-  let score = nq === nc ? 1 : jaccard(tokenSet(query.title), tokenSet(candidate.title));
+  let score = titleSimilarity(query.title, candidate.title);
+  if (candidate.originalTitle) {
+    score = Math.max(score, titleSimilarity(query.title, candidate.originalTitle));
+  }
 
   if (query.year != null && candidate.year != null) {
     const diff = Math.abs(query.year - candidate.year);
