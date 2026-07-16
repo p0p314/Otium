@@ -1,74 +1,84 @@
 import { Button, Skeleton, buttonVariants } from "@otium/ui";
 import { Link, Outlet, useNavigate } from "@tanstack/react-router";
+import { LogOut, UploadCloud } from "lucide-react";
 import { Suspense } from "react";
-import { useAuth, useLogout } from "../features/auth/api/use-auth";
 import { ThemeToggle } from "../components/theme-toggle";
+import { NAV_ITEMS } from "../components/nav-items";
+import { BottomNav } from "../components/bottom-nav";
+import { useAuth, useLogout } from "../features/auth/api/use-auth";
 
-/** Coquille applicative : en-tête + navigation + état d'authentification. */
+const NAV_LINK =
+  "text-muted-foreground transition-colors hover:text-foreground [&.active]:text-foreground";
+
+/** Coquille applicative responsive : en-tête (desktop) + barre d'onglets (mobile). */
 export function RootLayout() {
   const { user, isAuthenticated } = useAuth();
   const logout = useLogout();
   const navigate = useNavigate();
 
+  const doLogout = () =>
+    logout.mutate(undefined, { onSettled: () => void navigate({ to: "/" }) });
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="sticky top-0 z-10 border-b bg-background/80 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4">
           <div className="flex items-center gap-6">
             <Link to="/" className="text-lg font-semibold tracking-tight">
               Otium<span className="text-primary">.</span>
             </Link>
-            <nav className="flex items-center gap-4 text-sm">
-              <Link
-                to="/search"
-                className="text-muted-foreground transition-colors hover:text-foreground [&.active]:text-foreground"
-              >
-                Rechercher
-              </Link>
+            {/* Navigation inline : desktop uniquement (mobile → barre d'onglets). */}
+            <nav className="hidden items-center gap-4 text-sm md:flex">
+              {NAV_ITEMS.filter((item) => !item.auth || isAuthenticated).map((item) => (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  activeOptions={{ exact: item.exact ?? false }}
+                  className={NAV_LINK}
+                >
+                  {item.label}
+                </Link>
+              ))}
               {isAuthenticated ? (
-                <>
-                  <Link
-                    to="/library"
-                    className="text-muted-foreground transition-colors hover:text-foreground [&.active]:text-foreground"
-                  >
-                    Ma bibliothèque
-                  </Link>
-                  <Link
-                    to="/lists"
-                    className="text-muted-foreground transition-colors hover:text-foreground [&.active]:text-foreground"
-                  >
-                    Mes listes
-                  </Link>
-                  <Link
-                    to="/stats"
-                    className="text-muted-foreground transition-colors hover:text-foreground [&.active]:text-foreground"
-                  >
-                    Statistiques
-                  </Link>
-                  <Link
-                    to="/import"
-                    className="text-muted-foreground transition-colors hover:text-foreground [&.active]:text-foreground"
-                  >
-                    Importer
-                  </Link>
-                </>
+                <Link to="/import" className={NAV_LINK}>
+                  Importer
+                </Link>
               ) : null}
             </nav>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {isAuthenticated ? (
               <>
-                <span className="hidden text-sm text-muted-foreground sm:inline">
+                <span className="hidden text-sm text-muted-foreground lg:inline">
                   {user?.displayName}
                 </span>
+                {/* Import : icône sur mobile (le libellé vit dans la nav desktop). */}
+                <Link
+                  to="/import"
+                  aria-label="Importer"
+                  className={`${buttonVariants({ variant: "ghost", size: "icon" })} md:hidden`}
+                >
+                  <UploadCloud className="h-5 w-5" />
+                </Link>
                 <Button
                   variant="outline"
                   size="sm"
+                  className="hidden sm:inline-flex"
                   disabled={logout.isPending}
-                  onClick={() => logout.mutate(undefined, { onSettled: () => void navigate({ to: "/" }) })}
+                  onClick={doLogout}
                 >
                   Se déconnecter
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Se déconnecter"
+                  className="sm:hidden"
+                  disabled={logout.isPending}
+                  onClick={doLogout}
+                >
+                  <LogOut className="h-5 w-5" />
                 </Button>
               </>
             ) : (
@@ -76,7 +86,10 @@ export function RootLayout() {
                 <Link to="/login" className={buttonVariants({ variant: "ghost", size: "sm" })}>
                   Connexion
                 </Link>
-                <Link to="/register" className={buttonVariants({ size: "sm" })}>
+                <Link
+                  to="/register"
+                  className={`${buttonVariants({ size: "sm" })} hidden sm:inline-flex`}
+                >
                   Créer un compte
                 </Link>
               </>
@@ -85,11 +98,15 @@ export function RootLayout() {
           </div>
         </div>
       </header>
-      <main className="mx-auto max-w-5xl px-4 py-10">
+
+      {/* Marge basse mobile pour dégager la barre d'onglets fixe. */}
+      <main className="mx-auto max-w-6xl px-4 pb-24 pt-6 md:py-10">
         <Suspense fallback={<Skeleton className="h-64 w-full" />}>
           <Outlet />
         </Suspense>
       </main>
+
+      <BottomNav />
     </div>
   );
 }
