@@ -18,10 +18,32 @@ describe("toCatalogMedia", () => {
       externalRef: { provider: "tmdb", externalId: "438631" },
       type: "MOVIE",
       title: "Dune",
+      originalTitle: null,
       year: 2021,
       posterUrl: "https://img/w342/dune.jpg",
       genres: [],
     });
+  });
+
+  it("expose le titre d'origine quand il diffère du titre localisé", () => {
+    const item: TmdbSearchItem = {
+      id: 48866,
+      media_type: "tv",
+      name: "Les 100",
+      original_name: "The 100",
+      first_air_date: "2014-03-19",
+    };
+    expect(toCatalogMedia(item, IMG)?.originalTitle).toBe("The 100");
+  });
+
+  it("n'expose pas de titre d'origine identique au titre localisé", () => {
+    const item: TmdbSearchItem = {
+      id: 1399,
+      media_type: "tv",
+      name: "Game of Thrones",
+      original_name: "Game of Thrones",
+    };
+    expect(toCatalogMedia(item, IMG)?.originalTitle).toBeNull();
   });
 
   it("mappe une série (name/first_air_date) sans poster", () => {

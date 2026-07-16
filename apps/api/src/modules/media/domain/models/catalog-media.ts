@@ -19,6 +19,8 @@ export interface CatalogMedia {
   readonly externalRef: CatalogExternalRef;
   readonly type: CatalogMediaType;
   readonly title: string;
+  /** Titre d'origine (langue originale), utile au rapprochement d'imports en anglais. */
+  readonly originalTitle: string | null;
   readonly year: number | null;
   readonly posterUrl: string | null;
   readonly genres: readonly CatalogGenre[];

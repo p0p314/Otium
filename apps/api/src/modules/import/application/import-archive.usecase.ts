@@ -6,9 +6,11 @@ import { MarkWatchedEpisodesByNumberUseCase } from "../../library/application/ma
 import { SetWatchStatusUseCase } from "../../library/application/set-watch-status.usecase";
 import { MEDIA_CATALOG_PROVIDER, type MediaCatalogProvider } from "../../media/domain";
 import type { UseCase } from "../../../shared/application/use-case";
+import type { CatalogMedia } from "../../media/domain";
 import {
   ARCHIVE_READER,
   type ArchiveReader,
+  extractTitleYear,
   IMPORT_SOURCE_PARSERS,
   type ImportedMedia,
   type ImportSourceParser,
@@ -59,11 +61,13 @@ export class ImportArchiveUseCase implements UseCase<ImportArchiveInput, ImportR
     }
 
     const batch = parser.parse(files);
-    const seen = new Set(
+    // Médias déjà présents (rafraîchis, pas re-comptés « importés ») + dédoublonnage intra-fichier.
+    const existing = new Set(
       (await this.getLibrary.execute(userId)).map(
         (item) => `${item.media.externalRef.provider}:${item.media.externalRef.externalId}`,
       ),
     );
+    const processed = new Set<string>();
 
     const movies = emptyCounters();
     const series = emptyCounters();
@@ -74,8 +78,8 @@ export class ImportArchiveUseCase implements UseCase<ImportArchiveInput, ImportR
       const counters = media.type === "MOVIE" ? movies : series;
       counters.parsed++;
 
-      const externalId = await this.matchToCatalog(media);
-      if (!externalId) {
+      const match = await this.matchToCatalog(media);
+      if (!match) {
         counters.unmatched++;
         if (unmatchedSample.length < UNMATCHED_SAMPLE_MAX) {
           unmatchedSample.push({ type: media.type, title: media.title, year: media.year });
@@ -83,15 +87,19 @@ export class ImportArchiveUseCase implements UseCase<ImportArchiveInput, ImportR
         continue;
       }
 
-      const key = `tmdb:${externalId}`;
-      if (seen.has(key)) {
+      const key = `tmdb:${match.externalRef.externalId}`;
+      // Doublon dans le fichier même : traiter une seule fois.
+      if (processed.has(key)) {
         counters.skipped++;
         continue;
       }
-      seen.add(key);
+      processed.add(key);
 
-      episodesMarked += await this.importMedia(userId, media, externalId);
-      counters.imported++;
+      // Déjà en bibliothèque : on ne compte pas un nouvel ajout, mais on **rafraîchit**
+      // quand même (poster, dates de visionnage réelles) via l'ajout idempotent.
+      episodesMarked += await this.importMedia(userId, media, match);
+      if (existing.has(key)) counters.skipped++;
+      else counters.imported++;
     }
 
     return {
@@ -103,24 +111,25 @@ export class ImportArchiveUseCase implements UseCase<ImportArchiveInput, ImportR
     };
   }
 
-  /** Recherche le média dans le catalogue et retourne l'identifiant externe rapproché. */
-  private async matchToCatalog(media: ImportedMedia): Promise<string | null> {
+  /** Recherche le média dans le catalogue et retourne le meilleur candidat rapproché. */
+  private async matchToCatalog(media: ImportedMedia): Promise<CatalogMedia | null> {
+    // La date est parfois encodée dans le titre : la retirer de la requête et s'en servir
+    // comme signal d'année (améliore le rapprochement, ADR-0008).
+    const { title, year: titleYear } = extractTitleYear(media.title);
+    const year = media.year ?? titleYear;
     try {
-      const result = await this.catalog.search({
-        query: media.title,
-        page: 1,
-        pageSize: SEARCH_PAGE_SIZE,
-        type: media.type,
-      });
+      const result = await this.catalog.search({ query: title, page: 1, pageSize: SEARCH_PAGE_SIZE, type: media.type });
+      const byId = new Map(result.items.map((item) => [item.externalRef.externalId, item]));
       const best = pickBestMatch(
-        { title: media.title, year: media.year },
+        { title, year },
         result.items.map((item) => ({
           externalId: item.externalRef.externalId,
           title: item.title,
+          originalTitle: item.originalTitle,
           year: item.year,
         })),
       );
-      return best?.externalId ?? null;
+      return best ? (byId.get(best.externalId) ?? null) : null;
     } catch (error) {
       this.logger.warn(
         `Rapprochement impossible pour « ${media.title} » : ${(error as Error).message}`,
@@ -133,16 +142,17 @@ export class ImportArchiveUseCase implements UseCase<ImportArchiveInput, ImportR
   private async importMedia(
     userId: string,
     media: ImportedMedia,
-    externalId: string,
+    match: CatalogMedia,
   ): Promise<number> {
     const item = await this.addMedia.execute({
       userId,
       media: {
-        externalRef: { provider: "tmdb", externalId },
+        externalRef: { provider: "tmdb", externalId: match.externalRef.externalId },
         type: media.type,
-        title: media.title,
-        year: media.year,
-        posterUrl: null,
+        // Titre/année/poster issus du **catalogue** (fiables et localisés), pas de l'export.
+        title: match.title,
+        year: match.year ?? media.year,
+        posterUrl: match.posterUrl,
       },
     });
 

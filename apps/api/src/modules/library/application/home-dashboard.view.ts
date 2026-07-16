@@ -62,7 +62,8 @@ export function buildHomeDashboard(
   const toResume: HomeSeries[] = [];
 
   for (const record of records) {
-    if (record.status === "DROPPED") continue;
+    // Abandonnées et mises en pause (manuellement ou après 3 mois d'inactivité) : hors accueil.
+    if (record.status === "DROPPED" || record.status === "PAUSED") continue;
     const started = record.watchedIds.size > 0;
 
     if (started) {
@@ -86,4 +87,23 @@ export function buildHomeDashboard(
   toResume.sort((a, b) => time(b.lastWatchedAt) - time(a.lastWatchedAt));
 
   return { series: { toWatch, toResume } };
+}
+
+/**
+ * Identifiants des séries **en cours** inactives depuis au moins {@link STALE_ACTIVITY_DAYS}
+ * jours, à basculer en « En pause » (`PAUSED`). **Pur** : la persistance du changement de
+ * statut est faite par le use case appelant (effet de bord hors du calcul de la vue).
+ */
+export function staleInProgressItemIds(
+  records: readonly SeriesProgressRecord[],
+  now: Date,
+): string[] {
+  return records
+    .filter(
+      (r) =>
+        r.status === "IN_PROGRESS" &&
+        r.watchedIds.size > 0 &&
+        daysSinceLastWatch(r, now) >= STALE_ACTIVITY_DAYS,
+    )
+    .map((r) => r.itemId);
 }

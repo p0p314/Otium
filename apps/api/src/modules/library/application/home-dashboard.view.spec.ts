@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { EpisodeRef, SeasonRef, SeriesProgressRecord } from "../domain";
-import { buildHomeDashboard } from "./home-dashboard.view";
+import { buildHomeDashboard, staleInProgressItemIds } from "./home-dashboard.view";
 
 const NOW = new Date("2026-07-15T00:00:00.000Z");
 const AIRED = new Date("2026-07-01T00:00:00.000Z");
@@ -90,12 +90,18 @@ describe("buildHomeDashboard", () => {
     expect(d.series.toResume).toEqual([]);
   });
 
-  it("ignore les séries abandonnées", () => {
+  it("ignore les séries abandonnées et en pause", () => {
     const d = buildHomeDashboard(
       [
         record({
           itemId: "dropped",
           status: "DROPPED",
+          watchedIds: new Set(["e1"]),
+          lastWatchedAt: RECENT,
+        }),
+        record({
+          itemId: "paused",
+          status: "PAUSED",
           watchedIds: new Set(["e1"]),
           lastWatchedAt: RECENT,
         }),
@@ -143,3 +149,28 @@ describe("buildHomeDashboard", () => {
 function OLD_BUT_VISIBLE(): Date {
   return new Date("2026-05-06T00:00:00.000Z");
 }
+
+describe("staleInProgressItemIds", () => {
+  it("cible les séries en cours inactives depuis ≥ 3 mois", () => {
+    const ids = staleInProgressItemIds(
+      [
+        record({ itemId: "old", watchedIds: new Set(["e1"]), lastWatchedAt: OLD }),
+        record({ itemId: "paused-recent", watchedIds: new Set(["e1"]), lastWatchedAt: PAUSED }),
+        record({ itemId: "active", watchedIds: new Set(["e1"]), lastWatchedAt: RECENT }),
+      ],
+      NOW,
+    );
+    expect(ids).toEqual(["old"]);
+  });
+
+  it("ignore une série déjà en pause ou jamais commencée", () => {
+    const ids = staleInProgressItemIds(
+      [
+        record({ itemId: "already", status: "PAUSED", watchedIds: new Set(["e1"]), lastWatchedAt: OLD }),
+        record({ itemId: "fresh", status: "PLANNED" }),
+      ],
+      NOW,
+    );
+    expect(ids).toEqual([]);
+  });
+});
