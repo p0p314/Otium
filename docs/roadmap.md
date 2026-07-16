@@ -34,8 +34,11 @@ Objectif atteint : un utilisateur s'inscrit, cherche, ajoute, note/commente et s
   repli Bearer pour les clients non-navigateur ; le web ne manipule plus de jeton.
 - [x] **Statut « vu » / « à voir »** — changement de `WatchStatus` au niveau `Media`
   (`PATCH /library/:id/status`), événements `WatchStatusChanged` / `MovieCompleted`.
-- [x] **Accueil personnalisé** — séries en cours + séries laissées de côté (> 1 mois sans
-  épisode vu) via `GET /library/home`.
+- [x] **Accueil personnalisé** — tableau de bord `GET /library/home` cloisonné par type de média :
+  **à reprendre** (série commencée avec un épisode sorti non vu) puis **à commencer** (série non
+  commencée déjà disponible). Onglet **« À venir »** (`GET /library/upcoming`) : épisodes à diffusion
+  future des séries suivies. S'appuie sur les **dates de diffusion** (`Episode.airDate`, fournies par
+  TMDB) et la synchronisation de la structure d'une série à l'ajout.
 - [x] **Bibliothèque par catégorie** — sélecteur Films / Séries (jamais les deux en même temps).
 - [x] **Mise en avant dans la recherche** — tendances du moment (films/séries) sous la barre
   (`GET /media/trending`, TMDB `trending`).
