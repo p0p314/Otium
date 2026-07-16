@@ -18,6 +18,8 @@ import {
   type MediaType,
   type RateMediaInput,
   type RegisterInput,
+  type ResolveImportInput,
+  ResolveImportResult,
   Review,
   ReviewResponse,
   type SaveReviewInput,
@@ -145,6 +147,11 @@ export class OtiumClient {
     const form = new FormData();
     form.append("file", archive, "tvtime.zip");
     return this.request("/import/tvtime", ImportReport, { method: "POST", form });
+  }
+
+  /** Résout une entrée d'import ambiguë en important le candidat choisi. */
+  async resolveImport(input: ResolveImportInput): Promise<ResolveImportResult> {
+    return this.request("/import/resolve", ResolveImportResult, { method: "POST", body: input });
   }
 
   async getLibraryItem(itemId: string): Promise<LibraryItem> {

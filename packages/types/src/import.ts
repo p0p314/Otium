@@ -19,21 +19,81 @@ export const ImportMediaCounters = z.object({
   parsed: z.number().int().nonnegative(),
   /** Entrées rapprochées au catalogue (TMDB) puis importées. */
   imported: z.number().int().nonnegative(),
-  /** Entrées déjà présentes dans la bibliothèque (ignorées, dédoublonnage). */
+  /** Entrées déjà présentes dans la bibliothèque (rafraîchies, dédoublonnage). */
   skipped: z.number().int().nonnegative(),
-  /** Entrées non rapprochées au catalogue (listées pour résolution manuelle). */
+  /** Entrées ambiguës (candidats trouvés mais aucun certain) à résoudre manuellement. */
+  pending: z.number().int().nonnegative(),
+  /** Entrées sans aucun candidat au catalogue. */
   unmatched: z.number().int().nonnegative(),
 });
 export type ImportMediaCounters = z.infer<typeof ImportMediaCounters>;
 
-/** Rapport d'un import : ce qui a été lu, rapproché, importé, ignoré, non trouvé. */
+/** Statut de suivi visé pour une entrée importée. */
+export const ImportEntryStatus = z.enum(["PLANNED", "IN_PROGRESS", "COMPLETED", "DROPPED"]);
+export type ImportEntryStatus = z.infer<typeof ImportEntryStatus>;
+
+/** Un épisode vu d'une entrée importée (numérotation d'origine + date réelle si connue). */
+export const ImportWatchedEpisode = z.object({
+  seasonNumber: z.number().int(),
+  episodeNumber: z.number().int(),
+  watchedAt: z.string().datetime().nullable(),
+});
+export type ImportWatchedEpisode = z.infer<typeof ImportWatchedEpisode>;
+
+/** Un candidat du catalogue proposé pour résoudre une entrée ambiguë. */
+export const ImportCandidate = z.object({
+  externalId: z.string(),
+  title: z.string(),
+  year: z.number().int().nullable(),
+  posterUrl: z.string().url().nullable(),
+});
+export type ImportCandidate = z.infer<typeof ImportCandidate>;
+
+/**
+ * Une entrée d'import **ambiguë** : le rapprochement automatique n'a pas tranché, mais des
+ * candidats existent. Le client conserve l'entrée telle quelle et la renvoie avec le choix
+ * de l'utilisateur ({@link ResolveImportInput}).
+ */
+export const PendingImport = z.object({
+  type: MediaType,
+  title: z.string(),
+  year: z.number().int().nullable(),
+  status: ImportEntryStatus,
+  watchedEpisodes: z.array(ImportWatchedEpisode),
+  candidates: z.array(ImportCandidate),
+});
+export type PendingImport = z.infer<typeof PendingImport>;
+
+/** Résolution manuelle d'une entrée ambiguë : le candidat choisi + l'entrée d'origine. */
+export const ResolveImportInput = z.object({
+  candidate: ImportCandidate,
+  entry: z.object({
+    type: MediaType,
+    title: z.string(),
+    year: z.number().int().nullable(),
+    status: ImportEntryStatus,
+    watchedEpisodes: z.array(ImportWatchedEpisode),
+  }),
+});
+export type ResolveImportInput = z.infer<typeof ResolveImportInput>;
+
+/** Résultat d'une résolution : importée (ou déjà présente) et épisodes marqués. */
+export const ResolveImportResult = z.object({
+  imported: z.boolean(),
+  episodesMarked: z.number().int().nonnegative(),
+});
+export type ResolveImportResult = z.infer<typeof ResolveImportResult>;
+
+/** Rapport d'un import : ce qui a été lu, rapproché, importé, ignoré, non trouvé, à résoudre. */
 export const ImportReport = z.object({
   source: ImportSourceFormat,
   movies: ImportMediaCounters,
   series: ImportMediaCounters,
   /** Nombre total d'épisodes marqués vus (séries). */
   episodesMarked: z.number().int().nonnegative(),
-  /** Échantillon des médias non rapprochés (borné pour l'affichage). */
+  /** Échantillon des médias sans aucun candidat (borné pour l'affichage). */
   unmatchedSample: z.array(UnmatchedImportEntry),
+  /** Entrées ambiguës à résoudre à la main (candidats fournis, bornées). */
+  pending: z.array(PendingImport),
 });
 export type ImportReport = z.infer<typeof ImportReport>;
