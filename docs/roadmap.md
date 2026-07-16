@@ -61,8 +61,13 @@ Objectif atteint : un utilisateur s'inscrit, cherche, ajoute, note/commente et s
     séparé, palette CVD validée). Genres/durée persistés à l'ajout (enrichissement catalogue),
     avec backfill best-effort de la durée d'un film au passage « vu » (films ajoutés avant
     l'enrichissement, ou dont l'enrichissement avait échoué) — garantit le temps de visionnage films.
-11. **Polish UX** — états vides, skeletons partout, animations, accessibilité AA, i18n FR.
-12. **Providers additionnels** (TVMaze/OMDb) via le registry, sans toucher au métier.
+11. **Import de données externes (RGPD)** ✅ — module `import` (orchestration) : archive ZIP →
+    parseurs de source enfichables (TV Time : films v1 + séries/épisodes v2) → rapprochement TMDB
+    par nom+année (heuristique pure) → réutilisation du métier (ajout, statut « vu », suivi
+    d'épisodes). `POST /import/tvtime`, page `/import`, rapport (importés/déjà présents/non trouvés).
+    Best-effort, cache Redis (ADR-0008).
+12. **Polish UX** — états vides, skeletons partout, animations, accessibilité AA, i18n FR.
+13. **Providers additionnels** (TVMaze/OMDb) via le registry, sans toucher au métier.
 
 **Métriques V1** : couverture des parcours clés testés E2E ; score éco (APIGreenScore) suivi.
 

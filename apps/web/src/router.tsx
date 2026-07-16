@@ -13,6 +13,11 @@ import { SearchPage } from "./features/media-search/search-page";
 const StatsPage = lazy(() =>
   import("./features/stats/stats-page").then((m) => ({ default: m.StatsPage })),
 );
+
+// Page d'import (rarement utilisée) isolée dans son propre chunk (éco-conception).
+const ImportPage = lazy(() =>
+  import("./features/import/import-page").then((m) => ({ default: m.ImportPage })),
+);
 import { RootLayout } from "./routes/root-layout";
 import { HomePage } from "./routes/home";
 import { useAuthStore } from "./stores/auth-store";
@@ -91,6 +96,13 @@ const statsRoute = createRoute({
   component: StatsPage,
 });
 
+const importRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/import",
+  beforeLoad: requireAuth,
+  component: ImportPage,
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   searchRoute,
@@ -102,6 +114,7 @@ const routeTree = rootRoute.addChildren([
   listDetailRoute,
   mediaDetailRoute,
   statsRoute,
+  importRoute,
 ]);
 
 export const router = createRouter({ routeTree });
