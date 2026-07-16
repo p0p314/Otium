@@ -13,7 +13,7 @@ function TrendingRow({ title, type }: { title: string; type: MediaType }) {
         isLoading={isLoading}
         isError={isError}
         hasQuery
-        renderAction={(media) => <AddToLibraryButton media={media} />}
+        renderAction={(media) => <AddToLibraryButton media={media} compact />}
       />
     </section>
   );
