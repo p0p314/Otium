@@ -16,6 +16,8 @@ export interface MediaDescriptor {
   readonly genres?: readonly string[];
   /** Durée d'un film en minutes (null/absent pour une série ou si indisponible). */
   readonly runtimeMinutes?: number | null;
+  /** Date de sortie d'un film, renseignée à l'ajout (alimente « À venir »). */
+  readonly releaseDate?: Date | null;
 }
 
 export interface LibraryItem {

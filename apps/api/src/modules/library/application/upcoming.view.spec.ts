@@ -32,6 +32,7 @@ describe("buildUpcoming", () => {
         rec("a", [ep("a1", 1, d("2026-07-01T00:00:00Z")), ep("a2", 2, d("2026-09-01T00:00:00Z"))]),
         rec("b", [ep("b1", 1, d("2026-08-01T00:00:00Z"))]),
       ],
+      [],
       NOW,
     );
     expect(result.series.map((e) => `${e.itemId}:${e.number}`)).toEqual(["b:1", "a:2"]);
@@ -45,8 +46,23 @@ describe("buildUpcoming", () => {
         rec("noDate", [ep("y", 1, null)]),
         rec("aired", [ep("z", 1, d("2026-07-01T00:00:00Z"))]),
       ],
+      [],
       NOW,
     );
+    expect(result.series).toEqual([]);
+  });
+
+  it("liste les films à venir, cloisonnés et triés par date de sortie", () => {
+    const result = buildUpcoming(
+      [],
+      [
+        { itemId: "m2", title: "Avatar 3", posterUrl: null, releaseDate: d("2026-12-19T00:00:00Z") },
+        { itemId: "m1", title: "Dune 3", posterUrl: null, releaseDate: d("2026-10-01T00:00:00Z") },
+      ],
+      NOW,
+    );
+    expect(result.movies.map((m) => m.itemId)).toEqual(["m1", "m2"]);
+    expect(result.movies[0]?.releaseDate).toBe(d("2026-10-01T00:00:00Z").toISOString());
     expect(result.series).toEqual([]);
   });
 });

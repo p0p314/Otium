@@ -10,7 +10,7 @@ import { api } from "../../../lib/api";
 import { useAuthStore } from "../../../stores/auth-store";
 import { useUpcoming } from "./use-upcoming";
 
-const data = { series: [] } as UpcomingDashboard;
+const data = { series: [], movies: [] } as UpcomingDashboard;
 
 function wrapper({ children }: { children: ReactNode }) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });

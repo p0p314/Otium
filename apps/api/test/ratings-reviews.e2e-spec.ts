@@ -79,6 +79,9 @@ class FakeLibraryRepo implements LibraryRepository {
     return userId === USER_ID && itemId === ITEM_ID ? "media-1" : null;
   }
   async backfillMediaMetadata(): Promise<void> {}
+  async listUpcomingMovies(): Promise<[]> {
+    return [];
+  }
 }
 
 class FakeReviewRepo implements ReviewRepository {

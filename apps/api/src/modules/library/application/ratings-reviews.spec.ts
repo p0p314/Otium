@@ -18,6 +18,7 @@ function libraryFake(overrides: Partial<LibraryRepository> = {}): LibraryReposit
     setRating: vi.fn(async (_u, _i, rating) => ({ ...item, rating })),
     getMediaId: vi.fn(async () => "media-1"),
     backfillMediaMetadata: vi.fn(async () => undefined),
+    listUpcomingMovies: vi.fn(async () => []),
     ...overrides,
   };
 }

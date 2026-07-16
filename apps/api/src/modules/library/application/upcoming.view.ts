@@ -1,18 +1,19 @@
-import type { UpcomingDashboard, UpcomingEpisode } from "@otium/types";
-import { type SeriesProgressRecord, upcomingEpisodes } from "../domain";
+import type { UpcomingDashboard, UpcomingEpisode, UpcomingMovie } from "@otium/types";
+import { type SeriesProgressRecord, type UpcomingMovieRecord, upcomingEpisodes } from "../domain";
 
 /**
- * Assemble l'agenda « À venir » (**pur**, testable sans I/O) : tous les épisodes à
- * diffusion **future** des séries suivies (hors abandonnées), triés par date
- * croissante. Cloisonné par type de média (V1 : séries).
+ * Assemble l'agenda « À venir » (**pur**, testable sans I/O), **cloisonné par type de
+ * média** (jamais mélangés) : côté séries, les épisodes à diffusion **future** des
+ * séries suivies (hors abandonnées) ; côté films, les sorties **futures** de la
+ * bibliothèque. Chaque liste est triée par date croissante.
  */
 export function buildUpcoming(
-  records: readonly SeriesProgressRecord[],
+  seriesRecords: readonly SeriesProgressRecord[],
+  movieRecords: readonly UpcomingMovieRecord[],
   now: Date,
 ): UpcomingDashboard {
   const series: UpcomingEpisode[] = [];
-
-  for (const record of records) {
+  for (const record of seriesRecords) {
     if (record.status === "DROPPED") continue;
     for (const episode of upcomingEpisodes(record.seasons, now)) {
       series.push({
@@ -26,7 +27,16 @@ export function buildUpcoming(
       });
     }
   }
-
   series.sort((a, b) => Date.parse(a.airDate) - Date.parse(b.airDate));
-  return { series };
+
+  const movies: UpcomingMovie[] = movieRecords
+    .map((record) => ({
+      itemId: record.itemId,
+      title: record.title,
+      posterUrl: record.posterUrl,
+      releaseDate: record.releaseDate.toISOString(),
+    }))
+    .sort((a, b) => Date.parse(a.releaseDate) - Date.parse(b.releaseDate));
+
+  return { series, movies };
 }
