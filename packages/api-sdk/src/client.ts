@@ -5,6 +5,7 @@ import {
   AuthUser,
   type CreateListInput,
   HomeDashboard,
+  ImportReport,
   LibraryItem,
   ListDetail,
   ListSummary,
@@ -124,6 +125,13 @@ export class OtiumClient {
     return this.request("/stats", ViewingStats);
   }
 
+  /** Importe un export RGPD TV Time (archive ZIP) et retourne le rapport d'import. */
+  async importTvTime(archive: Blob): Promise<ImportReport> {
+    const form = new FormData();
+    form.append("file", archive, "tvtime.zip");
+    return this.request("/import/tvtime", ImportReport, { method: "POST", form });
+  }
+
   async getLibraryItem(itemId: string): Promise<LibraryItem> {
     return this.request(`/library/${itemId}`, LibraryItem);
   }
@@ -227,7 +235,7 @@ export class OtiumClient {
   private async request<T>(
     path: string,
     schema: z.ZodType<T>,
-    init?: { method?: string; body?: unknown },
+    init?: { method?: string; body?: unknown; form?: FormData },
   ): Promise<T> {
     const token = this.getToken?.();
     const requestInit: RequestInit = {
@@ -236,11 +244,15 @@ export class OtiumClient {
       // pour les clients non-navigateur (mobile) via `getToken`.
       credentials: "include",
       headers: {
-        "content-type": "application/json",
+        // Pour un envoi multipart (FormData), on laisse le navigateur poser le
+        // content-type avec la bonne frontière (boundary).
+        ...(init?.form ? {} : { "content-type": "application/json" }),
         ...(token ? { authorization: `Bearer ${token}` } : {}),
       },
     };
-    if (init?.body !== undefined) {
+    if (init?.form !== undefined) {
+      requestInit.body = init.form;
+    } else if (init?.body !== undefined) {
       requestInit.body = JSON.stringify(init.body);
     }
     const response = await this.fetchImpl(`${this.baseUrl}${path}`, requestInit);

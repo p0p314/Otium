@@ -6,6 +6,7 @@ import { GetHomeDashboardUseCase } from "./application/get-home-dashboard.usecas
 import { GetLibraryUseCase } from "./application/get-library.usecase";
 import { GetLibraryItemUseCase } from "./application/get-library-item.usecase";
 import { GetSeriesTrackingUseCase } from "./application/get-series-tracking.usecase";
+import { MarkWatchedEpisodesByNumberUseCase } from "./application/mark-watched-episodes-by-number.usecase";
 import {
   AddMediaToListUseCase,
   CreateListUseCase,
@@ -53,6 +54,7 @@ import { SeriesTrackingController } from "./presentation/series-tracking.control
     RateMediaUseCase,
     SetWatchStatusUseCase,
     GetSeriesTrackingUseCase,
+    MarkWatchedEpisodesByNumberUseCase,
     GetHomeDashboardUseCase,
     ToggleEpisodeWatchedUseCase,
     ToggleEpisodesWatchedUseCase,
@@ -70,6 +72,13 @@ import { SeriesTrackingController } from "./presentation/series-tracking.control
     { provide: SERIES_TRACKING_REPOSITORY, useClass: PrismaSeriesTrackingRepository },
     { provide: REVIEW_REPOSITORY, useClass: PrismaReviewRepository },
     { provide: LIST_REPOSITORY, useClass: PrismaListRepository },
+  ],
+  // Exposés au module d'import (orchestration réutilisant la logique métier existante).
+  exports: [
+    GetLibraryUseCase,
+    AddMediaToLibraryUseCase,
+    SetWatchStatusUseCase,
+    MarkWatchedEpisodesByNumberUseCase,
   ],
 })
 export class LibraryModule {}
