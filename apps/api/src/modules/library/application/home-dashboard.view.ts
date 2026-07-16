@@ -47,9 +47,10 @@ function time(iso: string | null): number {
  * Assemble le tableau de bord de l'accueil (**pur**, testable sans I/O) à partir de
  * toutes les séries suivies, selon l'ancienneté du **dernier visionnage** :
  * - **à voir** : série commencée et **active** (vue il y a < {@link RECENT_ACTIVITY_DAYS} j)
- *   avec un épisode sorti non vu, **ou** série jamais commencée ayant un épisode déjà sorti ;
+ *   avec un épisode sorti non vu ;
  * - **à reprendre** : série commencée puis laissée de côté (dernier visionnage entre
- *   {@link RECENT_ACTIVITY_DAYS} et {@link STALE_ACTIVITY_DAYS} jours) avec un épisode à voir.
+ *   {@link RECENT_ACTIVITY_DAYS} et {@link STALE_ACTIVITY_DAYS} jours) avec un épisode à voir ;
+ * - **à commencer** : série jamais commencée ayant un épisode déjà sorti.
  * Les séries commencées sans visionnage depuis {@link STALE_ACTIVITY_DAYS} jours sont
  * **masquées** de l'accueil ; les abandonnées (`DROPPED`) et terminées sont exclues. Les
  * médias ne sont jamais mélangés (cloisonnés par type — V1 : séries).
@@ -60,6 +61,7 @@ export function buildHomeDashboard(
 ): HomeDashboard {
   const toWatch: HomeSeries[] = [];
   const toResume: HomeSeries[] = [];
+  const toStart: HomeSeries[] = [];
 
   for (const record of records) {
     // Abandonnées et mises en pause (manuellement ou après 3 mois d'inactivité) : hors accueil.
@@ -74,19 +76,17 @@ export function buildHomeDashboard(
       else if (days < STALE_ACTIVITY_DAYS) toResume.push(toHomeSeries(record, now));
       // ≥ STALE_ACTIVITY_DAYS : masquée de l'accueil.
     } else if (airedCount(record.seasons, now) > 0) {
-      // Jamais commencée mais disponible → à voir (à commencer).
-      toWatch.push(toHomeSeries(record, now));
+      // Jamais commencée mais disponible → à commencer.
+      toStart.push(toHomeSeries(record, now));
     }
   }
 
-  // À voir : activité la plus récente d'abord ; les jamais-commencées (sans date) suivent,
-  // départagées par titre. À reprendre : reprise la plus récente d'abord.
-  toWatch.sort(
-    (a, b) => time(b.lastWatchedAt) - time(a.lastWatchedAt) || a.title.localeCompare(b.title, "fr"),
-  );
+  // À voir / à reprendre : reprise la plus récente d'abord. À commencer : ordre alphabétique.
+  toWatch.sort((a, b) => time(b.lastWatchedAt) - time(a.lastWatchedAt));
   toResume.sort((a, b) => time(b.lastWatchedAt) - time(a.lastWatchedAt));
+  toStart.sort((a, b) => a.title.localeCompare(b.title, "fr"));
 
-  return { series: { toWatch, toResume } };
+  return { series: { toWatch, toResume, toStart } };
 }
 
 /**

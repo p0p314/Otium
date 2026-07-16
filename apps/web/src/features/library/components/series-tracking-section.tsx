@@ -1,6 +1,12 @@
 import { Button, Skeleton } from "@otium/ui";
-import { CheckCheck, Play, RotateCcw } from "lucide-react";
+import { CheckCheck, ListChecks, Play, RotateCcw, X } from "lucide-react";
+import { useState } from "react";
 import { useMarkEpisode, useMarkEpisodes, useSeriesTracking } from "../api/use-series-tracking";
+
+/** Une proposition de rattrapage : marquer les épisodes précédents non vus. */
+interface CatchUp {
+  readonly episodeIds: string[];
+}
 
 /** Section de suivi épisode par épisode d'une série (progression, reprise, marquage en masse). */
 export function SeriesTrackingSection({ itemId }: { itemId: string }) {
@@ -8,10 +14,25 @@ export function SeriesTrackingSection({ itemId }: { itemId: string }) {
   const markEpisode = useMarkEpisode(itemId);
   const markEpisodes = useMarkEpisodes(itemId);
   const busy = markEpisode.isPending || markEpisodes.isPending;
+  const [catchUp, setCatchUp] = useState<CatchUp | null>(null);
 
   if (isLoading) return <Skeleton className="h-40 w-full" />;
   if (isError || !data) {
     return <p className="text-sm text-destructive">Impossible de charger le suivi des épisodes.</p>;
+  }
+
+  const ordered = data.seasons.flatMap((season) => season.episodes);
+
+  /** Marque un épisode ; s'il en reste des non vus **avant** lui, propose de les rattraper. */
+  function markSingle(episodeId: string, watched: boolean) {
+    markEpisode.mutate({ episodeId, watched });
+    if (!watched) {
+      setCatchUp(null);
+      return;
+    }
+    const index = ordered.findIndex((e) => e.id === episodeId);
+    const earlier = ordered.slice(0, index).filter((e) => !e.watched).map((e) => e.id);
+    setCatchUp(earlier.length > 0 ? { episodeIds: earlier } : null);
   }
 
   const progress =
@@ -63,9 +84,7 @@ export function SeriesTrackingSection({ itemId }: { itemId: string }) {
           </div>
           <Button
             disabled={busy}
-            onClick={() =>
-              data.nextEpisode && markEpisode.mutate({ episodeId: data.nextEpisode.id, watched: true })
-            }
+            onClick={() => data.nextEpisode && markSingle(data.nextEpisode.id, true)}
           >
             <Play className="h-4 w-4" /> Marquer vu
           </Button>
@@ -74,6 +93,32 @@ export function SeriesTrackingSection({ itemId }: { itemId: string }) {
         <p className="rounded-xl border border-dashed p-4 text-sm text-muted-foreground">
           🎉 Vous avez terminé cette série.
         </p>
+      )}
+
+      {catchUp && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-primary/40 bg-primary/5 p-4">
+          <p className="flex items-center gap-2 text-sm">
+            <ListChecks className="h-4 w-4 shrink-0 text-primary" aria-hidden />
+            {catchUp.episodeIds.length} épisode{catchUp.episodeIds.length > 1 ? "s" : ""} précédent
+            {catchUp.episodeIds.length > 1 ? "s" : ""} non vu
+            {catchUp.episodeIds.length > 1 ? "s" : ""}. Les marquer comme vus aussi ?
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              disabled={busy}
+              onClick={() => {
+                markEpisodes.mutate({ episodeIds: catchUp.episodeIds, watched: true });
+                setCatchUp(null);
+              }}
+            >
+              <CheckCheck className="h-4 w-4" /> Tout marquer vu
+            </Button>
+            <Button variant="ghost" size="icon" aria-label="Ignorer" onClick={() => setCatchUp(null)}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
       )}
 
       <div className="space-y-6">
@@ -107,9 +152,7 @@ export function SeriesTrackingSection({ itemId }: { itemId: string }) {
                         className="h-4 w-4 accent-[hsl(var(--primary))]"
                         checked={episode.watched}
                         disabled={busy}
-                        onChange={(e) =>
-                          markEpisode.mutate({ episodeId: episode.id, watched: e.target.checked })
-                        }
+                        onChange={(e) => markSingle(episode.id, e.target.checked)}
                       />
                       <span className="w-10 text-sm tabular-nums text-muted-foreground">
                         E{episode.number}

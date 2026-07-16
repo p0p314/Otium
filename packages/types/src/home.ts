@@ -19,16 +19,17 @@ export type HomeSeries = z.infer<typeof HomeSeries>;
 
 /**
  * Sections d'un type de média sur l'accueil, ordonnées par intention de visionnage :
- * - **à voir** : séries actives (vues il y a moins d'un mois) **et** séries jamais
- *   commencées mais déjà disponibles ;
+ * - **à voir** : séries actives (dernier épisode vu il y a moins d'un mois) ;
  * - **à reprendre** : séries commencées puis laissées de côté (dernier épisode vu il y a
- *   1 à 3 mois).
- * Les séries sans visionnage depuis 3 mois sont masquées de l'accueil (mais restent en
- * bibliothèque).
+ *   1 à 3 mois) ;
+ * - **à commencer** : séries jamais commencées mais déjà disponibles.
+ * Les séries commencées sans visionnage depuis 3 mois sont masquées de l'accueil (mais
+ * restent en bibliothèque).
  */
 export const HomeMediaSections = z.object({
   toWatch: z.array(HomeSeries),
   toResume: z.array(HomeSeries),
+  toStart: z.array(HomeSeries),
 });
 export type HomeMediaSections = z.infer<typeof HomeMediaSections>;
 
