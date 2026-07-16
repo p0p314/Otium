@@ -1,4 +1,4 @@
-import type { ImportReport } from "@otium/types";
+import type { ImportReport, ResolveImportInput, ResolveImportResult } from "@otium/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../../lib/api";
 
@@ -11,6 +11,18 @@ export function useImportTvTime() {
   const queryClient = useQueryClient();
   return useMutation<ImportReport, Error, File>({
     mutationFn: (archive) => api.importTvTime(archive),
+    onSuccess: () => queryClient.invalidateQueries(),
+  });
+}
+
+/**
+ * Résout une entrée d'import ambiguë (candidat choisi par l'utilisateur). Comme l'import,
+ * cela ajoute un média à la bibliothèque : on invalide le cache serveur à la réussite.
+ */
+export function useResolveImport() {
+  const queryClient = useQueryClient();
+  return useMutation<ResolveImportResult, Error, ResolveImportInput>({
+    mutationFn: (input) => api.resolveImport(input),
     onSuccess: () => queryClient.invalidateQueries(),
   });
 }

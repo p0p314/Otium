@@ -1,13 +1,13 @@
-import type { ImportReport } from "@otium/types";
+import type { ImportReport, ResolveImportInput } from "@otium/types";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("../../../lib/api", () => ({ api: { importTvTime: vi.fn() } }));
+vi.mock("../../../lib/api", () => ({ api: { importTvTime: vi.fn(), resolveImport: vi.fn() } }));
 
 import { api } from "../../../lib/api";
-import { useImportTvTime } from "./use-import";
+import { useImportTvTime, useResolveImport } from "./use-import";
 
 const report = {
   source: "tvtime",
@@ -34,5 +34,23 @@ describe("useImportTvTime", () => {
 
     await waitFor(() => expect(result.current.data).toEqual(report));
     expect(api.importTvTime).toHaveBeenCalledWith(file);
+  });
+});
+
+describe("useResolveImport", () => {
+  beforeEach(() => vi.mocked(api.resolveImport).mockReset());
+
+  it("résout une entrée ambiguë avec le candidat choisi", async () => {
+    vi.mocked(api.resolveImport).mockResolvedValue({ imported: true, episodesMarked: 3 });
+    const input: ResolveImportInput = {
+      candidate: { externalId: "the100", title: "Les 100", year: 2014, posterUrl: null },
+      entry: { type: "SERIES", title: "The 100", year: null, status: "IN_PROGRESS", watchedEpisodes: [] },
+    };
+    const { result } = renderHook(() => useResolveImport(), { wrapper });
+
+    act(() => result.current.mutate(input));
+
+    await waitFor(() => expect(result.current.data).toEqual({ imported: true, episodesMarked: 3 }));
+    expect(api.resolveImport).toHaveBeenCalledWith(input);
   });
 });

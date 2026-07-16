@@ -6,6 +6,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { SESSION_STORE } from "../src/modules/authentication/domain/ports/session-store";
 import { AuthGuard } from "../src/modules/authentication/presentation/auth.guard";
 import { ImportArchiveUseCase } from "../src/modules/import/application/import-archive.usecase";
+import { ResolveImportUseCase } from "../src/modules/import/application/resolve-import.usecase";
 import { ImportController } from "../src/modules/import/presentation/import.controller";
 import { Email, USER_REPOSITORY, User } from "../src/modules/user/domain";
 
@@ -14,10 +15,11 @@ const USER_ID = "user-1";
 
 const report: ImportReport = {
   source: "tvtime",
-  movies: { parsed: 2, imported: 2, skipped: 0, unmatched: 0 },
-  series: { parsed: 1, imported: 1, skipped: 0, unmatched: 0 },
+  movies: { parsed: 2, imported: 2, skipped: 0, pending: 0, unmatched: 0 },
+  series: { parsed: 1, imported: 1, skipped: 0, pending: 0, unmatched: 0 },
   episodesMarked: 5,
   unmatchedSample: [],
+  pending: [],
 };
 
 describe("Import (e2e)", () => {
@@ -34,6 +36,7 @@ describe("Import (e2e)", () => {
       controllers: [ImportController],
       providers: [
         { provide: ImportArchiveUseCase, useValue: { execute } },
+        { provide: ResolveImportUseCase, useValue: { execute: vi.fn() } },
         AuthGuard,
         {
           provide: SESSION_STORE,

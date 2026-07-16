@@ -1,12 +1,13 @@
 import { BadRequestException, Inject, Injectable, Logger } from "@nestjs/common";
-import type { ImportMediaCounters, ImportReport, UnmatchedImportEntry } from "@otium/types";
-import { AddMediaToLibraryUseCase } from "../../library/application/add-media-to-library.usecase";
+import type {
+  ImportMediaCounters,
+  ImportReport,
+  PendingImport,
+  UnmatchedImportEntry,
+} from "@otium/types";
 import { GetLibraryUseCase } from "../../library/application/get-library.usecase";
-import { MarkWatchedEpisodesByNumberUseCase } from "../../library/application/mark-watched-episodes-by-number.usecase";
-import { SetWatchStatusUseCase } from "../../library/application/set-watch-status.usecase";
-import { MEDIA_CATALOG_PROVIDER, type MediaCatalogProvider } from "../../media/domain";
+import { MEDIA_CATALOG_PROVIDER, type CatalogMedia, type MediaCatalogProvider } from "../../media/domain";
 import type { UseCase } from "../../../shared/application/use-case";
-import type { CatalogMedia } from "../../media/domain";
 import {
   ARCHIVE_READER,
   type ArchiveReader,
@@ -16,6 +17,7 @@ import {
   type ImportSourceParser,
   pickBestMatch,
 } from "../domain";
+import { MediaImporter } from "./media-importer";
 
 export interface ImportArchiveInput {
   readonly userId: string;
@@ -23,20 +25,50 @@ export interface ImportArchiveInput {
   readonly archive: Buffer;
 }
 
-/** Échantillon maximal d'entrées non rapprochées renvoyé dans le rapport. */
+/** Échantillon maximal d'entrées sans candidat renvoyé dans le rapport. */
 const UNMATCHED_SAMPLE_MAX = 50;
+/** Nombre maximal d'entrées ambiguës à résoudre renvoyées (borne l'affichage et la charge). */
+const PENDING_MAX = 50;
+/** Candidats proposés par entrée ambiguë. */
+const CANDIDATES_MAX = 5;
 /** Résultats de recherche examinés pour le rapprochement (pertinence décroissante). */
 const SEARCH_PAGE_SIZE = 20;
 
-function emptyCounters(): { parsed: number; imported: number; skipped: number; unmatched: number } {
-  return { parsed: 0, imported: 0, skipped: 0, unmatched: 0 };
+/** Résultat du rapprochement d'une entrée : trouvé, ambigu (candidats), ou aucun candidat. */
+type MatchResult =
+  | { kind: "matched"; media: CatalogMedia }
+  | { kind: "ambiguous"; candidates: CatalogMedia[] }
+  | { kind: "unmatched" };
+
+function emptyCounters(): ImportMediaCounters {
+  return { parsed: 0, imported: 0, skipped: 0, pending: 0, unmatched: 0 };
+}
+
+function toCandidate(media: CatalogMedia): PendingImport["candidates"][number] {
+  return { externalId: media.externalRef.externalId, title: media.title, year: media.year, posterUrl: media.posterUrl };
+}
+
+function toPending(media: ImportedMedia, candidates: readonly CatalogMedia[]): PendingImport {
+  return {
+    type: media.type,
+    title: media.title,
+    year: media.year,
+    status: media.status,
+    watchedEpisodes: media.watchedEpisodes.map((e) => ({
+      seasonNumber: e.seasonNumber,
+      episodeNumber: e.episodeNumber,
+      watchedAt: e.watchedAt?.toISOString() ?? null,
+    })),
+    candidates: candidates.slice(0, CANDIDATES_MAX).map(toCandidate),
+  };
 }
 
 /**
  * Orchestration d'un import d'archive : extraction → parseur de source (modulaire) →
  * rapprochement au catalogue (TMDB) → réutilisation de la logique métier existante
- * (ajout, statut, suivi d'épisodes). Best-effort : une entrée en échec n'interrompt
- * pas l'import ; elle est comptabilisée (ignorée / non rapprochée) dans le rapport.
+ * (ajout, statut, suivi d'épisodes). Best-effort : une entrée en échec n'interrompt pas
+ * l'import. Le rapprochement **incertain** n'invente rien : les candidats sont renvoyés dans
+ * `pending` pour une résolution manuelle ({@link ResolveImportUseCase}).
  */
 @Injectable()
 export class ImportArchiveUseCase implements UseCase<ImportArchiveInput, ImportReport> {
@@ -47,9 +79,7 @@ export class ImportArchiveUseCase implements UseCase<ImportArchiveInput, ImportR
     @Inject(IMPORT_SOURCE_PARSERS) private readonly parsers: readonly ImportSourceParser[],
     @Inject(MEDIA_CATALOG_PROVIDER) private readonly catalog: MediaCatalogProvider,
     private readonly getLibrary: GetLibraryUseCase,
-    private readonly addMedia: AddMediaToLibraryUseCase,
-    private readonly setWatchStatus: SetWatchStatusUseCase,
-    private readonly markEpisodes: MarkWatchedEpisodesByNumberUseCase,
+    private readonly importer: MediaImporter,
   ) {}
 
   async execute({ userId, format, archive }: ImportArchiveInput): Promise<ImportReport> {
@@ -72,6 +102,7 @@ export class ImportArchiveUseCase implements UseCase<ImportArchiveInput, ImportR
     const movies = emptyCounters();
     const series = emptyCounters();
     const unmatchedSample: UnmatchedImportEntry[] = [];
+    const pending: PendingImport[] = [];
     let episodesMarked = 0;
 
     for (const media of batch.medias) {
@@ -79,7 +110,8 @@ export class ImportArchiveUseCase implements UseCase<ImportArchiveInput, ImportR
       counters.parsed++;
 
       const match = await this.matchToCatalog(media);
-      if (!match) {
+
+      if (match.kind === "unmatched") {
         counters.unmatched++;
         if (unmatchedSample.length < UNMATCHED_SAMPLE_MAX) {
           unmatchedSample.push({ type: media.type, title: media.title, year: media.year });
@@ -87,7 +119,13 @@ export class ImportArchiveUseCase implements UseCase<ImportArchiveInput, ImportR
         continue;
       }
 
-      const key = `tmdb:${match.externalRef.externalId}`;
+      if (match.kind === "ambiguous") {
+        counters.pending++;
+        if (pending.length < PENDING_MAX) pending.push(toPending(media, match.candidates));
+        continue;
+      }
+
+      const key = `tmdb:${match.media.externalRef.externalId}`;
       // Doublon dans le fichier même : traiter une seule fois.
       if (processed.has(key)) {
         counters.skipped++;
@@ -97,28 +135,31 @@ export class ImportArchiveUseCase implements UseCase<ImportArchiveInput, ImportR
 
       // Déjà en bibliothèque : on ne compte pas un nouvel ajout, mais on **rafraîchit**
       // quand même (poster, dates de visionnage réelles) via l'ajout idempotent.
-      episodesMarked += await this.importMedia(userId, media, match);
+      episodesMarked += await this.importer.importOne(userId, media, match.media);
       if (existing.has(key)) counters.skipped++;
       else counters.imported++;
     }
 
     return {
       source: parser.format as ImportReport["source"],
-      movies: movies as ImportMediaCounters,
-      series: series as ImportMediaCounters,
+      movies,
+      series,
       episodesMarked,
       unmatchedSample,
+      pending,
     };
   }
 
-  /** Recherche le média dans le catalogue et retourne le meilleur candidat rapproché. */
-  private async matchToCatalog(media: ImportedMedia): Promise<CatalogMedia | null> {
+  /** Recherche le média et décide : rapproché (certain), ambigu (candidats), ou sans candidat. */
+  private async matchToCatalog(media: ImportedMedia): Promise<MatchResult> {
     // La date est parfois encodée dans le titre : la retirer de la requête et s'en servir
     // comme signal d'année (améliore le rapprochement, ADR-0008).
     const { title, year: titleYear } = extractTitleYear(media.title);
     const year = media.year ?? titleYear;
     try {
       const result = await this.catalog.search({ query: title, page: 1, pageSize: SEARCH_PAGE_SIZE, type: media.type });
+      if (result.items.length === 0) return { kind: "unmatched" };
+
       const byId = new Map(result.items.map((item) => [item.externalRef.externalId, item]));
       const best = pickBestMatch(
         { title, year },
@@ -129,53 +170,14 @@ export class ImportArchiveUseCase implements UseCase<ImportArchiveInput, ImportR
           year: item.year,
         })),
       );
-      return best ? (byId.get(best.externalId) ?? null) : null;
+      const matched = best ? byId.get(best.externalId) : undefined;
+      // Rapprochement certain → import direct ; sinon, laisser l'utilisateur choisir.
+      return matched ? { kind: "matched", media: matched } : { kind: "ambiguous", candidates: [...result.items] };
     } catch (error) {
       this.logger.warn(
         `Rapprochement impossible pour « ${media.title} » : ${(error as Error).message}`,
       );
-      return null;
-    }
-  }
-
-  /** Ajoute le média rapproché puis applique statut « vu » (film) ou épisodes vus (série). */
-  private async importMedia(
-    userId: string,
-    media: ImportedMedia,
-    match: CatalogMedia,
-  ): Promise<number> {
-    const item = await this.addMedia.execute({
-      userId,
-      media: {
-        externalRef: { provider: "tmdb", externalId: match.externalRef.externalId },
-        type: media.type,
-        // Titre/année/poster issus du **catalogue** (fiables et localisés), pas de l'export.
-        title: match.title,
-        year: match.year ?? media.year,
-        posterUrl: match.posterUrl,
-      },
-    });
-
-    if (media.type === "MOVIE") {
-      if (media.status === "COMPLETED") {
-        await this.setWatchStatus.execute({ userId, itemId: item.id, status: "COMPLETED" });
-      }
-      return 0;
-    }
-
-    if (media.watchedEpisodes.length === 0) return 0;
-    try {
-      const result = await this.markEpisodes.execute({
-        userId,
-        itemId: item.id,
-        episodes: media.watchedEpisodes,
-      });
-      return result.marked;
-    } catch (error) {
-      this.logger.warn(
-        `Suivi des épisodes impossible pour « ${media.title} » : ${(error as Error).message}`,
-      );
-      return 0;
+      return { kind: "unmatched" };
     }
   }
 }

@@ -3,6 +3,7 @@ import { Button } from "@otium/ui";
 import { CheckCircle2, FileArchive, Film, ListVideo, Tv, UploadCloud } from "lucide-react";
 import { useRef, useState, type DragEvent } from "react";
 import { useImportTvTime } from "./api/use-import";
+import { PendingResolution } from "./components/pending-resolution";
 
 /** Une ligne de compteurs (importés / ignorés / non trouvés) pour un type de média. */
 function CountersRow({
@@ -29,6 +30,12 @@ function CountersRow({
           <dt className="text-muted-foreground">Déjà présents</dt>
           <dd className="font-semibold">{counters.skipped}</dd>
         </div>
+        {counters.pending > 0 && (
+          <div className="flex items-center gap-1">
+            <dt className="text-muted-foreground">À rapprocher</dt>
+            <dd className="font-semibold text-primary">{counters.pending}</dd>
+          </div>
+        )}
         <div className="flex items-center gap-1">
           <dt className="text-muted-foreground">Non trouvés</dt>
           <dd className="font-semibold">{counters.unmatched}</dd>
@@ -54,6 +61,8 @@ function Report({ report }: { report: ImportReport }) {
         </div>
         <span className="font-semibold">{report.episodesMarked}</span>
       </div>
+
+      {report.pending.length > 0 && <PendingResolution pending={report.pending} />}
 
       {report.unmatchedSample.length > 0 && (
         <details className="rounded-lg border bg-card px-4 py-3 text-sm">

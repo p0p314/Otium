@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Body,
   Controller,
   Post,
   UploadedFile,
@@ -7,10 +8,12 @@ import {
   UseInterceptors,
 } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
-import type { ImportReport } from "@otium/types";
+import { type ImportReport, ResolveImportInput, type ResolveImportResult } from "@otium/types";
 import { AuthGuard, type AuthenticatedUser } from "../../authentication/presentation/auth.guard";
 import { CurrentUser } from "../../authentication/presentation/current-user.decorator";
+import { ZodValidationPipe } from "../../../shared/presentation/zod-validation.pipe";
 import { ImportArchiveUseCase } from "../application/import-archive.usecase";
+import { ResolveImportUseCase } from "../application/resolve-import.usecase";
 
 /** Taille maximale de l'archive acceptée (garde-fou mémoire ; export RGPD ~ quelques Mo). */
 const MAX_ARCHIVE_BYTES = 50 * 1024 * 1024;
@@ -23,7 +26,10 @@ interface UploadedArchive {
 @Controller("import")
 @UseGuards(AuthGuard)
 export class ImportController {
-  constructor(private readonly importArchive: ImportArchiveUseCase) {}
+  constructor(
+    private readonly importArchive: ImportArchiveUseCase,
+    private readonly resolveImport: ResolveImportUseCase,
+  ) {}
 
   /** Importe un export RGPD TV Time (archive ZIP) dans la bibliothèque de l'utilisateur. */
   @Post("tvtime")
@@ -38,5 +44,14 @@ export class ImportController {
       format: "tvtime",
       archive: file.buffer,
     });
+  }
+
+  /** Résout une entrée d'import ambiguë : importe le candidat choisi par l'utilisateur. */
+  @Post("resolve")
+  async resolve(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body(new ZodValidationPipe(ResolveImportInput)) input: ResolveImportInput,
+  ): Promise<ResolveImportResult> {
+    return this.resolveImport.execute({ userId: user.id, input });
   }
 }

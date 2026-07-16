@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { MediaCatalogProvider } from "../../media/domain";
 import type { ArchiveReader, ImportBatch, ImportSourceParser } from "../domain";
 import { ImportArchiveUseCase } from "./import-archive.usecase";
+import { MediaImporter } from "./media-importer";
 
 const batch: ImportBatch = {
   source: "tvtime",
@@ -100,15 +101,12 @@ describe("ImportArchiveUseCase", () => {
   });
 
   function build(): ImportArchiveUseCase {
-    return new ImportArchiveUseCase(
-      archiveReader,
-      [parser],
-      catalog,
-      getLibrary as never,
+    const importer = new MediaImporter(
       addMedia as never,
       setWatchStatus as never,
       markEpisodes as never,
     );
+    return new ImportArchiveUseCase(archiveReader, [parser], catalog, getLibrary as never, importer);
   }
 
   it("importe films et séries, rafraîchit les doublons et liste les non-rapprochés", async () => {
@@ -118,10 +116,50 @@ describe("ImportArchiveUseCase", () => {
       archive: Buffer.from(""),
     });
 
-    expect(report.movies).toEqual({ parsed: 4, imported: 2, skipped: 1, unmatched: 1 });
-    expect(report.series).toEqual({ parsed: 1, imported: 1, skipped: 0, unmatched: 0 });
+    expect(report.movies).toEqual({ parsed: 4, imported: 2, skipped: 1, pending: 0, unmatched: 1 });
+    expect(report.series).toEqual({ parsed: 1, imported: 1, skipped: 0, pending: 0, unmatched: 0 });
     expect(report.episodesMarked).toBe(2);
     expect(report.unmatchedSample).toContainEqual({ type: "MOVIE", title: "NoMatch", year: 1999 });
+    expect(report.pending).toEqual([]);
+  });
+
+  it("classe en « à résoudre » une entrée sans rapprochement certain mais avec des candidats", async () => {
+    // « The 100 » : aucun match sûr, mais deux candidats proches → résolution manuelle.
+    parser = {
+      format: "tvtime",
+      supports: () => true,
+      parse: () => ({
+        source: "tvtime",
+        medias: [
+          {
+            type: "SERIES",
+            title: "The 100",
+            year: null,
+            status: "IN_PROGRESS",
+            runtimeMinutes: null,
+            watchedEpisodes: [{ seasonNumber: 1, episodeNumber: 1, watchedAt: null }],
+          },
+        ],
+      }),
+    };
+    vi.mocked(catalog.search).mockResolvedValue({
+      items: [
+        // Titres proches mais sous le seuil : aucun rapprochement certain.
+        { externalRef: { provider: "tmdb", externalId: "hundred" }, title: "The Hundred Acre Wood", year: 2013, posterUrl: null, genres: [] },
+        { externalRef: { provider: "tmdb", externalId: "cent" }, title: "Cent", year: 2019, posterUrl: null, genres: [] },
+      ],
+      page: 1,
+      pageSize: 20,
+      total: 2,
+    } as never);
+
+    const report = await build().execute({ userId: "u1", format: "tvtime", archive: Buffer.from("") });
+
+    expect(report.series.pending).toBe(1);
+    expect(report.series.imported).toBe(0);
+    expect(report.pending[0]?.title).toBe("The 100");
+    expect(report.pending[0]?.candidates.map((c) => c.externalId)).toEqual(["hundred", "cent"]);
+    expect(addMedia.execute).not.toHaveBeenCalled();
   });
 
   it("marque « vu » les films COMPLETED (nouveaux comme rafraîchis)", async () => {
