@@ -1,6 +1,7 @@
-import { Inject, Injectable, NotFoundException } from "@nestjs/common";
+import { Inject, Injectable, Logger, NotFoundException } from "@nestjs/common";
 import type { UseCase } from "../../../shared/application/use-case";
 import { EVENT_PUBLISHER, type EventPublisher } from "../../../shared/domain";
+import { MEDIA_CATALOG_PROVIDER, type MediaCatalogProvider } from "../../media/domain";
 import {
   LIBRARY_REPOSITORY,
   type LibraryItem,
@@ -23,9 +24,12 @@ export interface SetWatchStatusInput {
  */
 @Injectable()
 export class SetWatchStatusUseCase implements UseCase<SetWatchStatusInput, LibraryItem> {
+  private readonly logger = new Logger(SetWatchStatusUseCase.name);
+
   constructor(
     @Inject(LIBRARY_REPOSITORY) private readonly library: LibraryRepository,
     @Inject(EVENT_PUBLISHER) private readonly events: EventPublisher,
+    @Inject(MEDIA_CATALOG_PROVIDER) private readonly catalog: MediaCatalogProvider,
   ) {}
 
   async execute({ userId, itemId, status }: SetWatchStatusInput): Promise<LibraryItem> {
@@ -36,8 +40,31 @@ export class SetWatchStatusUseCase implements UseCase<SetWatchStatusInput, Libra
     const item = await this.library.setStatus(userId, itemId, status);
     await this.events.publish(new WatchStatusChanged(userId, itemId, status));
     if (item.media.type === "MOVIE" && status === "COMPLETED") {
+      await this.ensureMovieRuntime(item);
       await this.events.publish(new MovieCompleted(userId, itemId));
     }
     return item;
+  }
+
+  /**
+   * Un film « vu » doit porter sa durée pour alimenter le temps de visionnage. Si
+   * elle manque (ajout antérieur à l'enrichissement, ou enrichissement échoué), on
+   * la complète depuis le catalogue. Best-effort : une panne du fournisseur n'échoue
+   * jamais le changement de statut.
+   */
+  private async ensureMovieRuntime(item: LibraryItem): Promise<void> {
+    if (item.media.runtimeMinutes != null) return;
+    try {
+      const details = await this.catalog.getMediaDetails(
+        item.media.type,
+        item.media.externalRef.externalId,
+      );
+      await this.library.backfillMediaMetadata(item.media.externalRef, {
+        genres: details.genres.map((g) => g.label),
+        runtimeMinutes: details.runtimeMinutes ?? null,
+      });
+    } catch (error) {
+      this.logger.warn(`Durée du film indisponible (backfill ignoré) : ${(error as Error).message}`);
+    }
   }
 }

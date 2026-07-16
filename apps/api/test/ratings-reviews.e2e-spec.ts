@@ -77,6 +77,7 @@ class FakeLibraryRepo implements LibraryRepository {
   async getMediaId(userId: string, itemId: string): Promise<string | null> {
     return userId === USER_ID && itemId === ITEM_ID ? "media-1" : null;
   }
+  async backfillMediaMetadata(): Promise<void> {}
 }
 
 class FakeReviewRepo implements ReviewRepository {

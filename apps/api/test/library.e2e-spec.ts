@@ -87,6 +87,7 @@ class InMemoryLibraryRepository implements LibraryRepository {
     const item = this.items.get(itemId);
     return item && item.userId === userId ? `media-${item.media.externalRef.externalId}` : null;
   }
+  async backfillMediaMetadata(): Promise<void> {}
 }
 
 const TOKEN = "test-token";
