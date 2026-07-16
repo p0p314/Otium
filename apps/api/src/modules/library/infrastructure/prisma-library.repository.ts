@@ -97,6 +97,19 @@ export class PrismaLibraryRepository implements LibraryRepository {
     return item?.mediaId ?? null;
   }
 
+  async backfillMediaMetadata(
+    ref: { provider: string; externalId: string },
+    metadata: { genres: readonly string[]; runtimeMinutes: number | null },
+  ): Promise<void> {
+    await this.prisma.media.updateMany({
+      where: { externalProvider: ref.provider, externalId: ref.externalId },
+      data: {
+        ...(metadata.runtimeMinutes != null ? { runtimeMinutes: metadata.runtimeMinutes } : {}),
+        ...(metadata.genres.length > 0 ? { genres: [...metadata.genres] } : {}),
+      },
+    });
+  }
+
   private toDomain(row: LibraryItemRow): LibraryItem {
     return {
       id: row.id,
@@ -106,6 +119,8 @@ export class PrismaLibraryRepository implements LibraryRepository {
         title: row.media.title,
         year: row.media.year,
         posterUrl: row.media.posterUrl,
+        genres: row.media.genres,
+        runtimeMinutes: row.media.runtimeMinutes,
       },
       status: row.status,
       rating: row.rating,

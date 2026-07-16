@@ -40,6 +40,7 @@ describe("Library use cases", () => {
       setStatus: vi.fn().mockResolvedValue({ ...item, status: "COMPLETED" }),
       setRating: vi.fn().mockResolvedValue({ ...item, rating: 8 }),
       getMediaId: vi.fn().mockResolvedValue("media-1"),
+      backfillMediaMetadata: vi.fn().mockResolvedValue(undefined),
     };
     events = { publish: vi.fn().mockResolvedValue(undefined), publishAll: vi.fn() };
     // Par défaut : l'enrichissement échoue (dégradation gracieuse — média inchangé).
@@ -93,7 +94,7 @@ describe("Library use cases", () => {
   });
 
   it("marque un film « vu » et émet WatchStatusChanged puis MovieCompleted", async () => {
-    const useCase = new SetWatchStatusUseCase(repo, events);
+    const useCase = new SetWatchStatusUseCase(repo, events, catalog);
     const result = await useCase.execute({ userId: "u1", itemId: "item-1", status: "COMPLETED" });
 
     expect(result.status).toBe("COMPLETED");
@@ -102,9 +103,53 @@ describe("Library use cases", () => {
     expect(names).toEqual(["WatchStatusChanged", "MovieCompleted"]);
   });
 
+  it("complète la durée d'un film « vu » dont la durée manque (backfill)", async () => {
+    vi.mocked(repo.setStatus).mockResolvedValue({ ...item, status: "COMPLETED" }); // media sans runtimeMinutes
+    vi.mocked(catalog.getMediaDetails).mockResolvedValue({
+      genres: [{ id: "18", label: "Drame" }],
+      runtimeMinutes: 155,
+    } as unknown as Awaited<ReturnType<MediaCatalogProvider["getMediaDetails"]>>);
+    const useCase = new SetWatchStatusUseCase(repo, events, catalog);
+
+    await useCase.execute({ userId: "u1", itemId: "item-1", status: "COMPLETED" });
+
+    expect(catalog.getMediaDetails).toHaveBeenCalledWith("MOVIE", "1");
+    expect(repo.backfillMediaMetadata).toHaveBeenCalledWith(
+      { provider: "tmdb", externalId: "1" },
+      { genres: ["Drame"], runtimeMinutes: 155 },
+    );
+  });
+
+  it("ne rappelle pas le catalogue si la durée du film est déjà connue", async () => {
+    vi.mocked(repo.setStatus).mockResolvedValue({
+      ...item,
+      status: "COMPLETED",
+      media: { ...media, runtimeMinutes: 120 },
+    });
+    const useCase = new SetWatchStatusUseCase(repo, events, catalog);
+
+    await useCase.execute({ userId: "u1", itemId: "item-1", status: "COMPLETED" });
+
+    expect(catalog.getMediaDetails).not.toHaveBeenCalled();
+    expect(repo.backfillMediaMetadata).not.toHaveBeenCalled();
+  });
+
+  it("n'échoue pas le passage « vu » si le catalogue est indisponible", async () => {
+    vi.mocked(repo.setStatus).mockResolvedValue({ ...item, status: "COMPLETED" });
+    // catalog.getMediaDetails rejette par défaut (voir beforeEach)
+    const useCase = new SetWatchStatusUseCase(repo, events, catalog);
+
+    const result = await useCase.execute({ userId: "u1", itemId: "item-1", status: "COMPLETED" });
+
+    expect(result.status).toBe("COMPLETED");
+    expect(repo.backfillMediaMetadata).not.toHaveBeenCalled();
+    const names = vi.mocked(events.publish).mock.calls.map((c) => (c[0] as { name: string }).name);
+    expect(names).toEqual(["WatchStatusChanged", "MovieCompleted"]);
+  });
+
   it("ne réémet rien si le statut est inchangé", async () => {
     vi.mocked(repo.findItem).mockResolvedValue({ ...item, status: "COMPLETED" });
-    const useCase = new SetWatchStatusUseCase(repo, events);
+    const useCase = new SetWatchStatusUseCase(repo, events, catalog);
     await useCase.execute({ userId: "u1", itemId: "item-1", status: "COMPLETED" });
 
     expect(repo.setStatus).not.toHaveBeenCalled();
@@ -119,7 +164,7 @@ describe("Library use cases", () => {
     };
     vi.mocked(repo.findItem).mockResolvedValue(seriesItem);
     vi.mocked(repo.setStatus).mockResolvedValue({ ...seriesItem, status: "PLANNED" });
-    const useCase = new SetWatchStatusUseCase(repo, events);
+    const useCase = new SetWatchStatusUseCase(repo, events, catalog);
     await useCase.execute({ userId: "u1", itemId: "item-1", status: "PLANNED" });
 
     const names = vi.mocked(events.publish).mock.calls.map((c) => (c[0] as { name: string }).name);

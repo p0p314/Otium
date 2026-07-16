@@ -58,7 +58,9 @@ Objectif atteint : un utilisateur s'inscrit, cherche, ajoute, note/commente et s
 10. **Statistiques de visionnage** ✅ — tableau de bord `/stats` (`GET /stats`) : totaux
     (films/séries/épisodes, temps), répartition, genres les plus regardés, activité par mois,
     note moyenne, records. Agrégations Prisma + builder pur ; graphiques recharts (chunk
-    séparé, palette CVD validée). Genres/durée persistés à l'ajout (enrichissement catalogue).
+    séparé, palette CVD validée). Genres/durée persistés à l'ajout (enrichissement catalogue),
+    avec backfill best-effort de la durée d'un film au passage « vu » (films ajoutés avant
+    l'enrichissement, ou dont l'enrichissement avait échoué) — garantit le temps de visionnage films.
 11. **Polish UX** — états vides, skeletons partout, animations, accessibilité AA, i18n FR.
 12. **Providers additionnels** (TVMaze/OMDb) via le registry, sans toucher au métier.
 

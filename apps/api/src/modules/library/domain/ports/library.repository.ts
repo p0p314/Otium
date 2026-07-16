@@ -17,6 +17,15 @@ export interface LibraryRepository {
   setRating(userId: string, itemId: string, rating: number | null): Promise<LibraryItem>;
   /** Identifiant interne du média d'un élément (pour les avis), ou `null`. */
   getMediaId(userId: string, itemId: string): Promise<string | null>;
+  /**
+   * Complète genres/durée d'un média déjà présent (backfill best-effort). Données
+   * objectives partagées entre utilisateurs, identifiées par référence externe ;
+   * seules les valeurs renseignées écrasent l'existant.
+   */
+  backfillMediaMetadata(
+    ref: { provider: string; externalId: string },
+    metadata: { genres: readonly string[]; runtimeMinutes: number | null },
+  ): Promise<void>;
 }
 
 export const LIBRARY_REPOSITORY = Symbol("LIBRARY_REPOSITORY");
