@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useHomeDashboard } from "./api/use-home";
 import { useUpcoming } from "./api/use-upcoming";
 import { HomeSeriesCard } from "./components/home-series-card";
-import { UpcomingList } from "./components/upcoming-list";
+import { UpcomingView } from "./components/upcoming-view";
 
 const GRID = "grid gap-3 sm:grid-cols-2";
 
@@ -115,7 +115,7 @@ export function HomeDashboard({ displayName }: { displayName: string }) {
           ))}
         </div>
       ) : (
-        <UpcomingList episodes={upcoming.data?.series ?? []} />
+        <UpcomingView data={upcoming.data ?? { series: [], movies: [] }} />
       )}
     </div>
   );

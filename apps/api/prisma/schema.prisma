@@ -42,6 +42,8 @@ model Media {
   year             Int?
   posterUrl        String?
   runtimeMinutes   Int?
+  /** Date de sortie (film). Null = inconnue. Alimente l'agenda « À venir ». */
+  releaseDate      DateTime?
   externalProvider String
   externalId       String
   genres           String[]

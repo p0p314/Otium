@@ -52,6 +52,7 @@ describe("Library use cases", () => {
       setRating: vi.fn().mockResolvedValue({ ...item, rating: 8 }),
       getMediaId: vi.fn().mockResolvedValue("media-1"),
       backfillMediaMetadata: vi.fn().mockResolvedValue(undefined),
+      listUpcomingMovies: vi.fn().mockResolvedValue([]),
     };
     events = { publish: vi.fn().mockResolvedValue(undefined), publishAll: vi.fn() };
     // Par défaut : l'enrichissement échoue (dégradation gracieuse — média inchangé).
