@@ -10,6 +10,8 @@ export interface UserRepository {
   create(user: User): Promise<User>;
   /** Met à jour le profil (nom affiché et/ou e-mail) et renvoie l'entité à jour. */
   updateProfile(userId: string, data: { displayName?: string; email?: Email }): Promise<User>;
+  /** Remplace le hash du mot de passe de l'utilisateur. */
+  updatePassword(userId: string, passwordHash: string): Promise<void>;
 }
 
 /** Jeton d'injection (DI) du port `UserRepository`. */

@@ -43,13 +43,7 @@ export function ProfilePage() {
         ))}
       </div>
 
-      {tab === "profile" ? (
-        <ProfileInfo />
-      ) : tab === "import" ? (
-        <ImportPage />
-      ) : (
-        <SearchSettings />
-      )}
+      {tab === "profile" ? <ProfileInfo /> : tab === "import" ? <ImportPage /> : <SearchSettings />}
     </section>
   );
 }

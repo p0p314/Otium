@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   ConflictException,
   Controller,
@@ -7,6 +8,7 @@ import {
   Inject,
   Patch,
   Post,
+  Put,
   Req,
   Res,
   UnauthorizedException,
@@ -16,6 +18,7 @@ import { ConfigService } from "@nestjs/config";
 import {
   type AuthSession,
   type AuthUser,
+  ChangePasswordInput,
   LoginInput,
   RegisterInput,
   UpdateProfileInput,
@@ -28,6 +31,7 @@ import { EmailAlreadyUsedError, InvalidCredentialsError } from "../application/e
 import { LoginUserUseCase } from "../application/login-user.usecase";
 import { RegisterUserUseCase } from "../application/register-user.usecase";
 import { UpdateProfileUseCase } from "../application/update-profile.usecase";
+import { ChangePasswordUseCase } from "../application/change-password.usecase";
 import { SESSION_STORE, type SessionStore } from "../domain/ports/session-store";
 import { AuthGuard, type AuthenticatedUser, type RequestWithUser } from "./auth.guard";
 import { CurrentUser } from "./current-user.decorator";
@@ -39,6 +43,7 @@ export class AuthController {
     private readonly registerUser: RegisterUserUseCase,
     private readonly loginUser: LoginUserUseCase,
     private readonly updateProfile: UpdateProfileUseCase,
+    private readonly changePassword: ChangePasswordUseCase,
     @Inject(SESSION_STORE) private readonly sessions: SessionStore,
     private readonly config: ConfigService<Env, true>,
   ) {}
@@ -90,6 +95,24 @@ export class AuthController {
       return await this.updateProfile.execute({ userId: user.id, ...input });
     } catch (error) {
       if (error instanceof EmailAlreadyUsedError) throw new ConflictException(error.message);
+      throw error;
+    }
+  }
+
+  @Put("password")
+  @HttpCode(204)
+  @UseGuards(AuthGuard)
+  async changeMyPassword(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body(new ZodValidationPipe(ChangePasswordInput)) input: ChangePasswordInput,
+  ): Promise<void> {
+    try {
+      await this.changePassword.execute({ userId: user.id, ...input });
+    } catch (error) {
+      // Mauvais mot de passe actuel → 400 (jamais 401 : ne pas déconnecter la session).
+      if (error instanceof InvalidCredentialsError) {
+        throw new BadRequestException("Mot de passe actuel incorrect.");
+      }
       throw error;
     }
   }

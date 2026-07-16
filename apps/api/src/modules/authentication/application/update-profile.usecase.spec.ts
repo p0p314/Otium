@@ -27,6 +27,7 @@ describe("UpdateProfileUseCase", () => {
           displayName: data.displayName ?? existing.displayName,
         }),
       ),
+      updatePassword: vi.fn(),
     };
     useCase = new UpdateProfileUseCase(users);
   });
@@ -50,9 +51,9 @@ describe("UpdateProfileUseCase", () => {
 
   it("rejette un e-mail déjà utilisé", async () => {
     vi.mocked(users.existsByEmail).mockResolvedValue(true);
-    await expect(useCase.execute({ userId: "u1", email: "taken@example.com" })).rejects.toBeInstanceOf(
-      EmailAlreadyUsedError,
-    );
+    await expect(
+      useCase.execute({ userId: "u1", email: "taken@example.com" }),
+    ).rejects.toBeInstanceOf(EmailAlreadyUsedError);
   });
 
   it("échoue si l'utilisateur est introuvable", async () => {

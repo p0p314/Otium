@@ -1,4 +1,9 @@
-import type { LoginInput, RegisterInput, UpdateProfileInput } from "@otium/types";
+import type {
+  ChangePasswordInput,
+  LoginInput,
+  RegisterInput,
+  UpdateProfileInput,
+} from "@otium/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../../lib/api";
 import { useAuthStore } from "../../../stores/auth-store";
@@ -31,6 +36,13 @@ export function useUpdateProfile() {
   return useMutation({
     mutationFn: (input: UpdateProfileInput) => api.updateProfile(input),
     onSuccess: (user) => setSession(user),
+  });
+}
+
+/** Change le mot de passe (le serveur vérifie l'actuel). */
+export function useChangePassword() {
+  return useMutation({
+    mutationFn: (input: ChangePasswordInput) => api.changePassword(input),
   });
 }
 
