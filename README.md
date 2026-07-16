@@ -53,6 +53,10 @@ pnpm dev                                     # web http://localhost:5173 · API 
 > le port de l'API (ex. `apps/web/.env` → `VITE_API_URL=http://localhost:3001/api`).
 > `.env` n'est pas versionné ; sans `TMDB_ACCESS_TOKEN`, la recherche renvoie 503 (le reste
 > fonctionne). L'API démarre même sans base (dégradation gracieuse).
+>
+> Les commandes `prisma:migrate` / `prisma:deploy` / `prisma:studio` chargent le `.env` **de la
+> racine** du monorepo (via `dotenv-cli`) : elles fonctionnent quel que soit le répertoire courant,
+> sans avoir à exporter `DATABASE_URL` à la main (Windows PowerShell compris).
 
 Vérifications : `pnpm typecheck` · `pnpm lint` · `pnpm test` · `pnpm build`.
 
