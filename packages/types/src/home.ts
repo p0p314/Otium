@@ -8,7 +8,9 @@ export const HomeSeries = z.object({
   posterUrl: z.string().url().nullable(),
   totalEpisodes: z.number().int().nonnegative(),
   watchedEpisodes: z.number().int().nonnegative(),
-  /** Prochain épisode à regarder (reprise), ou null si terminé. */
+  /** Épisodes déjà sortis (pour distinguer « disponible » de « à venir »). */
+  airedEpisodes: z.number().int().nonnegative(),
+  /** Prochain épisode **sorti** à regarder (reprise), ou null si rien à regarder. */
   nextEpisode: TrackedEpisode.nullable(),
   /** Date du dernier épisode vu (ISO), ou null si aucun. */
   lastWatchedAt: z.string().datetime().nullable(),
@@ -16,14 +18,20 @@ export const HomeSeries = z.object({
 export type HomeSeries = z.infer<typeof HomeSeries>;
 
 /**
- * Tableau de bord de l'accueil : séries en cours (activité récente) et séries
- * laissées de côté (pas d'épisode vu depuis un moment).
+ * Sections d'un type de média sur l'accueil : à reprendre (commencé, épisodes sortis
+ * non vus) puis à commencer (non commencé, avec épisodes déjà sortis).
+ */
+export const HomeMediaSections = z.object({
+  toResume: z.array(HomeSeries),
+  toStart: z.array(HomeSeries),
+});
+export type HomeMediaSections = z.infer<typeof HomeMediaSections>;
+
+/**
+ * Tableau de bord de l'accueil, **cloisonné par type de média** (jamais mélangés) et
+ * extensible (films et livres plus tard). V1 : séries.
  */
 export const HomeDashboard = z.object({
-  continueWatching: z.array(HomeSeries),
-  staleSeries: z.array(HomeSeries),
+  series: HomeMediaSections,
 });
 export type HomeDashboard = z.infer<typeof HomeDashboard>;
-
-/** Seuil (jours) au-delà duquel une série en cours est considérée « laissée de côté ». */
-export const STALE_SERIES_AFTER_DAYS = 30;

@@ -2,7 +2,12 @@ import { NotFoundException } from "@nestjs/common";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { EventPublisher } from "../../../shared/domain";
 import type { MediaCatalogProvider } from "../../media/domain";
-import type { LibraryItem, LibraryRepository, MediaDescriptor } from "../domain";
+import type {
+  LibraryItem,
+  LibraryRepository,
+  MediaDescriptor,
+  SeriesTrackingRepository,
+} from "../domain";
 import { AddMediaToLibraryUseCase } from "./add-media-to-library.usecase";
 import { RemoveFromLibraryUseCase } from "./remove-from-library.usecase";
 import { SetWatchStatusUseCase } from "./set-watch-status.usecase";
@@ -29,6 +34,12 @@ describe("Library use cases", () => {
   let repo: LibraryRepository;
   let events: EventPublisher;
   let catalog: MediaCatalogProvider;
+  // Suivi de séries : non sollicité par ces tests (média MOVIE), fourni pour le constructeur.
+  const tracking = {
+    getContext: vi.fn().mockResolvedValue(null),
+    hasEpisodes: vi.fn().mockResolvedValue(true),
+    saveSeasons: vi.fn().mockResolvedValue(undefined),
+  } as unknown as SeriesTrackingRepository;
 
   beforeEach(() => {
     repo = {
@@ -54,7 +65,7 @@ describe("Library use cases", () => {
   });
 
   it("ajoute un média et émet MediaAdded", async () => {
-    const useCase = new AddMediaToLibraryUseCase(repo, events, catalog);
+    const useCase = new AddMediaToLibraryUseCase(repo, events, catalog, tracking);
     const result = await useCase.execute({ userId: "u1", media });
     expect(result).toBe(item);
     expect(repo.add).toHaveBeenCalledWith("u1", media);
@@ -70,7 +81,10 @@ describe("Library use cases", () => {
       runtimeMinutes: 155,
     } as unknown as Awaited<ReturnType<MediaCatalogProvider["getMediaDetails"]>>);
 
-    await new AddMediaToLibraryUseCase(repo, events, catalog).execute({ userId: "u1", media });
+    await new AddMediaToLibraryUseCase(repo, events, catalog, tracking).execute({
+      userId: "u1",
+      media,
+    });
 
     expect(catalog.getMediaDetails).toHaveBeenCalledWith("MOVIE", "1");
     expect(repo.add).toHaveBeenCalledWith(

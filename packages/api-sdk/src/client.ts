@@ -26,6 +26,7 @@ import {
   type SetWatchStatusInput,
   type ToggleFavoriteInput,
   type TrendingMediaQuery,
+  UpcomingDashboard,
   ViewingStats,
 } from "@otium/types";
 import { z } from "zod";
@@ -116,6 +117,11 @@ export class OtiumClient {
 
   async getHomeDashboard(): Promise<HomeDashboard> {
     return this.request("/library/home", HomeDashboard);
+  }
+
+  /** Agenda « À venir » : épisodes à diffusion future des séries suivies. */
+  async getUpcoming(): Promise<UpcomingDashboard> {
+    return this.request("/library/upcoming", UpcomingDashboard);
   }
 
   async getViewingStats(): Promise<ViewingStats> {

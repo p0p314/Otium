@@ -1,7 +1,12 @@
 import { Inject, Injectable } from "@nestjs/common";
 import type { UseCase } from "../../../shared/application/use-case";
 import { EVENT_PUBLISHER, type EventPublisher } from "../../../shared/domain";
-import { LIBRARY_REPOSITORY, type LibraryItem, type LibraryRepository, MediaRated } from "../domain";
+import {
+  LIBRARY_REPOSITORY,
+  type LibraryItem,
+  type LibraryRepository,
+  MediaRated,
+} from "../domain";
 
 export interface RateMediaInput {
   userId: string;

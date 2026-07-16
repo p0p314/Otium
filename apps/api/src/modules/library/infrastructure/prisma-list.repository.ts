@@ -1,12 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import type { Prisma } from "@prisma/client";
 import { PrismaService } from "../../../shared/infrastructure/prisma/prisma.service";
-import type {
-  CustomList,
-  CustomListDetail,
-  ListRepository,
-  MediaDescriptor,
-} from "../domain";
+import type { CustomList, CustomListDetail, ListRepository, MediaDescriptor } from "../domain";
 
 type ListDetailRow = Prisma.ListGetPayload<{
   include: { items: { include: { media: true } } };
@@ -45,7 +40,10 @@ export class PrismaListRepository implements ListRepository {
   }
 
   async rename(userId: string, listId: string, name: string): Promise<CustomList | null> {
-    const result = await this.prisma.list.updateMany({ where: { id: listId, userId }, data: { name } });
+    const result = await this.prisma.list.updateMany({
+      where: { id: listId, userId },
+      data: { name },
+    });
     if (result.count === 0) return null;
     const list = await this.prisma.list.findFirst({
       where: { id: listId, userId },

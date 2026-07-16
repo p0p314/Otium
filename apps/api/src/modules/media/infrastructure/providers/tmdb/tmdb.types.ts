@@ -27,6 +27,7 @@ export interface TmdbSeasonDetails {
     episode_number: number;
     name?: string;
     runtime?: number | null;
+    air_date?: string | null;
   }[];
 }
 

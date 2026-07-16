@@ -1,19 +1,7 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  HttpCode,
-  Param,
-  Put,
-  UseGuards,
-} from "@nestjs/common";
+import { Body, Controller, Delete, Get, HttpCode, Param, Put, UseGuards } from "@nestjs/common";
 import { type Review as ReviewDto, type ReviewResponse, SaveReviewInput } from "@otium/types";
 import { ZodValidationPipe } from "../../../shared/presentation/zod-validation.pipe";
-import {
-  AuthGuard,
-  type AuthenticatedUser,
-} from "../../authentication/presentation/auth.guard";
+import { AuthGuard, type AuthenticatedUser } from "../../authentication/presentation/auth.guard";
 import { CurrentUser } from "../../authentication/presentation/current-user.decorator";
 import type { Review } from "../domain";
 import {

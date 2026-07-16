@@ -23,9 +23,10 @@ export interface ToggleEpisodesWatchedInput {
  * le cas échéant, `SeriesCompleted`. Recalcule le statut une seule fois (éco-conception).
  */
 @Injectable()
-export class ToggleEpisodesWatchedUseCase
-  implements UseCase<ToggleEpisodesWatchedInput, SeriesTrackingView>
-{
+export class ToggleEpisodesWatchedUseCase implements UseCase<
+  ToggleEpisodesWatchedInput,
+  SeriesTrackingView
+> {
   constructor(
     @Inject(SERIES_TRACKING_REPOSITORY) private readonly repo: SeriesTrackingRepository,
     @Inject(EVENT_PUBLISHER) private readonly events: EventPublisher,

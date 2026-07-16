@@ -3,6 +3,7 @@ import { AuthenticationModule } from "../authentication/authentication.module";
 import { MediaModule } from "../media/media.module";
 import { AddMediaToLibraryUseCase } from "./application/add-media-to-library.usecase";
 import { GetHomeDashboardUseCase } from "./application/get-home-dashboard.usecase";
+import { GetUpcomingUseCase } from "./application/get-upcoming.usecase";
 import { GetLibraryUseCase } from "./application/get-library.usecase";
 import { GetLibraryItemUseCase } from "./application/get-library-item.usecase";
 import { GetSeriesTrackingUseCase } from "./application/get-series-tracking.usecase";
@@ -56,6 +57,7 @@ import { SeriesTrackingController } from "./presentation/series-tracking.control
     GetSeriesTrackingUseCase,
     MarkWatchedEpisodesByNumberUseCase,
     GetHomeDashboardUseCase,
+    GetUpcomingUseCase,
     ToggleEpisodeWatchedUseCase,
     ToggleEpisodesWatchedUseCase,
     GetReviewUseCase,

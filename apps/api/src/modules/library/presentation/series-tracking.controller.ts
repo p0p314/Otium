@@ -1,10 +1,7 @@
 import { Body, Controller, Get, Param, Patch, UseGuards } from "@nestjs/common";
 import { MarkEpisodeInput, MarkEpisodesInput, type SeriesTracking } from "@otium/types";
 import { ZodValidationPipe } from "../../../shared/presentation/zod-validation.pipe";
-import {
-  AuthGuard,
-  type AuthenticatedUser,
-} from "../../authentication/presentation/auth.guard";
+import { AuthGuard, type AuthenticatedUser } from "../../authentication/presentation/auth.guard";
 import { CurrentUser } from "../../authentication/presentation/current-user.decorator";
 import { GetSeriesTrackingUseCase } from "../application/get-series-tracking.usecase";
 import { ToggleEpisodeWatchedUseCase } from "../application/toggle-episode-watched.usecase";
