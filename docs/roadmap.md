@@ -43,6 +43,10 @@ Objectif atteint : un utilisateur s'inscrit, cherche, ajoute, note/commente et s
 - [x] **Bibliothèque par catégorie** — sélecteur Films / Séries (jamais les deux en même temps).
 - [x] **Mise en avant dans la recherche** — tendances du moment (films/séries) sous la barre
   (`GET /media/trending`, TMDB `trending`).
+- [x] **Profil** — page `/profile` (mobile-first) à onglets : **Profil** (édition nom affiché /
+  e-mail via `PATCH /auth/me`, avec contrôle d'unicité, + déconnexion), **Importer** (page d'import
+  RGPD déplacée ici), **Réglages** (périmètre de recherche : films / séries, extensible). Les
+  réglages filtrent la recherche et les tendances.
 
 - [x] **Fiche média détaillée** — page unique `/media/:type/:externalId` (backdrop, note TMDB,
   synopsis, genres, durée/saisons, casting, réalisateur/créateurs, sociétés, plateformes),

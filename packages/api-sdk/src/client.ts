@@ -26,6 +26,7 @@ import {
   type SetWatchStatusInput,
   type ToggleFavoriteInput,
   type TrendingMediaQuery,
+  type UpdateProfileInput,
   UpcomingDashboard,
   ViewingStats,
 } from "@otium/types";
@@ -105,6 +106,11 @@ export class OtiumClient {
 
   async me(): Promise<AuthUser> {
     return this.request("/auth/me", AuthUser);
+  }
+
+  /** Met à jour le profil (nom affiché et/ou e-mail). */
+  async updateProfile(input: UpdateProfileInput): Promise<AuthUser> {
+    return this.request("/auth/me", AuthUser, { method: "PATCH", body: input });
   }
 
   async logout(): Promise<void> {

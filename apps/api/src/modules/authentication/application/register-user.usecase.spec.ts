@@ -19,6 +19,7 @@ describe("RegisterUserUseCase", () => {
 
   beforeEach(() => {
     users = {
+      updateProfile: vi.fn(),
       existsByEmail: vi.fn().mockResolvedValue(false),
       create: vi.fn(async (u: User) =>
         User.rehydrate("user-1", {

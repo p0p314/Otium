@@ -8,6 +8,8 @@ export interface UserRepository {
   existsByEmail(email: Email): Promise<boolean>;
   /** Persiste un nouvel utilisateur et renvoie l'entité avec son id attribué. */
   create(user: User): Promise<User>;
+  /** Met à jour le profil (nom affiché et/ou e-mail) et renvoie l'entité à jour. */
+  updateProfile(userId: string, data: { displayName?: string; email?: Email }): Promise<User>;
 }
 
 /** Jeton d'injection (DI) du port `UserRepository`. */

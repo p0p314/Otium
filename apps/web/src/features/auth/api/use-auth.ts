@@ -1,4 +1,4 @@
-import type { LoginInput, RegisterInput } from "@otium/types";
+import type { LoginInput, RegisterInput, UpdateProfileInput } from "@otium/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../../lib/api";
 import { useAuthStore } from "../../../stores/auth-store";
@@ -22,6 +22,15 @@ export function useLogin() {
   return useMutation({
     mutationFn: (input: LoginInput) => api.login(input),
     onSuccess: (session) => setSession(session.user),
+  });
+}
+
+/** Met à jour le profil et rafraîchit l'utilisateur en session (rendu immédiat). */
+export function useUpdateProfile() {
+  const setSession = useAuthStore((s) => s.setSession);
+  return useMutation({
+    mutationFn: (input: UpdateProfileInput) => api.updateProfile(input),
+    onSuccess: (user) => setSession(user),
   });
 }
 

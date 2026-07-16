@@ -40,4 +40,14 @@ export class User extends Entity<string> {
   get displayName(): string {
     return this.props.displayName;
   }
+
+  /** Renomme l'utilisateur (nom affiché). */
+  rename(displayName: string): void {
+    this.props.displayName = displayName;
+  }
+
+  /** Change l'adresse e-mail (identité) de l'utilisateur. */
+  changeEmail(email: Email): void {
+    this.props.email = email;
+  }
 }

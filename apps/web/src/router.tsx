@@ -14,9 +14,9 @@ const StatsPage = lazy(() =>
   import("./features/stats/stats-page").then((m) => ({ default: m.StatsPage })),
 );
 
-// Page d'import (rarement utilisée) isolée dans son propre chunk (éco-conception).
-const ImportPage = lazy(() =>
-  import("./features/import/import-page").then((m) => ({ default: m.ImportPage })),
+// Page profil (profil / import / réglages) isolée dans son propre chunk (éco-conception).
+const ProfilePage = lazy(() =>
+  import("./features/profile/profile-page").then((m) => ({ default: m.ProfilePage })),
 );
 import { RootLayout } from "./routes/root-layout";
 import { HomePage } from "./routes/home";
@@ -96,11 +96,11 @@ const statsRoute = createRoute({
   component: StatsPage,
 });
 
-const importRoute = createRoute({
+const profileRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/import",
+  path: "/profile",
   beforeLoad: requireAuth,
-  component: ImportPage,
+  component: ProfilePage,
 });
 
 const routeTree = rootRoute.addChildren([
@@ -114,7 +114,7 @@ const routeTree = rootRoute.addChildren([
   listDetailRoute,
   mediaDetailRoute,
   statsRoute,
-  importRoute,
+  profileRoute,
 ]);
 
 export const router = createRouter({ routeTree });

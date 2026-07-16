@@ -34,6 +34,20 @@ export class PrismaUserRepository implements UserRepository {
     return this.toDomain(row);
   }
 
+  async updateProfile(
+    userId: string,
+    data: { displayName?: string; email?: Email },
+  ): Promise<User> {
+    const row = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...(data.displayName !== undefined ? { displayName: data.displayName } : {}),
+        ...(data.email !== undefined ? { email: data.email.value } : {}),
+      },
+    });
+    return this.toDomain(row);
+  }
+
   private toDomain(row: PrismaUser): User {
     return User.rehydrate(row.id, {
       email: Email.create(row.email),

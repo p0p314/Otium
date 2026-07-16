@@ -1,11 +1,11 @@
-import { Button, Skeleton, buttonVariants } from "@otium/ui";
-import { Link, Outlet, useNavigate } from "@tanstack/react-router";
-import { LogOut, UploadCloud } from "lucide-react";
+import { Skeleton, buttonVariants } from "@otium/ui";
+import { Link, Outlet } from "@tanstack/react-router";
+import { UserRound } from "lucide-react";
 import { Suspense } from "react";
 import { ThemeToggle } from "../components/theme-toggle";
 import { NAV_ITEMS } from "../components/nav-items";
 import { BottomNav } from "../components/bottom-nav";
-import { useAuth, useLogout } from "../features/auth/api/use-auth";
+import { useAuth } from "../features/auth/api/use-auth";
 
 const NAV_LINK =
   "text-muted-foreground transition-colors hover:text-foreground [&.active]:text-foreground";
@@ -13,11 +13,6 @@ const NAV_LINK =
 /** Coquille applicative responsive : en-tête (desktop) + barre d'onglets (mobile). */
 export function RootLayout() {
   const { user, isAuthenticated } = useAuth();
-  const logout = useLogout();
-  const navigate = useNavigate();
-
-  const doLogout = () =>
-    logout.mutate(undefined, { onSettled: () => void navigate({ to: "/" }) });
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -39,48 +34,20 @@ export function RootLayout() {
                   {item.label}
                 </Link>
               ))}
-              {isAuthenticated ? (
-                <Link to="/import" className={NAV_LINK}>
-                  Importer
-                </Link>
-              ) : null}
             </nav>
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
             {isAuthenticated ? (
-              <>
-                <span className="hidden text-sm text-muted-foreground lg:inline">
-                  {user?.displayName}
-                </span>
-                {/* Import : icône sur mobile (le libellé vit dans la nav desktop). */}
-                <Link
-                  to="/import"
-                  aria-label="Importer"
-                  className={`${buttonVariants({ variant: "ghost", size: "icon" })} md:hidden`}
-                >
-                  <UploadCloud className="h-5 w-5" />
-                </Link>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="hidden sm:inline-flex"
-                  disabled={logout.isPending}
-                  onClick={doLogout}
-                >
-                  Se déconnecter
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label="Se déconnecter"
-                  className="sm:hidden"
-                  disabled={logout.isPending}
-                  onClick={doLogout}
-                >
-                  <LogOut className="h-5 w-5" />
-                </Button>
-              </>
+              // Profil : porte d'entrée vers infos, import, réglages et déconnexion.
+              <Link
+                to="/profile"
+                aria-label="Mon profil"
+                className={`${buttonVariants({ variant: "ghost", size: "sm" })} gap-2 [&.active]:text-foreground`}
+              >
+                <UserRound className="h-5 w-5" />
+                <span className="hidden lg:inline">{user?.displayName}</span>
+              </Link>
             ) : (
               <>
                 <Link to="/login" className={buttonVariants({ variant: "ghost", size: "sm" })}>
