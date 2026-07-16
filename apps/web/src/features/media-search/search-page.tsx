@@ -44,7 +44,7 @@ export function SearchPage() {
           isLoading={isLoading}
           isError={isError}
           hasQuery={hasQuery}
-          renderAction={(media) => <AddToLibraryButton media={media} />}
+          renderAction={(media) => <AddToLibraryButton media={media} compact />}
         />
       ) : (
         <TrendingShowcase />
