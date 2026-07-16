@@ -1,9 +1,10 @@
 import type { HomeSeries } from "@otium/types";
 import { Link } from "@tanstack/react-router";
 import { PlayCircle } from "lucide-react";
+import { memo } from "react";
 
 /** Carte d'une série mise en avant sur l'accueil : affiche, progression et reprise. */
-export function HomeSeriesCard({ series }: { series: HomeSeries }) {
+function HomeSeriesCardBase({ series }: { series: HomeSeries }) {
   const progress =
     series.totalEpisodes > 0
       ? Math.round((series.watchedEpisodes / series.totalEpisodes) * 100)
@@ -52,3 +53,6 @@ export function HomeSeriesCard({ series }: { series: HomeSeries }) {
     </Link>
   );
 }
+
+// Mémoïsé : la liste ne se re-rend pas au changement d'onglet tant que les séries sont identiques.
+export const HomeSeriesCard = memo(HomeSeriesCardBase);

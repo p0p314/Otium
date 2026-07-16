@@ -129,6 +129,26 @@ export class PrismaSeriesTrackingRepository implements SeriesTrackingRepository 
     }
   }
 
+  async setEpisodesWatchedAt(
+    itemId: string,
+    entries: readonly { episodeId: string; watchedAt: Date }[],
+  ): Promise<void> {
+    if (entries.length === 0) return;
+    // Upsert par épisode : conserve/rafraîchit la date réelle du visionnage (≠ createMany
+    // qui écraserait par la date du jour). Regroupé en transaction (cohérence de l'import).
+    await this.prisma.$transaction(
+      entries.map((entry) =>
+        this.prisma.watchedEpisode.upsert({
+          where: {
+            libraryItemId_episodeId: { libraryItemId: itemId, episodeId: entry.episodeId },
+          },
+          create: { libraryItemId: itemId, episodeId: entry.episodeId, watchedAt: entry.watchedAt },
+          update: { watchedAt: entry.watchedAt },
+        }),
+      ),
+    );
+  }
+
   async setStatus(itemId: string, status: WatchStatus): Promise<void> {
     await this.prisma.libraryItem.update({ where: { id: itemId }, data: { status } });
   }

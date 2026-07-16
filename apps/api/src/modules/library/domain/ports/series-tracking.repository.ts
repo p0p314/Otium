@@ -63,6 +63,14 @@ export interface SeriesTrackingRepository {
     episodeIds: readonly string[],
     watched: boolean,
   ): Promise<void>;
+  /**
+   * Marque des épisodes vus avec une **date de visionnage explicite** (import de
+   * l'historique). Idempotent (upsert par épisode), met à jour la date si déjà vu.
+   */
+  setEpisodesWatchedAt(
+    itemId: string,
+    entries: readonly { episodeId: string; watchedAt: Date }[],
+  ): Promise<void>;
   setStatus(itemId: string, status: WatchStatus): Promise<void>;
   /**
    * Progression de **toutes** les séries de la bibliothèque d'un utilisateur (tous

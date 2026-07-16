@@ -33,8 +33,7 @@ function EmptyDashboard() {
     <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed py-16 text-center">
       <p className="font-medium">Rien à suivre pour l'instant</p>
       <p className="max-w-xs text-sm text-muted-foreground">
-        Ajoutez une série : dès qu'un épisode est sorti, elle apparaît ici (à reprendre ou à
-        commencer).
+        Ajoutez une série : dès qu'un épisode est sorti, elle apparaît ici (à voir ou à reprendre).
       </p>
       <Link to="/search" className={buttonVariants({ size: "sm" })}>
         Rechercher une série
@@ -43,7 +42,7 @@ function EmptyDashboard() {
   );
 }
 
-/** Accueil connecté : tableau de bord (à reprendre / à commencer) et onglet « À venir ». */
+/** Accueil connecté : tableau de bord (à voir / à reprendre) et onglet « À venir ». */
 export function HomeDashboard({ displayName }: { displayName: string }) {
   const [tab, setTab] = useState<Tab>("dashboard");
   const dashboard = useHomeDashboard();
@@ -51,7 +50,7 @@ export function HomeDashboard({ displayName }: { displayName: string }) {
   const upcoming = useUpcoming();
 
   const series = dashboard.data?.series;
-  const hasDashboard = series && (series.toResume.length > 0 || series.toStart.length > 0);
+  const hasDashboard = series && (series.toWatch.length > 0 || series.toResume.length > 0);
 
   return (
     <div className="space-y-6">
@@ -95,14 +94,14 @@ export function HomeDashboard({ displayName }: { displayName: string }) {
         ) : hasDashboard ? (
           <div className="space-y-8">
             <Section
-              title="À reprendre"
-              subtitle="Séries commencées avec un épisode sorti à voir."
-              series={series.toResume}
+              title="À voir"
+              subtitle="Séries en cours et nouveautés prêtes à démarrer."
+              series={series.toWatch}
             />
             <Section
-              title="À commencer"
-              subtitle="Séries pas encore commencées, déjà disponibles."
-              series={series.toStart}
+              title="À reprendre"
+              subtitle="Séries laissées de côté ce dernier trimestre."
+              series={series.toResume}
             />
           </div>
         ) : (
