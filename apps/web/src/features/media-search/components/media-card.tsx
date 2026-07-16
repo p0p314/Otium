@@ -8,10 +8,13 @@ const TYPE_LABEL: Record<MediaSummary["type"], string> = {
   SERIES: "Série",
 };
 
-/** Vignette d'un média dans les résultats de recherche : lien vers la fiche + action. */
+/**
+ * Vignette d'un média : lien vers la fiche + action rapide superposée sur l'affiche
+ * (ajout en 1 tap). L'action est un frère du lien (jamais imbriquée dans le `<a>`).
+ */
 export function MediaCard({ media, action }: { media: MediaSummary; action?: ReactNode }) {
   return (
-    <article className="group">
+    <article className="group relative">
       <Link
         to="/media/$type/$externalId"
         params={{ type: media.type, externalId: media.externalRef.externalId }}
@@ -40,7 +43,7 @@ export function MediaCard({ media, action }: { media: MediaSummary; action?: Rea
           {media.year ? ` · ${media.year}` : ""}
         </p>
       </Link>
-      {action}
+      {action ? <div className="absolute right-1.5 top-1.5 z-10">{action}</div> : null}
     </article>
   );
 }
