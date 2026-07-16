@@ -23,6 +23,12 @@ export interface TrackingContext {
   readonly status: WatchStatus;
 }
 
+/** Série candidate à un rafraîchissement de sa structure (saisons/épisodes/dates). */
+export interface SeriesSyncCandidate {
+  readonly mediaId: string;
+  readonly externalId: string;
+}
+
 /**
  * Instantané de progression d'une série pour l'accueil : saisons/épisodes,
  * épisodes vus et date de dernière activité. Assemblé en une requête (éco-conception).
@@ -63,6 +69,14 @@ export interface SeriesTrackingRepository {
    * statuts), structure saisons/épisodes incluse. Base de l'accueil et de « À venir ».
    */
   listTrackedSeries(userId: string): Promise<SeriesProgressRecord[]>;
+  /**
+   * Séries suivies (hors abandonnées) dont la structure n'a **jamais** été synchronisée
+   * ou l'a été avant `staleBefore`. Alimente le rafraîchissement périodique de « À venir ».
+   * Dédoublonné par média (structure partagée entre utilisateurs).
+   */
+  listSeriesNeedingSync(userId: string, staleBefore: Date): Promise<SeriesSyncCandidate[]>;
+  /** Horodate la dernière synchro de structure d'un média (garde-fou de fraîcheur). */
+  markEpisodesSynced(mediaId: string, syncedAt: Date): Promise<void>;
 }
 
 export const SERIES_TRACKING_REPOSITORY = Symbol("SERIES_TRACKING_REPOSITORY");

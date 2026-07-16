@@ -14,6 +14,7 @@ Une décision = un fichier immuable ; on ne modifie pas un ADR accepté, on le *
 | [0006](0006-event-driven.md) | Événements de domaine internes | Accepté |
 | [0007](0007-stack-frontend.md) | Stack frontend (React/Vite + TanStack + Zustand) | Accepté |
 | [0008](0008-import-donnees-externes.md) | Import de données externes (RGPD) | Accepté |
+| [0009](0009-rafraichissement-structure-series.md) | Rafraîchissement de la structure des séries (garde-fou de fraîcheur) | Accepté |
 
 ## Gabarit
 

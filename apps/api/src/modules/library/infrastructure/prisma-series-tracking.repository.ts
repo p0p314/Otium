@@ -4,6 +4,7 @@ import type {
   PersistableSeason,
   SeasonRef,
   SeriesProgressRecord,
+  SeriesSyncCandidate,
   SeriesTrackingRepository,
   TrackingContext,
   WatchStatus,
@@ -172,6 +173,34 @@ export class PrismaSeriesTrackingRepository implements SeriesTrackingRepository 
         watchedIds,
         lastWatchedAt,
       };
+    });
+  }
+
+  async listSeriesNeedingSync(
+    userId: string,
+    staleBefore: Date,
+  ): Promise<SeriesSyncCandidate[]> {
+    const items = await this.prisma.libraryItem.findMany({
+      where: {
+        userId,
+        status: { not: "DROPPED" },
+        media: {
+          type: "SERIES",
+          OR: [{ episodesSyncedAt: null }, { episodesSyncedAt: { lt: staleBefore } }],
+        },
+      },
+      select: { media: { select: { id: true, externalId: true } } },
+    });
+    return items.map((item) => ({
+      mediaId: item.media.id,
+      externalId: item.media.externalId,
+    }));
+  }
+
+  async markEpisodesSynced(mediaId: string, syncedAt: Date): Promise<void> {
+    await this.prisma.media.update({
+      where: { id: mediaId },
+      data: { episodesSyncedAt: syncedAt },
     });
   }
 }
