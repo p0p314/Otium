@@ -45,6 +45,12 @@ export function RootLayout() {
                   >
                     Statistiques
                   </Link>
+                  <Link
+                    to="/import"
+                    className="text-muted-foreground transition-colors hover:text-foreground [&.active]:text-foreground"
+                  >
+                    Importer
+                  </Link>
                 </>
               ) : null}
             </nav>

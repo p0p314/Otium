@@ -10,12 +10,20 @@ describe("normalizeTitle", () => {
 
 describe("scoreMatch", () => {
   it("titre identique et même année = score maximal", () => {
-    expect(scoreMatch({ title: "Dune", year: 2021 }, { externalId: "1", title: "Dune", year: 2021 })).toBeCloseTo(1.15);
+    expect(
+      scoreMatch({ title: "Dune", year: 2021 }, { externalId: "1", title: "Dune", year: 2021 }),
+    ).toBeCloseTo(1.15);
   });
 
   it("pénalise une année éloignée", () => {
-    const same = scoreMatch({ title: "Dune", year: 2021 }, { externalId: "1", title: "Dune", year: 2021 });
-    const far = scoreMatch({ title: "Dune", year: 2021 }, { externalId: "2", title: "Dune", year: 1984 });
+    const same = scoreMatch(
+      { title: "Dune", year: 2021 },
+      { externalId: "1", title: "Dune", year: 2021 },
+    );
+    const far = scoreMatch(
+      { title: "Dune", year: 2021 },
+      { externalId: "2", title: "Dune", year: 1984 },
+    );
     expect(far).toBeLessThan(same);
   });
 });
@@ -33,10 +41,9 @@ describe("pickBestMatch", () => {
   });
 
   it("retourne null sous le seuil (aucun candidat pertinent)", () => {
-    const best = pickBestMatch(
-      { title: "Un titre totalement différent", year: 2000 },
-      [{ externalId: "99", title: "Autre chose", year: 1990 }],
-    );
+    const best = pickBestMatch({ title: "Un titre totalement différent", year: 2000 }, [
+      { externalId: "99", title: "Autre chose", year: 1990 },
+    ]);
     expect(best).toBeNull();
   });
 

@@ -89,10 +89,7 @@ export class OtiumClient {
   }
 
   async getMediaDetails(type: MediaType, externalId: string): Promise<MediaDetails> {
-    return this.request(
-      `/media/${type}/${encodeURIComponent(externalId)}`,
-      MediaDetails,
-    );
+    return this.request(`/media/${type}/${encodeURIComponent(externalId)}`, MediaDetails);
   }
 
   // --- Authentification ---

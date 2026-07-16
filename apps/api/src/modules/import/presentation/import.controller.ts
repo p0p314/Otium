@@ -8,10 +8,7 @@ import {
 } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
 import type { ImportReport } from "@otium/types";
-import {
-  AuthGuard,
-  type AuthenticatedUser,
-} from "../../authentication/presentation/auth.guard";
+import { AuthGuard, type AuthenticatedUser } from "../../authentication/presentation/auth.guard";
 import { CurrentUser } from "../../authentication/presentation/current-user.decorator";
 import { ImportArchiveUseCase } from "../application/import-archive.usecase";
 

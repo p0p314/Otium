@@ -34,9 +34,10 @@ export interface MarkWatchedEpisodesByNumberResult {
  * Conçu pour l'import de données externes (TV Time…), qui ne fournit pas nos IDs.
  */
 @Injectable()
-export class MarkWatchedEpisodesByNumberUseCase
-  implements UseCase<MarkWatchedEpisodesByNumberInput, MarkWatchedEpisodesByNumberResult>
-{
+export class MarkWatchedEpisodesByNumberUseCase implements UseCase<
+  MarkWatchedEpisodesByNumberInput,
+  MarkWatchedEpisodesByNumberResult
+> {
   constructor(
     @Inject(SERIES_TRACKING_REPOSITORY) private readonly repo: SeriesTrackingRepository,
     @Inject(MEDIA_CATALOG_PROVIDER) private readonly catalog: MediaCatalogProvider,
@@ -72,7 +73,11 @@ export class MarkWatchedEpisodesByNumberUseCase
     }
 
     const watched = await this.repo.getWatchedEpisodeIds(itemId);
-    const status = isComplete(seasons, watched) ? "COMPLETED" : watched.size > 0 ? "IN_PROGRESS" : "PLANNED";
+    const status = isComplete(seasons, watched)
+      ? "COMPLETED"
+      : watched.size > 0
+        ? "IN_PROGRESS"
+        : "PLANNED";
     if (status !== ctx.status) await this.repo.setStatus(itemId, status);
 
     return { marked: matchedIds.size, unmatched: episodes.length - matchedIds.size };

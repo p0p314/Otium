@@ -35,8 +35,14 @@ describe("Import (e2e)", () => {
       providers: [
         { provide: ImportArchiveUseCase, useValue: { execute } },
         AuthGuard,
-        { provide: SESSION_STORE, useValue: { resolve: async (t: string) => (t === TOKEN ? USER_ID : null) } },
-        { provide: USER_REPOSITORY, useValue: { findById: async (id: string) => (id === USER_ID ? user : null) } },
+        {
+          provide: SESSION_STORE,
+          useValue: { resolve: async (t: string) => (t === TOKEN ? USER_ID : null) },
+        },
+        {
+          provide: USER_REPOSITORY,
+          useValue: { findById: async (id: string) => (id === USER_ID ? user : null) },
+        },
       ],
     }).compile();
     app = moduleRef.createNestApplication();
@@ -54,7 +60,9 @@ describe("Import (e2e)", () => {
   });
 
   it("rejette l'absence de fichier (400)", async () => {
-    const res = await request(server()).post("/import/tvtime").set("authorization", `Bearer ${TOKEN}`);
+    const res = await request(server())
+      .post("/import/tvtime")
+      .set("authorization", `Bearer ${TOKEN}`);
     expect(res.status).toBe(400);
   });
 

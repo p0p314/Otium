@@ -20,7 +20,12 @@ describe("MarkWatchedEpisodesByNumberUseCase", () => {
 
   beforeEach(() => {
     repo = {
-      getContext: vi.fn(async () => ({ mediaId: "m1", externalId: "e1", title: "S", status: "PLANNED" })),
+      getContext: vi.fn(async () => ({
+        mediaId: "m1",
+        externalId: "e1",
+        title: "S",
+        status: "PLANNED",
+      })),
       hasEpisodes: vi.fn(async () => false),
       saveSeasons: vi.fn(async () => undefined),
       getSeasons: vi.fn(async () => seasons),
@@ -85,7 +90,11 @@ describe("MarkWatchedEpisodesByNumberUseCase", () => {
   it("ne recharge pas la structure si elle est déjà en base", async () => {
     vi.mocked(repo.hasEpisodes).mockResolvedValue(true);
     const useCase = new MarkWatchedEpisodesByNumberUseCase(repo, catalog);
-    await useCase.execute({ userId: "u1", itemId: "i1", episodes: [{ seasonNumber: 1, episodeNumber: 1 }] });
+    await useCase.execute({
+      userId: "u1",
+      itemId: "i1",
+      episodes: [{ seasonNumber: 1, episodeNumber: 1 }],
+    });
     expect(catalog.getSeriesDetails).not.toHaveBeenCalled();
   });
 

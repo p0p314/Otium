@@ -6,10 +6,38 @@ import { ImportArchiveUseCase } from "./import-archive.usecase";
 const batch: ImportBatch = {
   source: "tvtime",
   medias: [
-    { type: "MOVIE", title: "Dune", year: 2021, status: "COMPLETED", runtimeMinutes: 155, watchedEpisodes: [] },
-    { type: "MOVIE", title: "Tenet", year: 2020, status: "PLANNED", runtimeMinutes: 150, watchedEpisodes: [] },
-    { type: "MOVIE", title: "Already", year: 2000, status: "COMPLETED", runtimeMinutes: null, watchedEpisodes: [] },
-    { type: "MOVIE", title: "NoMatch", year: 1999, status: "COMPLETED", runtimeMinutes: null, watchedEpisodes: [] },
+    {
+      type: "MOVIE",
+      title: "Dune",
+      year: 2021,
+      status: "COMPLETED",
+      runtimeMinutes: 155,
+      watchedEpisodes: [],
+    },
+    {
+      type: "MOVIE",
+      title: "Tenet",
+      year: 2020,
+      status: "PLANNED",
+      runtimeMinutes: 150,
+      watchedEpisodes: [],
+    },
+    {
+      type: "MOVIE",
+      title: "Already",
+      year: 2000,
+      status: "COMPLETED",
+      runtimeMinutes: null,
+      watchedEpisodes: [],
+    },
+    {
+      type: "MOVIE",
+      title: "NoMatch",
+      year: 1999,
+      status: "COMPLETED",
+      runtimeMinutes: null,
+      watchedEpisodes: [],
+    },
     {
       type: "SERIES",
       title: "Chernobyl",
@@ -24,7 +52,12 @@ const batch: ImportBatch = {
   ],
 };
 
-const CATALOG_IDS: Record<string, string> = { Dune: "d1", Tenet: "t1", Already: "a1", Chernobyl: "c1" };
+const CATALOG_IDS: Record<string, string> = {
+  Dune: "d1",
+  Tenet: "t1",
+  Already: "a1",
+  Chernobyl: "c1",
+};
 
 describe("ImportArchiveUseCase", () => {
   let archiveReader: ArchiveReader;
@@ -46,7 +79,9 @@ describe("ImportArchiveUseCase", () => {
       search: vi.fn(async ({ query }: { query: string }) => {
         const id = CATALOG_IDS[query];
         return {
-          items: id ? [{ externalRef: { provider: "tmdb", externalId: id }, title: query, year: 2020 }] : [],
+          items: id
+            ? [{ externalRef: { provider: "tmdb", externalId: id }, title: query, year: 2020 }]
+            : [],
           page: 1,
           pageSize: 20,
           total: id ? 1 : 0,
@@ -55,9 +90,9 @@ describe("ImportArchiveUseCase", () => {
     } as unknown as MediaCatalogProvider;
     // « Already » (a1) est déjà en bibliothèque → dédoublonnage.
     getLibrary = {
-      execute: vi.fn().mockResolvedValue([
-        { media: { externalRef: { provider: "tmdb", externalId: "a1" } } },
-      ]),
+      execute: vi
+        .fn()
+        .mockResolvedValue([{ media: { externalRef: { provider: "tmdb", externalId: "a1" } } }]),
     };
     addMedia = { execute: vi.fn(async () => ({ id: "item-1" })) };
     setWatchStatus = { execute: vi.fn().mockResolvedValue(undefined) };
@@ -77,7 +112,11 @@ describe("ImportArchiveUseCase", () => {
   }
 
   it("importe films et séries, ignore les doublons et liste les non-rapprochés", async () => {
-    const report = await build().execute({ userId: "u1", format: "tvtime", archive: Buffer.from("") });
+    const report = await build().execute({
+      userId: "u1",
+      format: "tvtime",
+      archive: Buffer.from(""),
+    });
 
     expect(report.movies).toEqual({ parsed: 4, imported: 2, skipped: 1, unmatched: 1 });
     expect(report.series).toEqual({ parsed: 1, imported: 1, skipped: 0, unmatched: 0 });
@@ -89,7 +128,11 @@ describe("ImportArchiveUseCase", () => {
     await build().execute({ userId: "u1", format: "tvtime", archive: Buffer.from("") });
     // Dune (COMPLETED) → un seul appel ; Tenet (PLANNED) n'en déclenche pas.
     expect(setWatchStatus.execute).toHaveBeenCalledTimes(1);
-    expect(setWatchStatus.execute).toHaveBeenCalledWith({ userId: "u1", itemId: "item-1", status: "COMPLETED" });
+    expect(setWatchStatus.execute).toHaveBeenCalledWith({
+      userId: "u1",
+      itemId: "item-1",
+      status: "COMPLETED",
+    });
   });
 
   it("délègue le suivi des épisodes pour les séries", async () => {

@@ -122,7 +122,9 @@ export class ImportArchiveUseCase implements UseCase<ImportArchiveInput, ImportR
       );
       return best?.externalId ?? null;
     } catch (error) {
-      this.logger.warn(`Rapprochement impossible pour « ${media.title} » : ${(error as Error).message}`);
+      this.logger.warn(
+        `Rapprochement impossible pour « ${media.title} » : ${(error as Error).message}`,
+      );
       return null;
     }
   }
@@ -160,7 +162,9 @@ export class ImportArchiveUseCase implements UseCase<ImportArchiveInput, ImportR
       });
       return result.marked;
     } catch (error) {
-      this.logger.warn(`Suivi des épisodes impossible pour « ${media.title} » : ${(error as Error).message}`);
+      this.logger.warn(
+        `Suivi des épisodes impossible pour « ${media.title} » : ${(error as Error).message}`,
+      );
       return 0;
     }
   }

@@ -134,7 +134,14 @@ export class TvTimeParser implements ImportSourceParser {
         : watchedEpisodes.length > 0
           ? "IN_PROGRESS"
           : "PLANNED";
-      medias.push({ type: "SERIES", title, year: null, status, runtimeMinutes: null, watchedEpisodes });
+      medias.push({
+        type: "SERIES",
+        title,
+        year: null,
+        status,
+        runtimeMinutes: null,
+        watchedEpisodes,
+      });
     }
     return medias;
   }
