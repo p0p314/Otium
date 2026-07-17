@@ -26,6 +26,9 @@ import {
   type SearchMediaQuery,
   SearchMediaResult,
   EpisodeDetails,
+  type EpisodeReview,
+  EpisodeReviewResponse,
+  type SaveEpisodeReviewInput,
   SeriesTracking,
   type SetWatchStatusInput,
   type ToggleFavoriteInput,
@@ -251,6 +254,36 @@ export class OtiumClient {
       `/media/series/${encodeURIComponent(seriesExternalId)}/season/${seasonNumber}/episode/${episodeNumber}`,
       EpisodeDetails,
     );
+  }
+
+  /** Note/avis de l'utilisateur sur un épisode (null si aucun). */
+  async getEpisodeReview(itemId: string, episodeId: string): Promise<EpisodeReview | null> {
+    const { review } = await this.request(
+      `/library/${itemId}/episodes/${episodeId}/review`,
+      EpisodeReviewResponse,
+    );
+    return review;
+  }
+
+  /** Enregistre note et/ou avis d'un épisode (renvoie null si tout est vidé → supprimé). */
+  async saveEpisodeReview(
+    itemId: string,
+    episodeId: string,
+    input: SaveEpisodeReviewInput,
+  ): Promise<EpisodeReview | null> {
+    const { review } = await this.request(
+      `/library/${itemId}/episodes/${episodeId}/review`,
+      EpisodeReviewResponse,
+      { method: "PUT", body: input },
+    );
+    return review;
+  }
+
+  /** Supprime la note et l'avis d'un épisode. */
+  async deleteEpisodeReview(itemId: string, episodeId: string): Promise<void> {
+    await this.request(`/library/${itemId}/episodes/${episodeId}/review`, z.void(), {
+      method: "DELETE",
+    });
   }
 
   async markEpisode(itemId: string, input: MarkEpisodeInput): Promise<SeriesTracking> {

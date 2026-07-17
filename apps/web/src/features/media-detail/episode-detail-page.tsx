@@ -1,9 +1,8 @@
 import type { MediaType } from "@otium/types";
-import { Button, Skeleton } from "@otium/ui";
+import { Skeleton } from "@otium/ui";
 import { Link, useParams } from "@tanstack/react-router";
-import { ArrowLeft, Check, Clock, Play, Star, UserRound } from "lucide-react";
-import { useLibrary } from "../library/api/use-library";
-import { useMarkEpisode, useSeriesTracking } from "../library/api/use-series-tracking";
+import { ArrowLeft, Clock, Star, UserRound } from "lucide-react";
+import { EpisodeUserSection } from "./components/episode-user-section";
 import { useEpisodeDetails } from "./api/use-episode-details";
 
 function formatDate(iso: string | null): string | null {
@@ -12,48 +11,6 @@ function formatDate(iso: string | null): string | null {
   return Number.isNaN(date.getTime())
     ? null
     : date.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
-}
-
-/** Bouton « marquer vu » quand la série est en bibliothèque (résout l'épisode interne). */
-function WatchToggle({
-  externalId,
-  season,
-  episode,
-}: {
-  externalId: string;
-  season: number;
-  episode: number;
-}) {
-  const { data: library } = useLibrary();
-  const item = library?.find(
-    (i) => i.media.type === "SERIES" && i.media.externalRef.externalId === externalId,
-  );
-  const tracking = useSeriesTracking(item?.id ?? "");
-  const markEpisode = useMarkEpisode(item?.id ?? "");
-
-  if (!item) return null;
-  const tracked = tracking.data?.seasons
-    .find((s) => s.number === season)
-    ?.episodes.find((e) => e.number === episode);
-  if (!tracked) return null;
-
-  return (
-    <Button
-      variant={tracked.watched ? "outline" : "primary"}
-      disabled={markEpisode.isPending}
-      onClick={() => markEpisode.mutate({ episodeId: tracked.id, watched: !tracked.watched })}
-    >
-      {tracked.watched ? (
-        <>
-          <Check className="h-4 w-4" /> Vu
-        </>
-      ) : (
-        <>
-          <Play className="h-4 w-4" /> Marquer vu
-        </>
-      )}
-    </Button>
-  );
 }
 
 /** Fiche d'un épisode : image, résumé, métadonnées, casting et action « vu ». */
@@ -130,8 +87,9 @@ export function EpisodeDetailPage() {
             </span>
           ) : null}
         </div>
-        <WatchToggle externalId={params.externalId} season={season} episode={episode} />
       </header>
+
+      <EpisodeUserSection externalId={params.externalId} season={season} episode={episode} />
 
       {data.overview ? (
         <p className="leading-relaxed text-foreground/90">{data.overview}</p>
