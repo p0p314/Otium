@@ -4,5 +4,6 @@ export * from "./ports/library.repository";
 export * from "./ports/list.repository";
 export * from "./ports/series-tracking.repository";
 export * from "./ports/review.repository";
+export * from "./ports/episode-review.repository";
 export * from "./events/library.events";
 export * from "./series-progress";

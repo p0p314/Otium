@@ -30,9 +30,10 @@ model User {
   displayName  String
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
-  libraryItems LibraryItem[]
-  lists        List[]
-  reviews      Review[]
+  libraryItems   LibraryItem[]
+  lists          List[]
+  reviews        Review[]
+  episodeReviews EpisodeReview[]
 }
 
 model Media {
@@ -80,6 +81,7 @@ model Episode {
   /** Date de diffusion (fournie par le catalogue). Null = inconnue → considérée « sortie ». */
   airDate        DateTime?
   watchedBy      WatchedEpisode[]
+  reviews        EpisodeReview[]
 
   @@unique([seasonId, number])
 }
@@ -144,6 +146,22 @@ model Review {
   updatedAt DateTime @updatedAt
 
   @@unique([userId, mediaId])
+}
+
+// Note et/ou avis d'un utilisateur sur un épisode précis (extension de la notation/avis
+// du niveau média au niveau épisode — voir ADR-0011). `rating` et `body` sont tous deux
+// optionnels (une note peut exister sans avis), mais au moins l'un des deux est renseigné.
+model EpisodeReview {
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  episode   Episode  @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  episodeId String
+  rating    Int?
+  body      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@id([userId, episodeId])
 }
 
 // Journal des événements de domaine — source de vérité pour historique/stats/reco (ADR-0006).

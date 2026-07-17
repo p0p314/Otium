@@ -30,15 +30,23 @@ import { ToggleEpisodeWatchedUseCase } from "./application/toggle-episode-watche
 import { ToggleEpisodesWatchedUseCase } from "./application/toggle-episodes-watched.usecase";
 import { ToggleFavoriteUseCase } from "./application/toggle-favorite.usecase";
 import {
+  DeleteEpisodeReviewUseCase,
+  GetEpisodeReviewUseCase,
+  SaveEpisodeReviewUseCase,
+} from "./application/episode-review.usecases";
+import {
+  EPISODE_REVIEW_REPOSITORY,
   LIBRARY_REPOSITORY,
   LIST_REPOSITORY,
   REVIEW_REPOSITORY,
   SERIES_TRACKING_REPOSITORY,
 } from "./domain";
+import { PrismaEpisodeReviewRepository } from "./infrastructure/prisma-episode-review.repository";
 import { PrismaLibraryRepository } from "./infrastructure/prisma-library.repository";
 import { PrismaListRepository } from "./infrastructure/prisma-list.repository";
 import { PrismaReviewRepository } from "./infrastructure/prisma-review.repository";
 import { PrismaSeriesTrackingRepository } from "./infrastructure/prisma-series-tracking.repository";
+import { EpisodeReviewController } from "./presentation/episode-review.controller";
 import { LibraryController } from "./presentation/library.controller";
 import { ListController } from "./presentation/list.controller";
 import { ReviewController } from "./presentation/review.controller";
@@ -46,7 +54,13 @@ import { SeriesTrackingController } from "./presentation/series-tracking.control
 
 @Module({
   imports: [AuthenticationModule, MediaModule], // AuthGuard + MediaCatalogProvider
-  controllers: [LibraryController, SeriesTrackingController, ReviewController, ListController],
+  controllers: [
+    LibraryController,
+    SeriesTrackingController,
+    ReviewController,
+    EpisodeReviewController,
+    ListController,
+  ],
   providers: [
     GetLibraryUseCase,
     GetLibraryItemUseCase,
@@ -65,6 +79,9 @@ import { SeriesTrackingController } from "./presentation/series-tracking.control
     GetReviewUseCase,
     SaveReviewUseCase,
     DeleteReviewUseCase,
+    GetEpisodeReviewUseCase,
+    SaveEpisodeReviewUseCase,
+    DeleteEpisodeReviewUseCase,
     CreateListUseCase,
     GetListsUseCase,
     GetListUseCase,
@@ -75,6 +92,7 @@ import { SeriesTrackingController } from "./presentation/series-tracking.control
     { provide: LIBRARY_REPOSITORY, useClass: PrismaLibraryRepository },
     { provide: SERIES_TRACKING_REPOSITORY, useClass: PrismaSeriesTrackingRepository },
     { provide: REVIEW_REPOSITORY, useClass: PrismaReviewRepository },
+    { provide: EPISODE_REVIEW_REPOSITORY, useClass: PrismaEpisodeReviewRepository },
     { provide: LIST_REPOSITORY, useClass: PrismaListRepository },
   ],
   // Exposés au module d'import (orchestration réutilisant la logique métier existante).
