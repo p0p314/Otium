@@ -7,7 +7,7 @@ import { ChangePasswordUseCase } from "./application/change-password.usecase";
 import { PASSWORD_HASHER } from "./domain/ports/password-hasher";
 import { SESSION_STORE } from "./domain/ports/session-store";
 import { BcryptPasswordHasher } from "./infrastructure/bcrypt-password-hasher";
-import { RedisSessionStore } from "./infrastructure/redis-session-store";
+import { PrismaSessionStore } from "./infrastructure/prisma-session-store";
 import { AuthController } from "./presentation/auth.controller";
 import { AuthGuard } from "./presentation/auth.guard";
 
@@ -21,7 +21,7 @@ import { AuthGuard } from "./presentation/auth.guard";
     ChangePasswordUseCase,
     AuthGuard,
     { provide: PASSWORD_HASHER, useClass: BcryptPasswordHasher },
-    { provide: SESSION_STORE, useClass: RedisSessionStore },
+    { provide: SESSION_STORE, useClass: PrismaSessionStore },
   ],
   // Exporté pour que d'autres modules (library…) puissent protéger leurs routes.
   // On ré-exporte UserModule pour que l'AuthGuard résolve USER_REPOSITORY chez l'importateur.

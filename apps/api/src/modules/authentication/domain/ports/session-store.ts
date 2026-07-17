@@ -5,8 +5,8 @@ export interface Session {
 }
 
 /**
- * Port de gestion des sessions (jetons opaques). Implémenté en infrastructure (Redis).
- * Le domaine ne connaît ni Redis ni le format de stockage.
+ * Port de gestion des sessions (jetons opaques). Implémenté en infrastructure (Postgres).
+ * Le domaine ne connaît ni la base ni le format de stockage.
  */
 export interface SessionStore {
   /** Crée une session pour l'utilisateur et renvoie le jeton + son expiration. */

@@ -34,6 +34,23 @@ model User {
   lists          List[]
   reviews        Review[]
   episodeReviews EpisodeReview[]
+  sessions       Session[]
+}
+
+/**
+ * Session opaque (jeton → utilisateur), avec expiration. Remplace le stockage Redis :
+ * l'hébergement gratuit à service unique n'a pas de Redis (ADR-0012). Le domaine ne
+ * connaît pas ce modèle — il passe par le port `SessionStore`.
+ */
+model Session {
+  token     String   @id
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 model Media {

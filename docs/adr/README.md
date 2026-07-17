@@ -17,6 +17,7 @@ Une décision = un fichier immuable ; on ne modifie pas un ADR accepté, on le *
 | [0009](0009-rafraichissement-structure-series.md) | Rafraîchissement de la structure des séries (garde-fou de fraîcheur) | Accepté |
 | [0010](0010-accueil-fonde-sur-activite.md) | Accueil fondé sur l'activité de visionnage (dates réelles) | Accepté |
 | [0011](0011-notation-avis-episode.md) | Notation et avis au niveau épisode | Accepté |
+| [0012](0012-hebergement-gratuit-service-unique.md) | Hébergement gratuit : service unique, sans Redis | Accepté |
 
 ## Gabarit
 

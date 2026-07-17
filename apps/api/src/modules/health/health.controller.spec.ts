@@ -1,7 +1,6 @@
 import { Test } from "@nestjs/testing";
 import { beforeEach, describe, expect, it } from "vitest";
 import { PrismaService } from "../../shared/infrastructure/prisma/prisma.service";
-import { RedisService } from "../../shared/infrastructure/redis/redis.service";
 import { HealthController } from "./health.controller";
 
 describe("HealthController", () => {
@@ -12,10 +11,6 @@ describe("HealthController", () => {
       controllers: [HealthController],
       providers: [
         { provide: PrismaService, useValue: { $queryRaw: async () => [{ ok: 1 }] } },
-        {
-          provide: RedisService,
-          useValue: { client: { connect: async () => undefined, ping: async () => "PONG" } },
-        },
       ],
     }).compile();
 
@@ -26,9 +21,9 @@ describe("HealthController", () => {
     expect(controller.live().status).toBe("ok");
   });
 
-  it("readiness renvoie ready quand les dépendances répondent", async () => {
+  it("readiness renvoie ready quand la base répond", async () => {
     const result = await controller.ready();
     expect(result.status).toBe("ready");
-    expect(result.checks).toEqual({ database: true, redis: true });
+    expect(result.checks).toEqual({ database: true });
   });
 });

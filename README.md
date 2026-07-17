@@ -10,16 +10,16 @@ séries, les livres, mangas, animés, jeux vidéo, podcasts, musique et document
 ## État du projet
 
 🟢 **MVP « films & séries » complet, sur `main`.** Vérifié de bout en bout (données réelles
-TMDB, PostgreSQL, Redis) ; `typecheck`, `lint`, `test` (~85 tests) et `build` passent.
+TMDB, PostgreSQL) ; `typecheck`, `lint`, `test` et `build` passent.
 
 Fonctionnalités disponibles :
 
-- **Recherche** de films/séries (via TMDB, abstraction de fournisseur + cache Redis), avec
+- **Recherche** de films/séries (via TMDB, abstraction de fournisseur + cache **mémoire**), avec
   **mise en avant des tendances** du moment sous la barre de recherche.
 - **Fiche média détaillée** (page unique recherche/bibliothèque) : backdrop, note TMDB, synopsis,
   genres, durée/saisons, casting, réalisateur/créateurs, sociétés de production, plateformes.
-- **Authentification** (inscription/connexion, hachage bcrypt, sessions Redis, routes protégées),
-  jeton de session en **cookie httpOnly** (durcissement anti-XSS).
+- **Authentification** (inscription/connexion, hachage bcrypt, sessions **Postgres**, routes
+  protégées), jeton de session en **cookie httpOnly** (durcissement anti-XSS).
 - **Bibliothèque** : ajout/retrait, statut (**vu / à voir**…), favoris (au niveau `Media`),
   affichage **par catégorie** (Films / Séries).
 - **Accueil personnalisé** : séries **en cours** et séries **laissées de côté** (> 1 mois).
@@ -37,10 +37,10 @@ nouveaux types de médias).
 
 ## Démarrage / reprise
 
-Prérequis : Node ≥ 20, **pnpm via `corepack`**, **Docker Desktop démarré** (PostgreSQL + Redis).
+Prérequis : Node ≥ 20, **pnpm via `corepack`**, **Docker Desktop démarré** (PostgreSQL).
 
 ```bash
-docker compose up -d                        # démarre PostgreSQL + Redis
+docker compose up -d                        # démarre PostgreSQL (plus de Redis — ADR-0012)
 cp .env.example .env                        # puis renseigner TMDB_ACCESS_TOKEN (clé TMDB v3 ou v4)
 corepack pnpm@9.15.0 install                # installe les dépendances
 pnpm --filter @otium/api prisma:generate
@@ -81,8 +81,16 @@ Vérifications : `pnpm typecheck` · `pnpm lint` · `pnpm test` · `pnpm build`.
 Monorepo **Turborepo** · **TypeScript strict** · Clean Architecture + Hexagonale + DDD léger.
 
 - **Frontend** : React + Vite, TanStack Router/Query, Zustand, React Hook Form, Zod, Tailwind, shadcn/ui, Lucide, Motion.
-- **Backend** : NestJS, PostgreSQL + Prisma, Redis, event-driven.
+- **Backend** : NestJS, PostgreSQL + Prisma, event-driven. Cache **mémoire** et sessions
+  **Postgres** en V1 (pas de Redis — [ADR-0012](docs/adr/0012-hebergement-gratuit-service-unique.md)) ;
+  les ports `CacheService`/`SessionStore` permettent d'y revenir pour le passage multi-instances.
 - **Recherche** : PostgreSQL full-text (V1) → Meilisearch (évolution).
+
+## Déploiement
+
+Hébergement **gratuit** en **service unique** (l'API sert le SPA buildé) sur Render, base
+Postgres **Neon** durable. Procédure complète : **[docs/deployment.md](docs/deployment.md)**
+et [ADR-0012](docs/adr/0012-hebergement-gratuit-service-unique.md).
 
 ## Licence
 

@@ -1,13 +1,9 @@
 import { Controller, Get } from "@nestjs/common";
 import { PrismaService } from "../../shared/infrastructure/prisma/prisma.service";
-import { RedisService } from "../../shared/infrastructure/redis/redis.service";
 
 @Controller("health")
 export class HealthController {
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly redis: RedisService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   /** Liveness : le process répond (aucune dépendance externe requise). */
   @Get()
@@ -15,15 +11,11 @@ export class HealthController {
     return { status: "ok", timestamp: new Date().toISOString() };
   }
 
-  /** Readiness : les dépendances (PostgreSQL, Redis) sont joignables. */
+  /** Readiness : la base PostgreSQL est joignable (seule dépendance externe). */
   @Get("ready")
   async ready(): Promise<{ status: "ready" | "degraded"; checks: Record<string, boolean> }> {
     const checks = {
       database: await this.check(() => this.prisma.$queryRaw`SELECT 1`),
-      redis: await this.check(async () => {
-        await this.redis.client.connect().catch(() => undefined);
-        return this.redis.client.ping();
-      }),
     };
     const allUp = Object.values(checks).every(Boolean);
     return { status: allUp ? "ready" : "degraded", checks };
