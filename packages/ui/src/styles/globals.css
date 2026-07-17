@@ -9,6 +9,7 @@
  */
 @layer base {
   :root {
+    color-scheme: light;
     --background: 40 33% 98%;
     --foreground: 240 10% 12%;
 
@@ -45,6 +46,7 @@
   }
 
   .dark {
+    color-scheme: dark;
     --background: 240 12% 8%;
     --foreground: 40 20% 96%;
 
@@ -80,6 +82,12 @@
 
   * {
     border-color: hsl(var(--border));
+  }
+
+  /* Canvas racine teinté : la zone sûre iOS (encoche / barre d'état, PWA plein écran)
+     et le rebond de défilement reprennent le fond du thème, y compris en mode sombre. */
+  html {
+    background-color: hsl(var(--background));
   }
 
   body {

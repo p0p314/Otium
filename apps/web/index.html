@@ -7,7 +7,10 @@
     <title>Otium</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <meta name="theme-color" content="#6d3bce" />
+    <!-- Couleur de l'UI navigateur/barre d'état, accordée au thème (le ThemeProvider
+         la met à jour dynamiquement lors d'un basculement manuel). -->
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#faf7f0" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#131019" />
     <!-- iOS : comportement app plein écran une fois ajoutée à l'écran d'accueil. -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />

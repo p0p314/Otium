@@ -21,7 +21,7 @@ export function SearchPage() {
       </div>
 
       {/* Barre collante sur mobile (reste accessible en faisant défiler les résultats). */}
-      <div className="sticky top-16 z-10 -mx-4 bg-background/95 px-4 py-3 backdrop-blur md:static md:mx-0 md:max-w-xl md:bg-transparent md:p-0">
+      <div className="sticky top-16 z-20 -mx-4 bg-background/95 px-4 py-3 backdrop-blur md:static md:mx-0 md:max-w-xl md:bg-transparent md:p-0">
         <div className="relative">
           <Search
             className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground"

@@ -25,7 +25,7 @@ export function BottomNav() {
               activeOptions={{ exact: exact ?? false }}
               activeProps={{ "aria-current": "page", className: "text-primary" }}
               inactiveProps={{ className: "text-muted-foreground" }}
-              className="flex h-14 flex-col items-center justify-center gap-1 text-[11px] font-medium transition-colors hover:text-foreground"
+              className="flex h-12 flex-col items-center justify-center gap-0.5 text-[11px] font-medium transition-colors hover:text-foreground"
             >
               <Icon className="h-5 w-5" />
               <span>{short}</span>

@@ -48,6 +48,17 @@ export function ThemeProvider({
     const root = document.documentElement;
     root.classList.toggle("dark", resolvedTheme === "dark");
     root.style.colorScheme = resolvedTheme;
+    // Accorde la couleur de l'UI navigateur / zone barre d'état au thème **résolu**
+    // (couvre le basculement manuel, que les `media` de l'index.html ne gèrent pas).
+    const color = resolvedTheme === "dark" ? "#131019" : "#faf7f0";
+    let meta = document.head.querySelector<HTMLMetaElement>("meta[name='theme-color'][data-dynamic]");
+    if (!meta) {
+      meta = document.createElement("meta");
+      meta.name = "theme-color";
+      meta.setAttribute("data-dynamic", "");
+      document.head.appendChild(meta);
+    }
+    meta.content = color;
   }, [resolvedTheme]);
 
   const setTheme = useCallback((next: Theme) => {
