@@ -13,9 +13,12 @@ services:
     # `preDeployCommand`). Elles tournent une fois par déploiement — et non à chaque
     # réveil de veille, contrairement à une exécution au démarrage. `migrate deploy`
     # est idempotent (no-op sans migration en attente).
+    # `--prod=false` : NODE_ENV=production ferait sinon sauter les devDependencies
+    # (vite, nest, prisma…), toutes nécessaires au build. Pnpm est fourni par Render
+    # via le champ `packageManager` de package.json (pas besoin de `corepack enable`,
+    # qui échoue d'ailleurs sur le FS en lecture seule de l'image de build).
     buildCommand: |
-      corepack enable
-      pnpm install --frozen-lockfile
+      pnpm install --frozen-lockfile --prod=false
       pnpm --filter @otium/api exec prisma generate
       pnpm --filter @otium/web build
       pnpm --filter @otium/api build
