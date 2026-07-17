@@ -3,23 +3,14 @@ import { CheckCheck, Play, RotateCcw } from "lucide-react";
 import { useState } from "react";
 import { useMarkEpisode, useMarkEpisodes, useSeriesTracking } from "../api/use-series-tracking";
 
-/** Épisodes non vus situés **avant** le dernier épisode vu (trou de progression à rattraper). */
-function unwatchedGap(episodes: readonly { id: string; watched: boolean }[]): string[] {
-  let lastWatched = -1;
-  episodes.forEach((e, i) => {
-    if (e.watched) lastWatched = i;
-  });
-  return episodes.slice(0, lastWatched).filter((e) => !e.watched).map((e) => e.id);
-}
-
 /** Section de suivi épisode par épisode d'une série (progression, reprise, marquage en masse). */
 export function SeriesTrackingSection({ itemId }: { itemId: string }) {
   const { data, isLoading, isError } = useSeriesTracking(itemId);
   const markEpisode = useMarkEpisode(itemId);
   const markEpisodes = useMarkEpisodes(itemId);
   const busy = markEpisode.isPending || markEpisodes.isPending;
-  // Signature du trou déjà ignoré, pour ne pas re-proposer un rattrapage refusé.
-  const [dismissedGap, setDismissedGap] = useState<string | null>(null);
+  // Épisodes précédents à rattraper, proposés **au moment du clic** qui crée un trou.
+  const [catchUpIds, setCatchUpIds] = useState<string[] | null>(null);
 
   if (isLoading) return <Skeleton className="h-40 w-full" />;
   if (isError || !data) {
@@ -27,12 +18,20 @@ export function SeriesTrackingSection({ itemId }: { itemId: string }) {
   }
 
   const ordered = data.seasons.flatMap((season) => season.episodes);
-  // Dès qu'un épisode vu laisse des épisodes précédents non vus (saut, import partiel…),
-  // on propose de les rattraper. Dérivé des données → vaut pour n'importe quel épisode.
-  const gapIds = unwatchedGap(ordered);
-  const gapKey = gapIds.join(",");
-  const showCatchUp = gapIds.length > 0 && dismissedGap !== gapKey;
 
+  /**
+   * Marque un épisode. Si ce clic laisse des épisodes **précédents non vus** (saut en avant),
+   * propose de les rattraper via une modale. Ne se déclenche qu'à l'action, jamais au chargement.
+   */
+  function markSingle(episodeId: string, watched: boolean) {
+    markEpisode.mutate({ episodeId, watched });
+    if (!watched) return;
+    const index = ordered.findIndex((e) => e.id === episodeId);
+    const earlier = ordered.slice(0, index).filter((e) => !e.watched).map((e) => e.id);
+    if (earlier.length > 0) setCatchUpIds(earlier);
+  }
+
+  const catchUpCount = catchUpIds?.length ?? 0;
   const progress =
     data.totalEpisodes > 0 ? Math.round((data.watchedEpisodes / data.totalEpisodes) * 100) : 0;
   const allEpisodeIds = data.seasons.flatMap((season) => season.episodes.map((e) => e.id));
@@ -82,9 +81,7 @@ export function SeriesTrackingSection({ itemId }: { itemId: string }) {
           </div>
           <Button
             disabled={busy}
-            onClick={() =>
-              data.nextEpisode && markEpisode.mutate({ episodeId: data.nextEpisode.id, watched: true })
-            }
+            onClick={() => data.nextEpisode && markSingle(data.nextEpisode.id, true)}
           >
             <Play className="h-4 w-4" /> Marquer vu
           </Button>
@@ -96,24 +93,27 @@ export function SeriesTrackingSection({ itemId }: { itemId: string }) {
       )}
 
       <Modal
-        open={showCatchUp}
-        onClose={() => setDismissedGap(gapKey)}
+        open={catchUpIds !== null}
+        onClose={() => setCatchUpIds(null)}
         title="Rattraper les épisodes précédents ?"
         description={
           <>
-            {gapIds.length} épisode{gapIds.length > 1 ? "s" : ""} précédent
-            {gapIds.length > 1 ? "s" : ""} ne {gapIds.length > 1 ? "sont" : "s'est"} pas encore
-            marqué{gapIds.length > 1 ? "s" : ""} comme vu{gapIds.length > 1 ? "s" : ""}.
+            {catchUpCount} épisode{catchUpCount > 1 ? "s" : ""} précédent
+            {catchUpCount > 1 ? "s" : ""} ne {catchUpCount > 1 ? "sont" : "s'est"} pas encore
+            marqué{catchUpCount > 1 ? "s" : ""} comme vu{catchUpCount > 1 ? "s" : ""}.
           </>
         }
         footer={
           <>
-            <Button variant="outline" onClick={() => setDismissedGap(gapKey)}>
+            <Button variant="outline" onClick={() => setCatchUpIds(null)}>
               Plus tard
             </Button>
             <Button
               disabled={busy}
-              onClick={() => markEpisodes.mutate({ episodeIds: gapIds, watched: true })}
+              onClick={() => {
+                if (catchUpIds) markEpisodes.mutate({ episodeIds: catchUpIds, watched: true });
+                setCatchUpIds(null);
+              }}
             >
               <CheckCheck className="h-4 w-4" /> Tout marquer vu
             </Button>
@@ -152,9 +152,7 @@ export function SeriesTrackingSection({ itemId }: { itemId: string }) {
                         className="h-4 w-4 accent-[hsl(var(--primary))]"
                         checked={episode.watched}
                         disabled={busy}
-                        onChange={(e) =>
-                          markEpisode.mutate({ episodeId: episode.id, watched: e.target.checked })
-                        }
+                        onChange={(e) => markSingle(episode.id, e.target.checked)}
                       />
                       <span className="w-10 text-sm tabular-nums text-muted-foreground">
                         E{episode.number}
