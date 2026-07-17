@@ -51,18 +51,13 @@ export default defineConfig({
         globPatterns: ["**/*.{js,css,html,svg,png,ico,woff2}"],
         navigateFallback: "/index.html",
         navigateFallbackDenylist: [/^\/api/],
-        runtimeCaching: [
-          {
-            // Affiches/backdrops TMDB : cache-first, borné (éco-conception + vitesse).
-            urlPattern: ({ url }) => url.origin === "https://image.tmdb.org",
-            handler: "CacheFirst",
-            options: {
-              cacheName: "tmdb-images",
-              expiration: { maxEntries: 300, maxAgeSeconds: 60 * 60 * 24 * 30 },
-              cacheableResponse: { statuses: [0, 200] },
-            },
-          },
-        ],
+        // Le nouveau SW prend la main immédiatement (remplace un ancien SW en place).
+        skipWaiting: true,
+        clientsClaim: true,
+        cleanupOutdatedCaches: true,
+        // Pas de cache d'images TMDB par le service worker : un `CacheFirst` sur des
+        // réponses cross-origin opaques pouvait figer des images cassées côté PWA. On
+        // laisse le cache HTTP du navigateur gérer les affiches (déjà efficace).
       },
     }),
   ],
