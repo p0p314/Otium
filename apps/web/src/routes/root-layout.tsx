@@ -1,10 +1,10 @@
 import { Skeleton, buttonVariants } from "@otium/ui";
 import { Link, Outlet } from "@tanstack/react-router";
-import { UserRound } from "lucide-react";
 import { Suspense } from "react";
 import { ThemeToggle } from "../components/theme-toggle";
 import { NAV_ITEMS } from "../components/nav-items";
 import { BottomNav } from "../components/bottom-nav";
+import { ProfileMenu } from "../components/profile-menu";
 import { useAuth } from "../features/auth/api/use-auth";
 
 const NAV_LINK =
@@ -39,15 +39,9 @@ export function RootLayout() {
 
           <div className="flex items-center gap-2 sm:gap-3">
             {isAuthenticated ? (
-              // Profil : porte d'entrée vers infos, import, réglages et déconnexion.
-              <Link
-                to="/profile"
-                aria-label="Mon profil"
-                className={`${buttonVariants({ variant: "ghost", size: "sm" })} gap-2 [&.active]:text-foreground`}
-              >
-                <UserRound className="h-5 w-5" />
-                <span className="hidden lg:inline">{user?.displayName}</span>
-              </Link>
+              // Profil : menu déroulant (Réglages, Statistiques). La page profil porte
+              // aussi infos, import et déconnexion.
+              <ProfileMenu displayName={user?.displayName} />
             ) : (
               <>
                 <Link to="/login" className={buttonVariants({ variant: "ghost", size: "sm" })}>
