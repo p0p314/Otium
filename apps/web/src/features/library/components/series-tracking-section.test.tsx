@@ -35,10 +35,20 @@ describe("SeriesTrackingSection — rattrapage des épisodes précédents", () =
     markEpisodes.mockReset();
   });
 
-  it("ouvre une popup de rattrapage dès qu'un trou existe (épisode vu après des non-vus)", async () => {
-    // E3 vu, E1/E2 non vus → trou de 2 épisodes à rattraper.
+  it("n'ouvre aucune popup au chargement, même si un trou est déjà présent", () => {
+    // E3 déjà vu, E1/E2 non vus : au chargement on ne propose rien (uniquement sur clic).
     tracking = withEpisodes([episode(1, false), episode(2, false), episode(3, true)]);
     render(<SeriesTrackingSection itemId="i1" />);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("ouvre la popup quand un clic crée un trou, puis valide le rattrapage", async () => {
+    tracking = withEpisodes([episode(1, false), episode(2, false), episode(3, false)]);
+    render(<SeriesTrackingSection itemId="i1" />);
+
+    // On coche E3 alors que E1/E2 ne le sont pas → trou créé.
+    await userEvent.click(screen.getByRole("checkbox", { name: /Épisode 3/i }));
+    expect(markEpisode).toHaveBeenCalledWith({ episodeId: "e3", watched: true });
 
     expect(screen.getByRole("dialog")).toBeInTheDocument();
     expect(screen.getByText(/2 épisodes précédents/i)).toBeInTheDocument();
@@ -46,15 +56,17 @@ describe("SeriesTrackingSection — rattrapage des épisodes précédents", () =
     expect(markEpisodes).toHaveBeenCalledWith({ episodeIds: ["e1", "e2"], watched: true });
   });
 
-  it("n'ouvre pas de popup quand la progression est continue (aucun trou)", () => {
-    tracking = withEpisodes([episode(1, true), episode(2, true), episode(3, false)]);
+  it("ne propose rien quand le clic ne crée pas de trou", async () => {
+    tracking = withEpisodes([episode(1, false), episode(2, false)]);
     render(<SeriesTrackingSection itemId="i1" />);
+    await userEvent.click(screen.getByRole("checkbox", { name: /Épisode 1/i }));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
   it("permet de reporter la proposition (Plus tard)", async () => {
-    tracking = withEpisodes([episode(1, false), episode(2, true)]);
+    tracking = withEpisodes([episode(1, false), episode(2, false)]);
     render(<SeriesTrackingSection itemId="i1" />);
+    await userEvent.click(screen.getByRole("checkbox", { name: /Épisode 2/i }));
     expect(screen.getByRole("dialog")).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Plus tard" }));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
