@@ -6,7 +6,7 @@ import {
   type ChangePasswordInput,
   type CreateListInput,
   HomeDashboard,
-  ImportReport,
+  ImportJobState,
   LibraryItem,
   ListDetail,
   ListSummary,
@@ -20,6 +20,7 @@ import {
   type RegisterInput,
   type ResolveImportInput,
   ResolveImportResult,
+  StartImportResult,
   Review,
   ReviewResponse,
   type SaveReviewInput,
@@ -146,11 +147,19 @@ export class OtiumClient {
     return this.request("/stats", ViewingStats);
   }
 
-  /** Importe un export RGPD TV Time (archive ZIP) et retourne le rapport d'import. */
-  async importTvTime(archive: Blob): Promise<ImportReport> {
+  /**
+   * Lance l'import d'un export RGPD TV Time (archive ZIP) **en tâche de fond** et renvoie
+   * l'identifiant du job. L'import se poursuit côté serveur ; suivre {@link getImportJob}.
+   */
+  async startTvTimeImport(archive: Blob): Promise<StartImportResult> {
     const form = new FormData();
     form.append("file", archive, "tvtime.zip");
-    return this.request("/import/tvtime", ImportReport, { method: "POST", form });
+    return this.request("/import/tvtime", StartImportResult, { method: "POST", form });
+  }
+
+  /** État d'un job d'import (progression, puis rapport final une fois terminé). */
+  async getImportJob(jobId: string): Promise<ImportJobState> {
+    return this.request(`/import/jobs/${encodeURIComponent(jobId)}`, ImportJobState);
   }
 
   /** Résout une entrée d'import ambiguë en important le candidat choisi. */

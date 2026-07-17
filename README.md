@@ -28,6 +28,9 @@ Fonctionnalités disponibles :
   les plus regardés, activité par mois, note moyenne, records — cartes et graphiques.
 - **Suivi de séries** : saisons/épisodes, épisodes vus, progression, **reprise automatique**.
 - **Notation** (0–10) et **avis** (texte), au niveau `Media`.
+- **Import TV Time** (export RGPD) **en tâche de fond** : le traitement continue côté serveur
+  même si l'onglet se ferme / le téléphone se verrouille ; progression en direct et
+  bibliothèque qui se remplit au fil de l'eau ([ADR-0013](docs/adr/0013-import-tache-de-fond.md)).
 - **PWA** : app installable (écran d'accueil, plein écran mobile), service worker Workbox
   (app shell précachée + cache des affiches TMDB) pour des visites suivantes plus rapides.
 - **Validation i18n** : messages d'erreur Zod en français, partagés front/back.

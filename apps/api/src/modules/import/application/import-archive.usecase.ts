@@ -1,6 +1,7 @@
 import { BadRequestException, Inject, Injectable, Logger } from "@nestjs/common";
 import type {
   ImportMediaCounters,
+  ImportProgress,
   ImportReport,
   PendingImport,
   UnmatchedImportEntry,
@@ -23,6 +24,8 @@ export interface ImportArchiveInput {
   readonly userId: string;
   readonly format: string;
   readonly archive: Buffer;
+  /** Rappel de progression, appelé après la lecture puis après chaque entrée (optionnel). */
+  readonly onProgress?: (progress: ImportProgress) => void;
 }
 
 /** Échantillon maximal d'entrées sans candidat renvoyé dans le rapport. */
@@ -82,7 +85,7 @@ export class ImportArchiveUseCase implements UseCase<ImportArchiveInput, ImportR
     private readonly importer: MediaImporter,
   ) {}
 
-  async execute({ userId, format, archive }: ImportArchiveInput): Promise<ImportReport> {
+  async execute({ userId, format, archive, onProgress }: ImportArchiveInput): Promise<ImportReport> {
     const files = await this.archiveReader.read(archive);
     const parser =
       this.parsers.find((p) => p.format === format) ?? this.parsers.find((p) => p.supports(files));
@@ -105,39 +108,59 @@ export class ImportArchiveUseCase implements UseCase<ImportArchiveInput, ImportR
     const pending: PendingImport[] = [];
     let episodesMarked = 0;
 
+    const total = batch.medias.length;
+    let processedCount = 0;
+    const emitProgress = (): void =>
+      onProgress?.({
+        total,
+        processed: processedCount,
+        imported: movies.imported + series.imported,
+        episodesMarked,
+        pending: movies.pending + series.pending,
+        unmatched: movies.unmatched + series.unmatched,
+      });
+    // Total connu après lecture : première émission avant de commencer le rapprochement.
+    emitProgress();
+
     for (const media of batch.medias) {
-      const counters = media.type === "MOVIE" ? movies : series;
-      counters.parsed++;
+      // `finally` : la progression avance quel que soit le chemin (continue inclus).
+      try {
+        const counters = media.type === "MOVIE" ? movies : series;
+        counters.parsed++;
 
-      const match = await this.matchToCatalog(media);
+        const match = await this.matchToCatalog(media);
 
-      if (match.kind === "unmatched") {
-        counters.unmatched++;
-        if (unmatchedSample.length < UNMATCHED_SAMPLE_MAX) {
-          unmatchedSample.push({ type: media.type, title: media.title, year: media.year });
+        if (match.kind === "unmatched") {
+          counters.unmatched++;
+          if (unmatchedSample.length < UNMATCHED_SAMPLE_MAX) {
+            unmatchedSample.push({ type: media.type, title: media.title, year: media.year });
+          }
+          continue;
         }
-        continue;
-      }
 
-      if (match.kind === "ambiguous") {
-        counters.pending++;
-        if (pending.length < PENDING_MAX) pending.push(toPending(media, match.candidates));
-        continue;
-      }
+        if (match.kind === "ambiguous") {
+          counters.pending++;
+          if (pending.length < PENDING_MAX) pending.push(toPending(media, match.candidates));
+          continue;
+        }
 
-      const key = `tmdb:${match.media.externalRef.externalId}`;
-      // Doublon dans le fichier même : traiter une seule fois.
-      if (processed.has(key)) {
-        counters.skipped++;
-        continue;
-      }
-      processed.add(key);
+        const key = `tmdb:${match.media.externalRef.externalId}`;
+        // Doublon dans le fichier même : traiter une seule fois.
+        if (processed.has(key)) {
+          counters.skipped++;
+          continue;
+        }
+        processed.add(key);
 
-      // Déjà en bibliothèque : on ne compte pas un nouvel ajout, mais on **rafraîchit**
-      // quand même (poster, dates de visionnage réelles) via l'ajout idempotent.
-      episodesMarked += await this.importer.importOne(userId, media, match.media);
-      if (existing.has(key)) counters.skipped++;
-      else counters.imported++;
+        // Déjà en bibliothèque : on ne compte pas un nouvel ajout, mais on **rafraîchit**
+        // quand même (poster, dates de visionnage réelles) via l'ajout idempotent.
+        episodesMarked += await this.importer.importOne(userId, media, match.media);
+        if (existing.has(key)) counters.skipped++;
+        else counters.imported++;
+      } finally {
+        processedCount++;
+        emitProgress();
+      }
     }
 
     return {

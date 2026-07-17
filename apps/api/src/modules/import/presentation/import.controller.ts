@@ -2,18 +2,26 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Get,
+  Param,
   Post,
   UploadedFile,
   UseGuards,
   UseInterceptors,
 } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
-import { type ImportReport, ResolveImportInput, type ResolveImportResult } from "@otium/types";
+import {
+  type ImportJobState,
+  ResolveImportInput,
+  type ResolveImportResult,
+  type StartImportResult,
+} from "@otium/types";
 import { AuthGuard, type AuthenticatedUser } from "../../authentication/presentation/auth.guard";
 import { CurrentUser } from "../../authentication/presentation/current-user.decorator";
 import { ZodValidationPipe } from "../../../shared/presentation/zod-validation.pipe";
-import { ImportArchiveUseCase } from "../application/import-archive.usecase";
+import { GetImportJobUseCase } from "../application/get-import-job.usecase";
 import { ResolveImportUseCase } from "../application/resolve-import.usecase";
+import { StartImportUseCase } from "../application/start-import.usecase";
 
 /** Taille maximale de l'archive acceptée (garde-fou mémoire ; export RGPD ~ quelques Mo). */
 const MAX_ARCHIVE_BYTES = 50 * 1024 * 1024;
@@ -27,23 +35,33 @@ interface UploadedArchive {
 @UseGuards(AuthGuard)
 export class ImportController {
   constructor(
-    private readonly importArchive: ImportArchiveUseCase,
+    private readonly startImport: StartImportUseCase,
+    private readonly getImportJob: GetImportJobUseCase,
     private readonly resolveImport: ResolveImportUseCase,
   ) {}
 
-  /** Importe un export RGPD TV Time (archive ZIP) dans la bibliothèque de l'utilisateur. */
+  /**
+   * Lance l'import d'un export RGPD TV Time **en tâche de fond** et renvoie l'identifiant
+   * du job. Le traitement se poursuit côté serveur (même si le client se déconnecte) ; le
+   * client suit la progression via `GET /import/jobs/:jobId`.
+   */
   @Post("tvtime")
   @UseInterceptors(FileInterceptor("file", { limits: { fileSize: MAX_ARCHIVE_BYTES } }))
   async importTvTime(
     @CurrentUser() user: AuthenticatedUser,
     @UploadedFile() file?: UploadedArchive,
-  ): Promise<ImportReport> {
+  ): Promise<StartImportResult> {
     if (!file) throw new BadRequestException("Fichier d'archive manquant.");
-    return this.importArchive.execute({
-      userId: user.id,
-      format: "tvtime",
-      archive: file.buffer,
-    });
+    return this.startImport.execute({ userId: user.id, format: "tvtime", archive: file.buffer });
+  }
+
+  /** État d'un job d'import (progression puis rapport final) — restreint à son propriétaire. */
+  @Get("jobs/:jobId")
+  async jobState(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("jobId") jobId: string,
+  ): Promise<ImportJobState> {
+    return this.getImportJob.execute({ userId: user.id, jobId });
   }
 
   /** Résout une entrée d'import ambiguë : importe le candidat choisi par l'utilisateur. */

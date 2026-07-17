@@ -84,6 +84,28 @@ export const ResolveImportResult = z.object({
 });
 export type ResolveImportResult = z.infer<typeof ResolveImportResult>;
 
+/**
+ * Progression d'un import en cours. `total` est connu après lecture de l'archive
+ * (0 tant que la préparation n'est pas finie) ; `processed` avance entrée par entrée.
+ */
+export const ImportProgress = z.object({
+  total: z.number().int().nonnegative(),
+  processed: z.number().int().nonnegative(),
+  imported: z.number().int().nonnegative(),
+  episodesMarked: z.number().int().nonnegative(),
+  pending: z.number().int().nonnegative(),
+  unmatched: z.number().int().nonnegative(),
+});
+export type ImportProgress = z.infer<typeof ImportProgress>;
+
+/** État d'un job d'import : en cours, terminé (rapport dispo) ou en erreur. */
+export const ImportJobStatus = z.enum(["running", "done", "error"]);
+export type ImportJobStatus = z.infer<typeof ImportJobStatus>;
+
+/** Réponse au lancement d'un import : identifiant de job à interroger pour la progression. */
+export const StartImportResult = z.object({ jobId: z.string() });
+export type StartImportResult = z.infer<typeof StartImportResult>;
+
 /** Rapport d'un import : ce qui a été lu, rapproché, importé, ignoré, non trouvé, à résoudre. */
 export const ImportReport = z.object({
   source: ImportSourceFormat,
@@ -97,3 +119,16 @@ export const ImportReport = z.object({
   pending: z.array(PendingImport),
 });
 export type ImportReport = z.infer<typeof ImportReport>;
+
+/**
+ * État complet d'un job d'import interrogé par le client (polling). Le `report` n'est
+ * disponible qu'une fois `status: "done"` ; `error` est renseigné si `status: "error"`.
+ */
+export const ImportJobState = z.object({
+  id: z.string(),
+  status: ImportJobStatus,
+  progress: ImportProgress,
+  report: ImportReport.nullable(),
+  error: z.string().nullable(),
+});
+export type ImportJobState = z.infer<typeof ImportJobState>;
