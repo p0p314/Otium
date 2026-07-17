@@ -53,7 +53,10 @@ function LibraryControls({ item, media }: { item: LibraryItem; media: MediaSumma
       {isSeries ? (
         <div className="space-y-3">
           <h3 className="text-sm font-semibold">Suivi des épisodes</h3>
-          <SeriesTrackingSection itemId={item.id} />
+          <SeriesTrackingSection
+            itemId={item.id}
+            seriesExternalId={item.media.externalRef.externalId}
+          />
         </div>
       ) : null}
     </div>

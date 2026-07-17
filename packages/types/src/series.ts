@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { CastMember } from "./media-details.js";
 import { WatchStatus } from "./media.js";
 
 export const TrackedEpisode = z.object({
@@ -28,6 +29,20 @@ export const SeriesTracking = z.object({
   seasons: z.array(TrackedSeason),
 });
 export type SeriesTracking = z.infer<typeof SeriesTracking>;
+
+/** Fiche détaillée d'un épisode (catalogue) : résumé, image, note et casting. */
+export const EpisodeDetails = z.object({
+  seasonNumber: z.number().int().nonnegative(),
+  number: z.number().int().positive(),
+  title: z.string(),
+  overview: z.string().nullable(),
+  airDate: z.string().nullable(),
+  runtimeMinutes: z.number().int().positive().nullable(),
+  stillUrl: z.string().url().nullable(),
+  rating: z.number().nullable(),
+  cast: z.array(CastMember),
+});
+export type EpisodeDetails = z.infer<typeof EpisodeDetails>;
 
 export const MarkEpisodeInput = z.object({
   episodeId: z.string().min(1),

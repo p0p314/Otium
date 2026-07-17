@@ -2,6 +2,7 @@ import { type INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import request from "supertest";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { GetEpisodeDetailsUseCase } from "../src/modules/media/application/queries/get-episode-details.usecase";
 import { GetMediaDetailsUseCase } from "../src/modules/media/application/queries/get-media-details.usecase";
 import { GetTrendingMediaUseCase } from "../src/modules/media/application/queries/get-trending-media.usecase";
 import { SearchMediaUseCase } from "../src/modules/media/application/queries/search-media.usecase";
@@ -50,6 +51,18 @@ describe("MediaController (e2e)", () => {
     watchProviders: [],
   };
   const detailsExecute = vi.fn(async () => detailsResult);
+  const episodeResult = {
+    seasonNumber: 1,
+    number: 3,
+    title: "Le long chemin",
+    overview: "…",
+    airDate: "2014-04-02",
+    runtimeMinutes: 43,
+    stillUrl: null,
+    rating: 8.4,
+    cast: [{ name: "Actrice A", character: "Héroïne", profileUrl: null }],
+  };
+  const episodeExecute = vi.fn(async () => episodeResult);
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -58,6 +71,7 @@ describe("MediaController (e2e)", () => {
         { provide: SearchMediaUseCase, useValue: { execute } },
         { provide: GetTrendingMediaUseCase, useValue: { execute: trendingExecute } },
         { provide: GetMediaDetailsUseCase, useValue: { execute: detailsExecute } },
+        { provide: GetEpisodeDetailsUseCase, useValue: { execute: episodeExecute } },
       ],
     }).compile();
     app = moduleRef.createNestApplication();
@@ -99,6 +113,19 @@ describe("MediaController (e2e)", () => {
     expect(response.body.title).toBe("Dune");
     expect(response.body.directors).toEqual(["Denis Villeneuve"]);
     expect(detailsExecute).toHaveBeenCalledWith({ type: "MOVIE", externalId: "438631" });
+  });
+
+  it("GET /media/series/:id/season/:s/episode/:e renvoie la fiche épisode", async () => {
+    const response = await request(app.getHttpServer()).get("/media/series/1399/season/1/episode/3");
+
+    expect(response.status).toBe(200);
+    expect(response.body.title).toBe("Le long chemin");
+    expect(response.body.cast[0].name).toBe("Actrice A");
+    expect(episodeExecute).toHaveBeenCalledWith({
+      externalId: "1399",
+      seasonNumber: 1,
+      episodeNumber: 3,
+    });
   });
 
   it("GET /media/:type/:externalId rejette un type invalide (400)", async () => {

@@ -1,6 +1,7 @@
 import type {
   CatalogCastMember,
   CatalogCompany,
+  CatalogEpisodeDetails,
   CatalogGenre,
   CatalogMedia,
   CatalogMediaDetails,
@@ -9,7 +10,9 @@ import type {
   CatalogWatchProvider,
 } from "../../../domain";
 import type {
+  TmdbCastMember,
   TmdbCredits,
+  TmdbEpisodeDetails,
   TmdbGenre,
   TmdbMovieDetailsFull,
   TmdbSearchItem,
@@ -34,12 +37,43 @@ function toGenres(genres: TmdbGenre[] | undefined): CatalogGenre[] {
   return (genres ?? []).map((g) => ({ id: String(g.id), label: g.name }));
 }
 
-function toCast(credits: TmdbCredits | undefined, root: string): CatalogCastMember[] {
-  return (credits?.cast ?? []).slice(0, MAX_CAST).map((c) => ({
+function toCastMember(c: TmdbCastMember, root: string): CatalogCastMember {
+  return {
     name: c.name,
     character: c.character?.trim() ? c.character : null,
     profileUrl: img(root, IMAGE_SIZE.profile, c.profile_path),
-  }));
+  };
+}
+
+function toCast(credits: TmdbCredits | undefined, root: string): CatalogCastMember[] {
+  return (credits?.cast ?? []).slice(0, MAX_CAST).map((c) => toCastMember(c, root));
+}
+
+/** Fiche épisode normalisée : casting = acteurs récurrents puis invités, sans doublon. */
+export function toCatalogEpisodeDetails(
+  episode: TmdbEpisodeDetails,
+  imageRoot: string,
+): CatalogEpisodeDetails {
+  const root = imageRoot;
+  const seen = new Set<string>();
+  const cast: CatalogCastMember[] = [];
+  for (const c of [...(episode.credits?.cast ?? []), ...(episode.guest_stars ?? [])]) {
+    if (seen.has(c.name)) continue;
+    seen.add(c.name);
+    cast.push(toCastMember(c, root));
+    if (cast.length >= MAX_CAST) break;
+  }
+  return {
+    seasonNumber: episode.season_number,
+    number: episode.episode_number,
+    title: episode.name && episode.name.trim() ? episode.name : `Épisode ${episode.episode_number}`,
+    overview: episode.overview?.trim() ? episode.overview : null,
+    airDate: episode.air_date ?? null,
+    runtimeMinutes: episode.runtime ?? null,
+    stillUrl: img(root, IMAGE_SIZE.backdrop, episode.still_path),
+    rating: episode.vote_average && episode.vote_average > 0 ? episode.vote_average : null,
+    cast,
+  };
 }
 
 function toCompanies(

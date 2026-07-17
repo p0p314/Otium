@@ -1,4 +1,5 @@
 import { Module } from "@nestjs/common";
+import { GetEpisodeDetailsUseCase } from "./application/queries/get-episode-details.usecase";
 import { GetMediaDetailsUseCase } from "./application/queries/get-media-details.usecase";
 import { GetTrendingMediaUseCase } from "./application/queries/get-trending-media.usecase";
 import { SearchMediaUseCase } from "./application/queries/search-media.usecase";
@@ -12,6 +13,7 @@ import { MediaController } from "./presentation/media.controller";
     SearchMediaUseCase,
     GetTrendingMediaUseCase,
     GetMediaDetailsUseCase,
+    GetEpisodeDetailsUseCase,
     TmdbProvider,
     // Liaison port → adapter. Changer de fournisseur = changer cette seule ligne (ADR-0004).
     { provide: MEDIA_CATALOG_PROVIDER, useExisting: TmdbProvider },

@@ -15,6 +15,7 @@ function fakeProvider(): MediaCatalogProvider {
     getTrending: vi.fn(),
     getMediaDetails: vi.fn().mockResolvedValue(details),
     getSeriesDetails: vi.fn(),
+    getEpisodeDetails: vi.fn(),
   };
 }
 

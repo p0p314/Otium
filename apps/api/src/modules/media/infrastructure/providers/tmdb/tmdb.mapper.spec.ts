@@ -1,6 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { toCatalogMedia, toCatalogMovieDetails, toCatalogTvDetails } from "./tmdb.mapper";
-import type { TmdbMovieDetailsFull, TmdbSearchItem, TmdbTvDetailsFull } from "./tmdb.types";
+import {
+  toCatalogEpisodeDetails,
+  toCatalogMedia,
+  toCatalogMovieDetails,
+  toCatalogTvDetails,
+} from "./tmdb.mapper";
+import type {
+  TmdbEpisodeDetails,
+  TmdbMovieDetailsFull,
+  TmdbSearchItem,
+  TmdbTvDetailsFull,
+} from "./tmdb.types";
 
 const IMG = "https://img/w342";
 const ROOT = "https://image.tmdb.org/t/p/";
@@ -143,5 +153,50 @@ describe("toCatalogTvDetails", () => {
     expect(d.runtimeMinutes).toBeNull();
     expect(d.directors).toEqual(["David Benioff", "D. B. Weiss"]);
     expect(d.watchProviders).toEqual([]);
+  });
+});
+
+describe("toCatalogEpisodeDetails", () => {
+  const ROOT = "https://image.tmdb.org/t/p/";
+
+  it("mappe résumé, image, note et casting (récurrents + invités, sans doublon)", () => {
+    const episode: TmdbEpisodeDetails = {
+      season_number: 1,
+      episode_number: 3,
+      name: "Le long chemin",
+      overview: "Un résumé.",
+      air_date: "2014-04-02",
+      runtime: 43,
+      still_path: "/still.jpg",
+      vote_average: 8.4,
+      credits: { cast: [{ name: "Actrice A", character: "Héroïne", profile_path: "/a.jpg" }] },
+      guest_stars: [
+        { name: "Invité B", character: "Méchant" },
+        { name: "Actrice A", character: "Héroïne" }, // doublon → ignoré
+      ],
+    };
+    const d = toCatalogEpisodeDetails(episode, ROOT);
+
+    expect(d).toMatchObject({
+      seasonNumber: 1,
+      number: 3,
+      title: "Le long chemin",
+      overview: "Un résumé.",
+      airDate: "2014-04-02",
+      runtimeMinutes: 43,
+      stillUrl: "https://image.tmdb.org/t/p/w780/still.jpg",
+      rating: 8.4,
+    });
+    expect(d.cast).toEqual([
+      { name: "Actrice A", character: "Héroïne", profileUrl: "https://image.tmdb.org/t/p/w185/a.jpg" },
+      { name: "Invité B", character: "Méchant", profileUrl: null },
+    ]);
+  });
+
+  it("gère un épisode sans titre ni note", () => {
+    const d = toCatalogEpisodeDetails({ season_number: 2, episode_number: 5, vote_average: 0 }, ROOT);
+    expect(d.title).toBe("Épisode 5");
+    expect(d.rating).toBeNull();
+    expect(d.cast).toEqual([]);
   });
 });

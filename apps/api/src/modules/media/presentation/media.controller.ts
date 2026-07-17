@@ -1,5 +1,6 @@
-import { Controller, Get, Param, Query } from "@nestjs/common";
+import { Controller, Get, Param, ParseIntPipe, Query } from "@nestjs/common";
 import {
+  type EpisodeDetails,
   type MediaDetails,
   MediaType,
   SearchMediaQuery,
@@ -7,10 +8,11 @@ import {
   TrendingMediaQuery,
 } from "@otium/types";
 import { ZodValidationPipe } from "../../../shared/presentation/zod-validation.pipe";
+import { GetEpisodeDetailsUseCase } from "../application/queries/get-episode-details.usecase";
 import { GetMediaDetailsUseCase } from "../application/queries/get-media-details.usecase";
 import { GetTrendingMediaUseCase } from "../application/queries/get-trending-media.usecase";
 import { SearchMediaUseCase } from "../application/queries/search-media.usecase";
-import { toMediaDetailsDto } from "./media-details.mapper";
+import { toEpisodeDetailsDto, toMediaDetailsDto } from "./media-details.mapper";
 import { toSearchMediaResult } from "./media.mapper";
 
 @Controller("media")
@@ -19,6 +21,7 @@ export class MediaController {
     private readonly searchMedia: SearchMediaUseCase,
     private readonly getTrending: GetTrendingMediaUseCase,
     private readonly getDetails: GetMediaDetailsUseCase,
+    private readonly getEpisodeDetails: GetEpisodeDetailsUseCase,
   ) {}
 
   /** `GET /api/media/search?q=...&type=&page=&pageSize=` — recherche dans le catalogue. */
@@ -47,5 +50,20 @@ export class MediaController {
   ): Promise<MediaDetails> {
     const details = await this.getDetails.execute({ type, externalId });
     return toMediaDetailsDto(details);
+  }
+
+  /** `GET /api/media/series/:externalId/season/:season/episode/:episode` — fiche d'un épisode. */
+  @Get("series/:externalId/season/:season/episode/:episode")
+  async episode(
+    @Param("externalId") externalId: string,
+    @Param("season", ParseIntPipe) season: number,
+    @Param("episode", ParseIntPipe) episode: number,
+  ): Promise<EpisodeDetails> {
+    const details = await this.getEpisodeDetails.execute({
+      externalId,
+      seasonNumber: season,
+      episodeNumber: episode,
+    });
+    return toEpisodeDetailsDto(details);
   }
 }

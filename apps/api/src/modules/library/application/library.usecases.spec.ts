@@ -63,6 +63,7 @@ describe("Library use cases", () => {
       getTrending: vi.fn(),
       getMediaDetails: vi.fn().mockRejectedValue(new Error("no details")),
       getSeriesDetails: vi.fn(),
+      getEpisodeDetails: vi.fn(),
     };
   });
 
