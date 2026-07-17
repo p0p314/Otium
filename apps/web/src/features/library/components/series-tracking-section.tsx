@@ -1,5 +1,5 @@
-import { Button, Skeleton } from "@otium/ui";
-import { CheckCheck, ListChecks, Play, RotateCcw, X } from "lucide-react";
+import { Button, Modal, Skeleton } from "@otium/ui";
+import { CheckCheck, Play, RotateCcw } from "lucide-react";
 import { useState } from "react";
 import { useMarkEpisode, useMarkEpisodes, useSeriesTracking } from "../api/use-series-tracking";
 
@@ -95,33 +95,31 @@ export function SeriesTrackingSection({ itemId }: { itemId: string }) {
         </p>
       )}
 
-      {showCatchUp && (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-primary/40 bg-primary/5 p-4">
-          <p className="flex items-center gap-2 text-sm">
-            <ListChecks className="h-4 w-4 shrink-0 text-primary" aria-hidden />
+      <Modal
+        open={showCatchUp}
+        onClose={() => setDismissedGap(gapKey)}
+        title="Rattraper les épisodes précédents ?"
+        description={
+          <>
             {gapIds.length} épisode{gapIds.length > 1 ? "s" : ""} précédent
-            {gapIds.length > 1 ? "s" : ""} non vu{gapIds.length > 1 ? "s" : ""}. Les marquer comme
-            vus aussi ?
-          </p>
-          <div className="flex items-center gap-2">
+            {gapIds.length > 1 ? "s" : ""} ne {gapIds.length > 1 ? "sont" : "s'est"} pas encore
+            marqué{gapIds.length > 1 ? "s" : ""} comme vu{gapIds.length > 1 ? "s" : ""}.
+          </>
+        }
+        footer={
+          <>
+            <Button variant="outline" onClick={() => setDismissedGap(gapKey)}>
+              Plus tard
+            </Button>
             <Button
-              size="sm"
               disabled={busy}
               onClick={() => markEpisodes.mutate({ episodeIds: gapIds, watched: true })}
             >
               <CheckCheck className="h-4 w-4" /> Tout marquer vu
             </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label="Ignorer"
-              onClick={() => setDismissedGap(gapKey)}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      )}
+          </>
+        }
+      />
 
       <div className="space-y-6">
         {data.seasons.map((season) => {

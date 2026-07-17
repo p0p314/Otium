@@ -35,28 +35,29 @@ describe("SeriesTrackingSection — rattrapage des épisodes précédents", () =
     markEpisodes.mockReset();
   });
 
-  it("propose le rattrapage dès qu'un trou existe (épisode vu après des non-vus)", async () => {
+  it("ouvre une popup de rattrapage dès qu'un trou existe (épisode vu après des non-vus)", async () => {
     // E3 vu, E1/E2 non vus → trou de 2 épisodes à rattraper.
     tracking = withEpisodes([episode(1, false), episode(2, false), episode(3, true)]);
     render(<SeriesTrackingSection itemId="i1" />);
 
-    expect(screen.getByText(/2 épisodes précédents non vus/i)).toBeInTheDocument();
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(screen.getByText(/2 épisodes précédents/i)).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: /Tout marquer vu/i }));
     expect(markEpisodes).toHaveBeenCalledWith({ episodeIds: ["e1", "e2"], watched: true });
   });
 
-  it("ne propose rien quand la progression est continue (aucun trou)", () => {
+  it("n'ouvre pas de popup quand la progression est continue (aucun trou)", () => {
     tracking = withEpisodes([episode(1, true), episode(2, true), episode(3, false)]);
     render(<SeriesTrackingSection itemId="i1" />);
-    expect(screen.queryByText(/précédents? non vus?/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
-  it("permet d'ignorer la proposition", async () => {
+  it("permet de reporter la proposition (Plus tard)", async () => {
     tracking = withEpisodes([episode(1, false), episode(2, true)]);
     render(<SeriesTrackingSection itemId="i1" />);
-    expect(screen.getByText(/1 épisode précédent non vu/i)).toBeInTheDocument();
-    await userEvent.click(screen.getByRole("button", { name: "Ignorer" }));
-    expect(screen.queryByText(/précédents? non vus?/i)).not.toBeInTheDocument();
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Plus tard" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(markEpisodes).not.toHaveBeenCalled();
   });
 });
