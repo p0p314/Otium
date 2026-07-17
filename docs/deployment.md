@@ -41,14 +41,18 @@ Réglage manuel équivalent (« New + » → « Web Service ») :
 Build command :
 
 ```bash
-corepack enable
-pnpm install --frozen-lockfile
+pnpm install --frozen-lockfile --prod=false
 pnpm --filter @otium/api exec prisma generate
 pnpm --filter @otium/web build
 pnpm --filter @otium/api build
 pnpm --filter @otium/api run prisma:deploy:ci   # applique les migrations
 ```
 
+- **`--prod=false`** est indispensable : `NODE_ENV=production` ferait sinon **sauter les
+  devDependencies** (`vite`, `nest`, `prisma`…) qui sont nécessaires au build → erreurs
+  `vite: not found` / `nest: not found` / `prisma: not found`.
+- Pas de `corepack enable` : Render fournit pnpm via le champ `packageManager` de
+  `package.json` (et `corepack enable` échoue sur le FS en lecture seule de l'image de build).
 - Les **migrations** (`prisma migrate deploy`) sont appliquées **en fin de build** : le tier
   gratuit de Render **ne supporte pas** `preDeployCommand`. Elles tournent ainsi une fois par
   déploiement (et non à chaque réveil de veille). `migrate deploy` est idempotent : sans
