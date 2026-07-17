@@ -19,6 +19,7 @@ Une décision = un fichier immuable ; on ne modifie pas un ADR accepté, on le *
 | [0011](0011-notation-avis-episode.md) | Notation et avis au niveau épisode | Accepté |
 | [0012](0012-hebergement-gratuit-service-unique.md) | Hébergement gratuit : service unique, sans Redis | Accepté |
 | [0013](0013-import-tache-de-fond.md) | Import TV Time en tâche de fond (job + polling) | Accepté |
+| [0014](0014-accueil-nouvelle-saison-a-voir.md) | Accueil : une nouvelle saison récente remonte la série dans « À voir » | Accepté |
 
 ## Gabarit
 

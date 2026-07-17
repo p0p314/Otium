@@ -3,7 +3,9 @@ import type { EpisodeRef, SeasonRef, SeriesProgressRecord } from "../domain";
 import { buildHomeDashboard, staleInProgressItemIds } from "./home-dashboard.view";
 
 const NOW = new Date("2026-07-15T00:00:00.000Z");
-const AIRED = new Date("2026-07-01T00:00:00.000Z");
+const AIRED = new Date("2026-05-20T00:00:00.000Z"); // 56 j → sorti, mais pas une première récente
+const RECENT_AIRED = new Date("2026-07-05T00:00:00.000Z"); // 10 j → première de saison récente
+const OLD_AIRED = new Date("2026-01-01T00:00:00.000Z"); // saison diffusée il y a longtemps
 const FUTURE = new Date("2026-08-01T00:00:00.000Z");
 
 // Ancienneté du dernier visionnage, relative à NOW.
@@ -46,6 +48,56 @@ describe("buildHomeDashboard", () => {
     expect(d.series.toStart.map((s) => s.itemId)).toEqual(["fresh"]);
     expect(d.series.toWatch).toEqual([]);
     expect(d.series.toResume).toEqual([]);
+  });
+
+  it("« à voir » : série « à voir » dont la saison en cours vient de sortir (< 1 mois), rien vu", () => {
+    const d = buildHomeDashboard(
+      [
+        record({
+          itemId: "premiere",
+          status: "PLANNED",
+          seasons: oneSeason([ep("e1", 1, RECENT_AIRED)]),
+        }),
+      ],
+      NOW,
+    );
+    expect(d.series.toWatch.map((s) => s.itemId)).toEqual(["premiere"]);
+    expect(d.series.toStart).toEqual([]);
+    expect(d.series.toWatch[0]?.nextEpisode?.id).toBe("e1");
+  });
+
+  it("« à voir » : nouvelle saison récente d'une série en cours inactive (sinon masquée)", () => {
+    const d = buildHomeDashboard(
+      [
+        record({
+          itemId: "s2",
+          status: "IN_PROGRESS",
+          watchedIds: new Set(["s1e1"]),
+          lastWatchedAt: OLD, // ~136 j → normalement masquée
+          seasons: [
+            { number: 1, episodes: [ep("s1e1", 1, OLD_AIRED)] },
+            {
+              number: 2,
+              episodes: [{ id: "s2e1", seasonNumber: 2, number: 1, title: "S2E1", airDate: RECENT_AIRED }],
+            },
+          ],
+        }),
+      ],
+      NOW,
+    );
+    expect(d.series.toWatch.map((s) => s.itemId)).toEqual(["s2"]);
+    expect(d.series.toResume).toEqual([]);
+    expect(d.series.toWatch[0]?.nextEpisode?.id).toBe("s2e1");
+  });
+
+  it("ne remonte pas une saison en cours sortie il y a plus d'un mois", () => {
+    const d = buildHomeDashboard(
+      [record({ itemId: "vieux", status: "PLANNED", seasons: oneSeason([ep("e1", 1, AIRED)]) })],
+      NOW,
+    );
+    // Première ancienne (> 1 mois) → reste « à commencer », pas « à voir ».
+    expect(d.series.toWatch).toEqual([]);
+    expect(d.series.toStart.map((s) => s.itemId)).toEqual(["vieux"]);
   });
 
   it("« à reprendre » : série commencée laissée de côté (1 à 3 mois)", () => {
