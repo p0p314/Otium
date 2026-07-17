@@ -43,11 +43,15 @@ Build command :
 ```bash
 pnpm install --frozen-lockfile --prod=false
 pnpm --filter @otium/api exec prisma generate
-pnpm --filter @otium/web build
-pnpm --filter @otium/api build
-pnpm --filter @otium/api run prisma:deploy:ci   # applique les migrations
+pnpm build                                        # turbo : compile TOUS les packages
+pnpm --filter @otium/api run prisma:deploy:ci     # applique les migrations
 ```
 
+- **`pnpm build`** (et non des `--filter web/api` isolés) : c'est un `turbo run build` qui
+  compile aussi les **packages internes** (`@otium/types`, `@otium/utils`, `@otium/api-sdk`,
+  `@otium/ui`) dans le bon ordre. Sans ça, l'API démarre en erreur
+  `Cannot find module '@otium/types/dist/index.js'` (leurs `dist/` n'existent pas sur un
+  checkout neuf).
 - **`--prod=false`** est indispensable : `NODE_ENV=production` ferait sinon **sauter les
   devDependencies** (`vite`, `nest`, `prisma`…) qui sont nécessaires au build → erreurs
   `vite: not found` / `nest: not found` / `prisma: not found`.

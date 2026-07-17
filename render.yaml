@@ -20,8 +20,7 @@ services:
     buildCommand: |
       pnpm install --frozen-lockfile --prod=false
       pnpm --filter @otium/api exec prisma generate
-      pnpm --filter @otium/web build
-      pnpm --filter @otium/api build
+      pnpm build
       pnpm --filter @otium/api run prisma:deploy:ci
     # Démarré depuis apps/api : WEB_DIST_PATH="../web/dist" pointe alors sur le SPA buildé.
     startCommand: pnpm --filter @otium/api run start
