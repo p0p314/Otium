@@ -28,6 +28,8 @@ Fonctionnalités disponibles :
   les plus regardés, activité par mois, note moyenne, records — cartes et graphiques.
 - **Suivi de séries** : saisons/épisodes, épisodes vus, progression, **reprise automatique**.
 - **Notation** (0–10) et **avis** (texte), au niveau `Media`.
+- **PWA** : app installable (écran d'accueil, plein écran mobile), service worker Workbox
+  (app shell précachée + cache des affiches TMDB) pour des visites suivantes plus rapides.
 - **Validation i18n** : messages d'erreur Zod en français, partagés front/back.
 - **Événements de domaine** journalisés (`MediaAdded`, `EpisodeWatched`, `MediaRated`,
   `WatchStatusChanged`, `MovieCompleted`…) — socle des futures statistiques/recommandations.
