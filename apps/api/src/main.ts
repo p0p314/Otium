@@ -14,7 +14,22 @@ async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule, { bufferLogs: false });
   const config = app.get(ConfigService<Env, true>);
 
-  app.use(helmet());
+  // En service unique, l'API sert aussi le SPA : la CSP par défaut de helmet
+  // (`img-src 'self'`) bloquerait les affiches/backdrops chargés depuis les
+  // fournisseurs externes (TMDB…). On autorise donc les images https + data:, tout
+  // en gardant scripts/objets stricts. `connect-src 'self'` : le front appelle l'API
+  // en same-origin (`/api`).
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        useDefaults: true,
+        directives: {
+          "img-src": ["'self'", "data:", "https:"],
+          "connect-src": ["'self'"],
+        },
+      },
+    }),
+  );
   // En dev, tolère toutes les variantes locales (localhost / 127.0.0.1, tout port) pour
   // éviter les blocages CORS selon l'URL ouverte. En prod, on reste strict sur WEB_ORIGIN.
   const isProduction = config.get("NODE_ENV", { infer: true }) === "production";
