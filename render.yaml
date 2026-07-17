@@ -1,0 +1,42 @@
+# Blueprint Render — Otium en service unique (l'API NestJS sert aussi le SPA buildé).
+# Voir docs/deployment.md et docs/adr/0012-hebergement-gratuit-service-unique.md.
+#
+# Base de données : Postgres gratuit **Neon** (durable, scale-to-zero). On n'utilise pas
+# le Postgres gratuit de Render, supprimé après 30 jours. Renseigner DATABASE_URL et
+# TMDB_ACCESS_TOKEN dans le dashboard Render (marqués `sync: false`).
+services:
+  - type: web
+    name: otium
+    runtime: node
+    plan: free
+    # Migrations appliquées avant chaque mise en ligne (aucune interruption de trafic).
+    preDeployCommand: pnpm --filter @otium/api run prisma:deploy:ci
+    buildCommand: |
+      corepack enable
+      pnpm install --frozen-lockfile
+      pnpm --filter @otium/api exec prisma generate
+      pnpm --filter @otium/web build
+      pnpm --filter @otium/api build
+    # Démarré depuis apps/api : WEB_DIST_PATH="../web/dist" pointe alors sur le SPA buildé.
+    startCommand: pnpm --filter @otium/api run start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Chemin (relatif à apps/api) du SPA buildé servi par l'API.
+      - key: WEB_DIST_PATH
+        value: ../web/dist
+      # Connexion Neon : utiliser l'URL **poolée** + `?sslmode=require`. À renseigner
+      # dans le dashboard (secret).
+      - key: DATABASE_URL
+        sync: false
+      # Jeton v4 TMDB ("API Read Access Token"). À renseigner dans le dashboard.
+      - key: TMDB_ACCESS_TOKEN
+        sync: false
+      # Origine publique du service (utilisée par le CORS). Même domaine que le SPA en
+      # service unique : y mettre l'URL Render (ex. https://otium.onrender.com).
+      - key: WEB_ORIGIN
+        sync: false
+      # Cache TMDB en mémoire : 24 h par défaut, ajustable pour limiter les appels réseau.
+      - key: TMDB_CACHE_TTL_SECONDS
+        value: "86400"

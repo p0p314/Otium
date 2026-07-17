@@ -1,8 +1,8 @@
 import type { ConfigService } from "@nestjs/config";
 import { describe, expect, it, vi } from "vitest";
 import type { Env } from "../../../../../shared/infrastructure/config/env";
+import type { CacheService } from "../../../../../shared/infrastructure/cache/cache.service";
 import type { HttpClient } from "../../../../../shared/infrastructure/http/http-client";
-import type { RedisService } from "../../../../../shared/infrastructure/redis/redis.service";
 import { TmdbProvider } from "./tmdb.provider";
 import type { TmdbSearchResponse } from "./tmdb.types";
 
@@ -18,8 +18,8 @@ function makeConfig(overrides: Partial<Env> = {}): ConfigService<Env, true> {
   return { get: (key: string) => values[key] } as unknown as ConfigService<Env, true>;
 }
 
-function makeRedis(get: () => Promise<string | null> = async () => null): RedisService {
-  return { client: { get, set: vi.fn(async () => "OK") } } as unknown as RedisService;
+function makeCache(get: (key: string) => unknown = () => null): CacheService {
+  return { get: vi.fn(get), set: vi.fn() } as unknown as CacheService;
 }
 
 const tmdbResponse: TmdbSearchResponse = {
@@ -38,7 +38,7 @@ describe("TmdbProvider", () => {
     const provider = new TmdbProvider(
       makeConfig({ TMDB_ACCESS_TOKEN: undefined }),
       { getJson: vi.fn() } as unknown as HttpClient,
-      makeRedis(),
+      makeCache(),
     );
     await expect(provider.search({ query: "x", page: 1, pageSize: 20 })).rejects.toThrow(
       /TMDB_ACCESS_TOKEN/,
@@ -47,8 +47,8 @@ describe("TmdbProvider", () => {
 
   it("appelle TMDB, normalise et met en cache (cache miss)", async () => {
     const http = { getJson: vi.fn(async () => tmdbResponse) } as unknown as HttpClient;
-    const redis = makeRedis();
-    const provider = new TmdbProvider(makeConfig(), http, redis);
+    const cache = makeCache();
+    const provider = new TmdbProvider(makeConfig(), http, cache);
 
     const result = await provider.search({ query: "Dune", page: 1, pageSize: 20 });
 
@@ -56,13 +56,13 @@ describe("TmdbProvider", () => {
     expect(result.items).toHaveLength(2); // la "person" est écartée
     expect(result.items[0]?.externalRef).toEqual({ provider: "tmdb", externalId: "1" });
     expect(http.getJson).toHaveBeenCalledOnce();
-    expect(redis.client.set).toHaveBeenCalledOnce();
+    expect(cache.set).toHaveBeenCalledOnce();
   });
 
   it("filtre par type et sert le cache sans appel réseau (cache hit)", async () => {
-    const cached = JSON.stringify({ items: [], page: 1, pageSize: 20, total: 0 });
+    const cached = { items: [], page: 1, pageSize: 20, total: 0 };
     const http = { getJson: vi.fn() } as unknown as HttpClient;
-    const provider = new TmdbProvider(makeConfig(), http, makeRedis(async () => cached));
+    const provider = new TmdbProvider(makeConfig(), http, makeCache(() => cached));
 
     const result = await provider.search({ query: "Dune", page: 1, pageSize: 20 });
 
@@ -75,7 +75,7 @@ describe("TmdbProvider", () => {
     const provider = new TmdbProvider(
       makeConfig({ TMDB_ACCESS_TOKEN: "eyJhbGciOiJ.abc.def" }),
       http,
-      makeRedis(),
+      makeCache(),
     );
 
     await provider.search({ query: "x", page: 1, pageSize: 20 });
@@ -90,7 +90,7 @@ describe("TmdbProvider", () => {
     const provider = new TmdbProvider(
       makeConfig({ TMDB_ACCESS_TOKEN: "abc123def456" }),
       http,
-      makeRedis(),
+      makeCache(),
     );
 
     await provider.search({ query: "x", page: 1, pageSize: 20 });
@@ -102,7 +102,7 @@ describe("TmdbProvider", () => {
 
   it("ne retient que le type demandé", async () => {
     const http = { getJson: vi.fn(async () => tmdbResponse) } as unknown as HttpClient;
-    const provider = new TmdbProvider(makeConfig(), http, makeRedis());
+    const provider = new TmdbProvider(makeConfig(), http, makeCache());
 
     const result = await provider.search({ query: "x", page: 1, pageSize: 20, type: "SERIES" });
 

@@ -1,8 +1,8 @@
-import { Injectable, Logger, ServiceUnavailableException } from "@nestjs/common";
+import { Injectable, ServiceUnavailableException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import type { Env } from "../../../../../shared/infrastructure/config/env";
+import { CacheService } from "../../../../../shared/infrastructure/cache/cache.service";
 import { HttpClient } from "../../../../../shared/infrastructure/http/http-client";
-import { RedisService } from "../../../../../shared/infrastructure/redis/redis.service";
 import type {
   CatalogEpisodeDetails,
   CatalogMediaDetails,
@@ -31,18 +31,17 @@ import type {
 
 /**
  * Adapter TMDB du port `MediaCatalogProvider`. Normalise les réponses TMDB vers le
- * modèle catalogue et met en cache (Redis) pour limiter les appels réseau (éco-conception).
+ * modèle catalogue et met en cache (mémoire) pour limiter les appels réseau (éco-conception).
  * La panne du cache n'empêche pas les requêtes (dégradation gracieuse — risque R1).
  */
 @Injectable()
 export class TmdbProvider implements MediaCatalogProvider {
   readonly name = "tmdb";
-  private readonly logger = new Logger(TmdbProvider.name);
 
   constructor(
     private readonly config: ConfigService<Env, true>,
     private readonly http: HttpClient,
-    private readonly redis: RedisService,
+    private readonly cache: CacheService,
   ) {}
 
   async search(params: MediaCatalogSearchParams): Promise<CatalogSearchResult> {
@@ -198,21 +197,11 @@ export class TmdbProvider implements MediaCatalogProvider {
   }
 
   private async cacheGet<T>(key: string): Promise<T | null> {
-    try {
-      const value = await this.redis.client.get(key);
-      return value ? (JSON.parse(value) as T) : null;
-    } catch (error) {
-      this.logger.warn(`Cache indisponible (lecture): ${(error as Error).message}`);
-      return null;
-    }
+    return this.cache.get<T>(key);
   }
 
   private async cacheSet<T>(key: string, value: T): Promise<void> {
-    try {
-      const ttl = this.config.get("TMDB_CACHE_TTL_SECONDS", { infer: true });
-      await this.redis.client.set(key, JSON.stringify(value), "EX", ttl);
-    } catch (error) {
-      this.logger.warn(`Cache indisponible (écriture): ${(error as Error).message}`);
-    }
+    const ttl = this.config.get("TMDB_CACHE_TTL_SECONDS", { infer: true });
+    this.cache.set(key, value, ttl);
   }
 }

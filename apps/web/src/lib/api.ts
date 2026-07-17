@@ -1,7 +1,11 @@
 import { OtiumClient } from "@otium/api-sdk";
 import { useAuthStore } from "../stores/auth-store";
 
-const baseUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3000/api";
+// En production (service unique), l'API sert le SPA : on l'appelle en same-origin
+// (`/api`), ce qui garantit l'envoi du cookie de session (SameSite=Lax). En dev,
+// on cible l'API Vite/Nest locale. `VITE_API_URL` permet de forcer une URL explicite.
+const baseUrl =
+  import.meta.env.VITE_API_URL ?? (import.meta.env.PROD ? "/api" : "http://localhost:3000/api");
 
 /**
  * Instance unique du SDK — seul point d'accès du frontend à l'API (CLAUDE.md).

@@ -5,8 +5,11 @@ export const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   PORT: z.coerce.number().int().positive().default(3000),
   DATABASE_URL: z.string().url(),
-  REDIS_URL: z.string().url().default("redis://localhost:6379"),
   WEB_ORIGIN: z.string().url().default("http://localhost:5173"),
+
+  // Chemin vers le SPA buildé (apps/web/dist) que l'API sert en production (service
+  // unique). Vide en dev : le SPA est servi par Vite et l'API n'expose que /api.
+  WEB_DIST_PATH: z.string().optional(),
 
   // Fournisseur TMDB (jeton v4 "Read Access Token"). Optionnel : l'app démarre sans,
   // mais la recherche échoue proprement tant qu'il n'est pas fourni.

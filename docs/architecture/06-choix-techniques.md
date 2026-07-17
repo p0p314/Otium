@@ -32,7 +32,12 @@ Chaque choix est évalué selon les priorités du projet : **maintenabilité > l
 | **NestJS** | DI native (idéale pour ports/adapters), modularité, conventions matures. | Express nu (trop peu structuré), Fastify seul (moins de DI). |
 | **PostgreSQL** | Relationnel robuste, JSONB, **full-text search** intégré (V1 sans dépendance externe). | MongoDB (relations + FTS moins naturels). |
 | **Prisma** | Type-safety bout-en-bout, migrations, mappé en **infrastructure** uniquement. | TypeORM (moins sûr), SQL brut (verbeux). |
-| **Redis** | Cache API, sessions, rate-limiting, files (BullMQ) pour événements/jobs. | Cache mémoire seul (non partagé, non persistant). |
+| **Redis** *(cible, différé)* | Cache API partagé, rate-limiting, files (BullMQ) pour événements/jobs, en multi-instances. | Cache mémoire + sessions Postgres (V1, hébergement gratuit). |
+
+> **V1 (hébergement gratuit, mono-instance)** : pas de Redis. Le cache TMDB est **en mémoire**
+> (port `CacheService`) et les sessions sont en **Postgres** (port `SessionStore`). Redis
+> reste la cible pour le passage multi-instances, réintroduisible derrière ces ports sans
+> toucher au métier. Voir [ADR-0012](../adr/0012-hebergement-gratuit-service-unique.md).
 
 → Voir [ADR-0005](../adr/0005-search-postgres-puis-meilisearch.md).
 
