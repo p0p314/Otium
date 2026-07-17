@@ -35,7 +35,6 @@ Réglage manuel équivalent (« New + » → « Web Service ») :
 | Runtime | Node |
 | Plan | Free |
 | Build command | voir ci-dessous |
-| Pre-deploy command | `pnpm --filter @otium/api run prisma:deploy:ci` |
 | Start command | `pnpm --filter @otium/api run start` |
 | Health check path | `/api/health` |
 
@@ -47,10 +46,13 @@ pnpm install --frozen-lockfile
 pnpm --filter @otium/api exec prisma generate
 pnpm --filter @otium/web build
 pnpm --filter @otium/api build
+pnpm --filter @otium/api run prisma:deploy:ci   # applique les migrations
 ```
 
-- **Pre-deploy** applique les migrations (`prisma migrate deploy`) avant la mise en ligne,
-  sans interruption de trafic.
+- Les **migrations** (`prisma migrate deploy`) sont appliquées **en fin de build** : le tier
+  gratuit de Render **ne supporte pas** `preDeployCommand`. Elles tournent ainsi une fois par
+  déploiement (et non à chaque réveil de veille). `migrate deploy` est idempotent : sans
+  migration en attente, c'est un no-op.
 - **Start** est lancé depuis `apps/api`, donc `WEB_DIST_PATH=../web/dist` pointe sur le SPA buildé.
 
 ## 3. Variables d'environnement (dashboard Render)

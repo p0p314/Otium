@@ -9,14 +9,17 @@ services:
     name: otium
     runtime: node
     plan: free
-    # Migrations appliquées avant chaque mise en ligne (aucune interruption de trafic).
-    preDeployCommand: pnpm --filter @otium/api run prisma:deploy:ci
+    # Migrations appliquées en fin de build (le tier gratuit ne supporte pas
+    # `preDeployCommand`). Elles tournent une fois par déploiement — et non à chaque
+    # réveil de veille, contrairement à une exécution au démarrage. `migrate deploy`
+    # est idempotent (no-op sans migration en attente).
     buildCommand: |
       corepack enable
       pnpm install --frozen-lockfile
       pnpm --filter @otium/api exec prisma generate
       pnpm --filter @otium/web build
       pnpm --filter @otium/api build
+      pnpm --filter @otium/api run prisma:deploy:ci
     # Démarré depuis apps/api : WEB_DIST_PATH="../web/dist" pointe alors sur le SPA buildé.
     startCommand: pnpm --filter @otium/api run start
     healthCheckPath: /api/health
