@@ -32,5 +32,6 @@ export function toLibraryItemDto(item: LibraryItem): LibraryItemDto {
     rating: item.rating,
     isFavorite: item.isFavorite,
     addedAt: item.addedAt.toISOString(),
+    lastActivityAt: item.lastActivityAt.toISOString(),
   };
 }

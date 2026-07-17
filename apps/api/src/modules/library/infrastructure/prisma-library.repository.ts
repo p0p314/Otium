@@ -58,10 +58,16 @@ export class PrismaLibraryRepository implements LibraryRepository {
   async findByUser(userId: string): Promise<LibraryItem[]> {
     const rows = await this.prisma.libraryItem.findMany({
       where: { userId },
-      include: { media: true },
-      orderBy: { addedAt: "desc" },
+      include: {
+        media: true,
+        // Dernier épisode vu (borné à 1) : sert de date de visionnage sans charger tout l'historique.
+        watched: { orderBy: { watchedAt: "desc" }, take: 1, select: { watchedAt: true } },
+      },
     });
-    return rows.map((row) => this.toDomain(row));
+    // Date de visionnage : dernier épisode vu (série) ou dernière MAJ de l'élément (film).
+    return rows
+      .map((row) => this.toDomain(row, row.watched[0]?.watchedAt ?? row.updatedAt))
+      .sort((a, b) => b.lastActivityAt.getTime() - a.lastActivityAt.getTime());
   }
 
   async findItem(userId: string, itemId: string): Promise<LibraryItem | null> {
@@ -139,7 +145,7 @@ export class PrismaLibraryRepository implements LibraryRepository {
     }));
   }
 
-  private toDomain(row: LibraryItemRow): LibraryItem {
+  private toDomain(row: LibraryItemRow, lastActivityAt: Date = row.updatedAt): LibraryItem {
     return {
       id: row.id,
       media: {
@@ -155,6 +161,7 @@ export class PrismaLibraryRepository implements LibraryRepository {
       rating: row.rating,
       isFavorite: row.isFavorite,
       addedAt: row.addedAt,
+      lastActivityAt,
     };
   }
 }

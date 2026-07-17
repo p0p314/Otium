@@ -27,4 +27,6 @@ export interface LibraryItem {
   readonly rating: number | null;
   readonly isFavorite: boolean;
   readonly addedAt: Date;
+  /** Dernière activité de visionnage : dernier épisode vu (série) ou dernière MAJ (film). */
+  readonly lastActivityAt: Date;
 }

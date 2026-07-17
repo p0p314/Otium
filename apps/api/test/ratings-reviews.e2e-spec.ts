@@ -51,6 +51,7 @@ const baseItem: LibraryItem = {
   rating: null,
   isFavorite: false,
   addedAt: new Date(),
+  lastActivityAt: new Date(),
 };
 
 class FakeLibraryRepo implements LibraryRepository {
