@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   airedCount,
+  currentSeasonPremiere,
+  hasRecentSeasonPremiere,
   hasUnwatchedAired,
   isComplete,
   nextUnwatched,
@@ -89,5 +91,52 @@ describe("dates de diffusion (sorti / à venir)", () => {
   it("upcomingEpisodes liste les diffusions futures, triées", () => {
     expect(upcomingEpisodes(dated, NOW).map((e) => e.id)).toEqual(["e3"]);
     expect(upcomingEpisodes(seasons, NOW)).toEqual([]); // aucune date → rien à venir
+  });
+});
+
+describe("saison en cours / première récente", () => {
+  const NOW = new Date("2026-07-15T00:00:00.000Z");
+  const recent = new Date("2026-07-05T00:00:00.000Z"); // 10 j
+  const old = new Date("2026-01-01T00:00:00.000Z");
+  const future = new Date("2026-08-01T00:00:00.000Z");
+
+  const withSeasons = (s: SeasonRef[]): SeasonRef[] => s;
+
+  it("currentSeasonPremiere = 1er épisode de la dernière saison diffusée", () => {
+    const s = withSeasons([
+      { number: 1, episodes: [{ id: "s1e1", seasonNumber: 1, number: 1, title: "", airDate: old }] },
+      {
+        number: 2,
+        episodes: [
+          { id: "s2e2", seasonNumber: 2, number: 2, title: "", airDate: null },
+          { id: "s2e1", seasonNumber: 2, number: 1, title: "", airDate: recent },
+        ],
+      },
+    ]);
+    expect(currentSeasonPremiere(s, NOW)?.id).toBe("s2e1");
+  });
+
+  it("ignore une saison entièrement à venir pour la saison « en cours »", () => {
+    const s = withSeasons([
+      { number: 1, episodes: [{ id: "s1e1", seasonNumber: 1, number: 1, title: "", airDate: recent }] },
+      { number: 2, episodes: [{ id: "s2e1", seasonNumber: 2, number: 1, title: "", airDate: future }] },
+    ]);
+    // Saison 2 pas encore diffusée → saison en cours = saison 1.
+    expect(currentSeasonPremiere(s, NOW)?.id).toBe("s1e1");
+  });
+
+  it("hasRecentSeasonPremiere : vrai si < withinDays, faux au-delà ou sans date", () => {
+    const recentS = withSeasons([
+      { number: 1, episodes: [{ id: "e1", seasonNumber: 1, number: 1, title: "", airDate: recent }] },
+    ]);
+    const oldS = withSeasons([
+      { number: 1, episodes: [{ id: "e1", seasonNumber: 1, number: 1, title: "", airDate: old }] },
+    ]);
+    const undatedS = withSeasons([
+      { number: 1, episodes: [{ id: "e1", seasonNumber: 1, number: 1, title: "", airDate: null }] },
+    ]);
+    expect(hasRecentSeasonPremiere(recentS, NOW, 30)).toBe(true);
+    expect(hasRecentSeasonPremiere(oldS, NOW, 30)).toBe(false);
+    expect(hasRecentSeasonPremiere(undatedS, NOW, 30)).toBe(false); // date inconnue → pas « récent »
   });
 });

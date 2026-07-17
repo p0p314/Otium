@@ -73,6 +73,38 @@ export function hasUnwatchedAired(
   return nextUnwatchedAired(seasons, watched, now) !== null;
 }
 
+/**
+ * Premier épisode (numéro le plus bas) de la **dernière saison entamée en diffusion**
+ * (plus grand numéro de saison ayant au moins un épisode sorti), ou `null`. Sert à
+ * détecter le lancement d'une nouvelle saison.
+ */
+export function currentSeasonPremiere(
+  seasons: readonly SeasonRef[],
+  now: Date,
+): EpisodeRef | null {
+  const latestAiredSeason = [...seasons]
+    .filter((s) => s.episodes.some((e) => isAired(e, now)))
+    .sort((a, b) => b.number - a.number)[0];
+  if (!latestAiredSeason) return null;
+  return [...latestAiredSeason.episodes].sort((a, b) => a.number - b.number)[0] ?? null;
+}
+
+/**
+ * Vrai si la saison en cours vient d'être lancée : le premier épisode de la dernière
+ * saison diffusée est sorti il y a **moins de `withinDays` jours** (date connue requise —
+ * une diffusion inconnue ne compte pas comme une sortie récente).
+ */
+export function hasRecentSeasonPremiere(
+  seasons: readonly SeasonRef[],
+  now: Date,
+  withinDays: number,
+): boolean {
+  const premiere = currentSeasonPremiere(seasons, now);
+  if (!premiere || premiere.airDate === null) return false;
+  const ageDays = (now.getTime() - premiere.airDate.getTime()) / (24 * 60 * 60 * 1000);
+  return ageDays >= 0 && ageDays < withinDays;
+}
+
 /** Épisodes **à venir** (diffusion future connue), triés par date croissante. */
 export function upcomingEpisodes(seasons: readonly SeasonRef[], now: Date): EpisodeRef[] {
   return orderedEpisodes(seasons)

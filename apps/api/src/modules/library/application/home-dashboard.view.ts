@@ -1,6 +1,7 @@
 import type { HomeDashboard, HomeSeries } from "@otium/types";
 import {
   airedCount,
+  hasRecentSeasonPremiere,
   hasUnwatchedAired,
   nextUnwatchedAired,
   type SeriesProgressRecord,
@@ -47,7 +48,9 @@ function time(iso: string | null): number {
  * Assemble le tableau de bord de l'accueil (**pur**, testable sans I/O) à partir de
  * toutes les séries suivies, selon l'ancienneté du **dernier visionnage** :
  * - **à voir** : série commencée et **active** (vue il y a < {@link RECENT_ACTIVITY_DAYS} j)
- *   avec un épisode sorti non vu ;
+ *   avec un épisode sorti non vu — **ou** série « à voir »/« en cours » dont la saison en
+ *   cours vient de démarrer (premier épisode sorti il y a < {@link RECENT_ACTIVITY_DAYS} j),
+ *   même sans aucun épisode vu de cette saison ;
  * - **à reprendre** : série commencée puis laissée de côté (dernier visionnage entre
  *   {@link RECENT_ACTIVITY_DAYS} et {@link STALE_ACTIVITY_DAYS} jours) avec un épisode à voir ;
  * - **à commencer** : série jamais commencée ayant un épisode déjà sorti.
@@ -67,6 +70,18 @@ export function buildHomeDashboard(
     // Abandonnées et mises en pause (manuellement ou après 3 mois d'inactivité) : hors accueil.
     if (record.status === "DROPPED" || record.status === "PAUSED") continue;
     const started = record.watchedIds.size > 0;
+
+    // Nouvelle saison fraîchement lancée (premier épisode sorti il y a < RECENT_ACTIVITY_DAYS)
+    // d'une série « à voir » ou « en cours » : on la remonte dans « À voir », même si aucun
+    // épisode de cette saison n'a encore été vu.
+    if (
+      (record.status === "PLANNED" || record.status === "IN_PROGRESS") &&
+      hasUnwatchedAired(record.seasons, record.watchedIds, now) &&
+      hasRecentSeasonPremiere(record.seasons, now, RECENT_ACTIVITY_DAYS)
+    ) {
+      toWatch.push(toHomeSeries(record, now));
+      continue;
+    }
 
     if (started) {
       // Rien de sorti à voir → la série relève de « À venir », pas de l'accueil.
