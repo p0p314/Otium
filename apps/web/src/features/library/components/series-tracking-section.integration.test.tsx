@@ -60,9 +60,8 @@ describe("SeriesTrackingSection (intégration hooks réels)", () => {
     const box = await screen.findByRole("checkbox", { name: /Épisode 4/i });
     await userEvent.click(box);
 
-    await waitFor(() =>
-      expect(screen.getByText(/3 épisodes précédents non vus/i)).toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.getByRole("dialog")).toBeInTheDocument());
+    expect(screen.getByText(/3 épisodes précédents/i)).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole("button", { name: /Tout marquer vu/i }));
     await waitFor(() =>
@@ -71,6 +70,6 @@ describe("SeriesTrackingSection (intégration hooks réels)", () => {
         watched: true,
       }),
     );
-    await waitFor(() => expect(screen.queryByText(/précédents non vus/i)).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
   });
 });
