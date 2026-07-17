@@ -72,4 +72,27 @@ describe("SeriesTrackingSection — rattrapage des épisodes précédents", () =
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(markEpisodes).not.toHaveBeenCalled();
   });
+
+  it("n'affiche qu'une saison à la fois via le sélecteur", async () => {
+    tracking = {
+      itemId: "i1",
+      totalEpisodes: 2,
+      watchedEpisodes: 0,
+      nextEpisode: { id: "s1e1", seasonNumber: 1, number: 1, title: "Pilote S1", watched: false },
+      seasons: [
+        { number: 1, episodes: [{ id: "s1e1", seasonNumber: 1, number: 1, title: "Pilote S1", watched: false }] },
+        { number: 2, episodes: [{ id: "s2e1", seasonNumber: 2, number: 1, title: "Reprise S2", watched: false }] },
+      ],
+    } as unknown as SeriesTracking;
+    render(<SeriesTrackingSection itemId="i1" />);
+
+    // Saison de reprise (1) affichée par défaut ; la saison 2 est masquée.
+    expect(screen.getByText("Pilote S1")).toBeInTheDocument();
+    expect(screen.queryByText("Reprise S2")).not.toBeInTheDocument();
+
+    // Bascule vers la saison 2 via le sélecteur.
+    await userEvent.selectOptions(screen.getByRole("combobox", { name: /Saison/i }), "2");
+    expect(screen.getByText("Reprise S2")).toBeInTheDocument();
+    expect(screen.queryByText("Pilote S1")).not.toBeInTheDocument();
+  });
 });
