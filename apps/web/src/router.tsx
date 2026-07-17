@@ -18,6 +18,13 @@ const StatsPage = lazy(() =>
 const ProfilePage = lazy(() =>
   import("./features/profile/profile-page").then((m) => ({ default: m.ProfilePage })),
 );
+
+// Fiche épisode (résumé, casting) isolée dans son propre chunk (éco-conception).
+const EpisodeDetailPage = lazy(() =>
+  import("./features/media-detail/episode-detail-page").then((m) => ({
+    default: m.EpisodeDetailPage,
+  })),
+);
 import { RootLayout } from "./routes/root-layout";
 import { HomePage } from "./routes/home";
 import { useAuthStore } from "./stores/auth-store";
@@ -89,6 +96,12 @@ const mediaDetailRoute = createRoute({
   component: MediaDetailPage,
 });
 
+const episodeDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/media/$type/$externalId/season/$season/episode/$episode",
+  component: EpisodeDetailPage,
+});
+
 const statsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/stats",
@@ -113,6 +126,7 @@ const routeTree = rootRoute.addChildren([
   listsRoute,
   listDetailRoute,
   mediaDetailRoute,
+  episodeDetailRoute,
   statsRoute,
   profileRoute,
 ]);

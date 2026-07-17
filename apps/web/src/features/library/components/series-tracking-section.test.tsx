@@ -12,6 +12,10 @@ vi.mock("../api/use-series-tracking", () => ({
   useMarkEpisode: () => ({ mutate: markEpisode, isPending: false }),
   useMarkEpisodes: () => ({ mutate: markEpisodes, isPending: false }),
 }));
+// Link nécessite un routeur : ancre simple pour le test.
+vi.mock("@tanstack/react-router", () => ({
+  Link: ({ children, ...p }: { children: unknown }) => <a {...p}>{children as never}</a>,
+}));
 
 import { SeriesTrackingSection } from "./series-tracking-section";
 
@@ -38,13 +42,13 @@ describe("SeriesTrackingSection — rattrapage des épisodes précédents", () =
   it("n'ouvre aucune popup au chargement, même si un trou est déjà présent", () => {
     // E3 déjà vu, E1/E2 non vus : au chargement on ne propose rien (uniquement sur clic).
     tracking = withEpisodes([episode(1, false), episode(2, false), episode(3, true)]);
-    render(<SeriesTrackingSection itemId="i1" />);
+    render(<SeriesTrackingSection itemId="i1" seriesExternalId="1399" />);
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
   it("ouvre la popup quand un clic crée un trou, puis valide le rattrapage", async () => {
     tracking = withEpisodes([episode(1, false), episode(2, false), episode(3, false)]);
-    render(<SeriesTrackingSection itemId="i1" />);
+    render(<SeriesTrackingSection itemId="i1" seriesExternalId="1399" />);
 
     // On coche E3 alors que E1/E2 ne le sont pas → trou créé.
     await userEvent.click(screen.getByRole("checkbox", { name: /Épisode 3/i }));
@@ -58,14 +62,14 @@ describe("SeriesTrackingSection — rattrapage des épisodes précédents", () =
 
   it("ne propose rien quand le clic ne crée pas de trou", async () => {
     tracking = withEpisodes([episode(1, false), episode(2, false)]);
-    render(<SeriesTrackingSection itemId="i1" />);
+    render(<SeriesTrackingSection itemId="i1" seriesExternalId="1399" />);
     await userEvent.click(screen.getByRole("checkbox", { name: /Épisode 1/i }));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
   it("permet de reporter la proposition (Plus tard)", async () => {
     tracking = withEpisodes([episode(1, false), episode(2, false)]);
-    render(<SeriesTrackingSection itemId="i1" />);
+    render(<SeriesTrackingSection itemId="i1" seriesExternalId="1399" />);
     await userEvent.click(screen.getByRole("checkbox", { name: /Épisode 2/i }));
     expect(screen.getByRole("dialog")).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Plus tard" }));
@@ -84,7 +88,7 @@ describe("SeriesTrackingSection — rattrapage des épisodes précédents", () =
         { number: 2, episodes: [{ id: "s2e1", seasonNumber: 2, number: 1, title: "Reprise S2", watched: false }] },
       ],
     } as unknown as SeriesTracking;
-    render(<SeriesTrackingSection itemId="i1" />);
+    render(<SeriesTrackingSection itemId="i1" seriesExternalId="1399" />);
 
     // Saison de reprise (1) affichée par défaut ; la saison 2 est masquée.
     expect(screen.getByText("Pilote S1")).toBeInTheDocument();

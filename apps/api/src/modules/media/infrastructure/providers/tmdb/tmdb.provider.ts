@@ -4,6 +4,7 @@ import type { Env } from "../../../../../shared/infrastructure/config/env";
 import { HttpClient } from "../../../../../shared/infrastructure/http/http-client";
 import { RedisService } from "../../../../../shared/infrastructure/redis/redis.service";
 import type {
+  CatalogEpisodeDetails,
   CatalogMediaDetails,
   CatalogMediaType,
   CatalogSearchResult,
@@ -13,12 +14,14 @@ import type {
   MediaCatalogTrendingParams,
 } from "../../../domain";
 import {
+  toCatalogEpisodeDetails,
   toCatalogMedia,
   toCatalogMovieDetails,
   toCatalogSeason,
   toCatalogTvDetails,
 } from "./tmdb.mapper";
 import type {
+  TmdbEpisodeDetails,
   TmdbMovieDetailsFull,
   TmdbSearchResponse,
   TmdbSeasonDetails,
@@ -154,6 +157,23 @@ export class TmdbProvider implements MediaCatalogProvider {
     );
 
     const result: CatalogSeriesDetails = { seasons };
+    await this.cacheSet(cacheKey, result);
+    return result;
+  }
+
+  async getEpisodeDetails(
+    externalId: string,
+    seasonNumber: number,
+    episodeNumber: number,
+  ): Promise<CatalogEpisodeDetails> {
+    const cacheKey = `tmdb:episode:${externalId}:${seasonNumber}:${episodeNumber}`;
+    const cached = await this.cacheGet<CatalogEpisodeDetails>(cacheKey);
+    if (cached) return cached;
+
+    const episode = await this.authedGet<TmdbEpisodeDetails>(
+      `/tv/${externalId}/season/${seasonNumber}/episode/${episodeNumber}?language=fr-FR&append_to_response=credits`,
+    );
+    const result = toCatalogEpisodeDetails(episode, this.imageRoot());
     await this.cacheSet(cacheKey, result);
     return result;
   }

@@ -9,6 +9,9 @@ vi.mock("../../auth/api/use-auth", () => ({ useAuth: () => ({ isAuthenticated: t
 vi.mock("../../../lib/api", () => ({
   api: { getSeriesTracking: vi.fn(), markEpisode: vi.fn(), markEpisodes: vi.fn() },
 }));
+vi.mock("@tanstack/react-router", () => ({
+  Link: ({ children, ...p }: { children: unknown }) => <a {...p}>{children as never}</a>,
+}));
 
 import { api } from "../../../lib/api";
 import { SeriesTrackingSection } from "./series-tracking-section";
@@ -55,7 +58,7 @@ describe("SeriesTrackingSection (intégration hooks réels)", () => {
   });
 
   it("propose puis marque les épisodes précédents après un saut (E4)", async () => {
-    render(<SeriesTrackingSection itemId="i1" />, { wrapper });
+    render(<SeriesTrackingSection itemId="i1" seriesExternalId="1399" />, { wrapper });
     // On saute directement à E4 (E1–E3 non vus).
     const box = await screen.findByRole("checkbox", { name: /Épisode 4/i });
     await userEvent.click(box);

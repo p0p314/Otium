@@ -25,6 +25,7 @@ import {
   type SaveReviewInput,
   type SearchMediaQuery,
   SearchMediaResult,
+  EpisodeDetails,
   SeriesTracking,
   type SetWatchStatusInput,
   type ToggleFavoriteInput,
@@ -238,6 +239,18 @@ export class OtiumClient {
 
   async getSeriesTracking(itemId: string): Promise<SeriesTracking> {
     return this.request(`/library/${itemId}/series`, SeriesTracking);
+  }
+
+  /** Fiche détaillée d'un épisode d'une série (résumé, image, casting). */
+  async getEpisodeDetails(
+    seriesExternalId: string,
+    seasonNumber: number,
+    episodeNumber: number,
+  ): Promise<EpisodeDetails> {
+    return this.request(
+      `/media/series/${encodeURIComponent(seriesExternalId)}/season/${seasonNumber}/episode/${episodeNumber}`,
+      EpisodeDetails,
+    );
   }
 
   async markEpisode(itemId: string, input: MarkEpisodeInput): Promise<SeriesTracking> {

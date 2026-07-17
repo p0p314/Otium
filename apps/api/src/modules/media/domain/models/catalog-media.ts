@@ -47,6 +47,20 @@ export interface CatalogSeason {
   readonly episodes: readonly CatalogEpisode[];
 }
 
+/** Fiche détaillée d'un épisode (résumé, image, casting), normalisée depuis le fournisseur. */
+export interface CatalogEpisodeDetails {
+  readonly seasonNumber: number;
+  readonly number: number;
+  readonly title: string;
+  readonly overview: string | null;
+  readonly airDate: string | null;
+  readonly runtimeMinutes: number | null;
+  readonly stillUrl: string | null;
+  readonly rating: number | null;
+  /** Acteurs principaux de l'épisode (casting récurrent + invités). */
+  readonly cast: readonly CatalogCastMember[];
+}
+
 /** Structure saisons/épisodes d'une série, normalisée depuis le fournisseur. */
 export interface CatalogSeriesDetails {
   readonly seasons: readonly CatalogSeason[];

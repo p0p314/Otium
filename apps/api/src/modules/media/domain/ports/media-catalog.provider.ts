@@ -1,4 +1,5 @@
 import type {
+  CatalogEpisodeDetails,
   CatalogMediaDetails,
   CatalogMediaType,
   CatalogSearchResult,
@@ -32,6 +33,12 @@ export interface MediaCatalogProvider {
   getMediaDetails(type: CatalogMediaType, externalId: string): Promise<CatalogMediaDetails>;
   /** Structure saisons/épisodes d'une série, par identifiant externe. */
   getSeriesDetails(externalId: string): Promise<CatalogSeriesDetails>;
+  /** Fiche détaillée d'un épisode (résumé, image, casting) par série + saison + numéro. */
+  getEpisodeDetails(
+    externalId: string,
+    seasonNumber: number,
+    episodeNumber: number,
+  ): Promise<CatalogEpisodeDetails>;
 }
 
 /** Jeton d'injection (DI) pour le port `MediaCatalogProvider`. */

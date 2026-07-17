@@ -34,6 +34,20 @@ export interface TmdbSeasonDetails {
   }[];
 }
 
+/** Fiche épisode (`/tv/{id}/season/{s}/episode/{e}?append_to_response=credits`). */
+export interface TmdbEpisodeDetails {
+  season_number: number;
+  episode_number: number;
+  name?: string;
+  overview?: string;
+  air_date?: string | null;
+  runtime?: number | null;
+  still_path?: string | null;
+  vote_average?: number;
+  credits?: TmdbCredits;
+  guest_stars?: TmdbCastMember[];
+}
+
 // --- Fiche détaillée (append_to_response=credits,watch/providers) ---
 
 export interface TmdbGenre {

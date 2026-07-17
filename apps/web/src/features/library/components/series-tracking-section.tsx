@@ -1,10 +1,17 @@
 import { Button, Modal, Select, Skeleton } from "@otium/ui";
-import { Check, CheckCheck, Play, RotateCcw } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { Check, CheckCheck, ChevronRight, Play, RotateCcw } from "lucide-react";
 import { useState } from "react";
 import { useMarkEpisode, useMarkEpisodes, useSeriesTracking } from "../api/use-series-tracking";
 
 /** Section de suivi épisode par épisode d'une série (progression, reprise, marquage en masse). */
-export function SeriesTrackingSection({ itemId }: { itemId: string }) {
+export function SeriesTrackingSection({
+  itemId,
+  seriesExternalId,
+}: {
+  itemId: string;
+  seriesExternalId: string;
+}) {
   const { data, isLoading, isError } = useSeriesTracking(itemId);
   const markEpisode = useMarkEpisode(itemId);
   const markEpisodes = useMarkEpisodes(itemId);
@@ -171,30 +178,43 @@ export function SeriesTrackingSection({ itemId }: { itemId: string }) {
 
           <ul className="divide-y overflow-hidden rounded-xl border">
             {season.episodes.map((episode) => (
-              <li key={episode.id}>
-                <label
-                  className={`flex cursor-pointer items-center gap-3 px-3 py-2.5 transition-colors hover:bg-muted/50 ${episode.watched ? "text-muted-foreground" : ""}`}
-                >
+              <li key={episode.id} className="flex items-center gap-1 pr-2 hover:bg-muted/50">
+                {/* Coche de statut : marque vu/non vu sans quitter la liste. */}
+                <label className="flex shrink-0 cursor-pointer items-center py-2.5 pl-3">
                   <input
                     type="checkbox"
-                    className="peer sr-only"
+                    className="sr-only"
                     checked={episode.watched}
                     disabled={busy}
+                    aria-label={`Marquer l'épisode ${episode.number} comme ${episode.watched ? "non vu" : "vu"}`}
                     onChange={(e) => markSingle(episode.id, e.target.checked)}
                   />
                   <span
                     aria-hidden
-                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border transition-colors ${episode.watched ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/40"}`}
+                    className={`flex h-6 w-6 items-center justify-center rounded-full border transition-colors ${episode.watched ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/40"}`}
                   >
                     {episode.watched ? <Check className="h-4 w-4" /> : null}
                   </span>
+                </label>
+                {/* Le reste de la ligne ouvre la fiche épisode. */}
+                <Link
+                  to="/media/$type/$externalId/season/$season/episode/$episode"
+                  params={{
+                    type: "SERIES",
+                    externalId: seriesExternalId,
+                    season: String(episode.seasonNumber),
+                    episode: String(episode.number),
+                  }}
+                  className={`flex min-w-0 flex-1 items-center gap-3 py-2.5 ${episode.watched ? "text-muted-foreground" : ""}`}
+                >
                   <span className="w-9 shrink-0 text-sm tabular-nums text-muted-foreground">
                     E{episode.number}
                   </span>
-                  <span className={`line-clamp-1 text-sm ${episode.watched ? "" : "font-medium"}`}>
+                  <span className={`line-clamp-1 flex-1 text-sm ${episode.watched ? "" : "font-medium"}`}>
                     {episode.title}
                   </span>
-                </label>
+                  <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+                </Link>
               </li>
             ))}
           </ul>

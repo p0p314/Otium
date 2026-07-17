@@ -12,6 +12,7 @@ describe("SearchMediaUseCase", () => {
       getTrending: vi.fn().mockResolvedValue(emptyResult),
       getMediaDetails: vi.fn(),
       getSeriesDetails: vi.fn().mockResolvedValue({ seasons: [] }),
+      getEpisodeDetails: vi.fn(),
     };
     const useCase = new SearchMediaUseCase(provider);
 
@@ -28,6 +29,7 @@ describe("SearchMediaUseCase", () => {
       getTrending: vi.fn().mockResolvedValue(emptyResult),
       getMediaDetails: vi.fn(),
       getSeriesDetails: vi.fn().mockResolvedValue({ seasons: [] }),
+      getEpisodeDetails: vi.fn(),
     };
     const useCase = new SearchMediaUseCase(provider);
 
