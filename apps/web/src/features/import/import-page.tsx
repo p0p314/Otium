@@ -1,8 +1,9 @@
 import type { ImportMediaCounters, ImportReport } from "@otium/types";
 import { Button } from "@otium/ui";
-import { CheckCircle2, FileArchive, Film, ListVideo, Tv, UploadCloud } from "lucide-react";
-import { useRef, useState, type DragEvent } from "react";
-import { useImportTvTime } from "./api/use-import";
+import { useQueryClient } from "@tanstack/react-query";
+import { CheckCircle2, FileArchive, Film, ListVideo, Loader2, Tv, UploadCloud } from "lucide-react";
+import { useEffect, useRef, useState, type DragEvent } from "react";
+import { useImportJob, useStartImport } from "./api/use-import";
 import { PendingResolution } from "./components/pending-resolution";
 
 /** Une ligne de compteurs (importés / ignorés / non trouvés) pour un type de média. */
@@ -93,16 +94,31 @@ function Report({ report }: { report: ImportReport }) {
 }
 
 export function ImportPage() {
-  const importTvTime = useImportTvTime();
+  const queryClient = useQueryClient();
+  const start = useStartImport();
+  const [jobId, setJobId] = useState<string | null>(null);
+  const { data: job } = useImportJob(jobId);
   const [file, setFile] = useState<File | null>(null);
   const [dragging, setDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const processed = job?.progress.processed;
+  const status = job?.status;
+  // Rafraîchissement progressif : au fil de l'import, on marque bibliothèque et accueil
+  // comme périmés pour qu'ils se rechargent à jour dès qu'on y revient.
+  useEffect(() => {
+    if (!jobId) return;
+    queryClient.invalidateQueries({ queryKey: ["library"] });
+    queryClient.invalidateQueries({ queryKey: ["home-dashboard"] });
+    queryClient.invalidateQueries({ queryKey: ["upcoming"] });
+  }, [jobId, processed, status, queryClient]);
 
   const pickZip = (files: FileList | null) => {
     const candidate = files?.[0];
     if (candidate && candidate.name.toLowerCase().endsWith(".zip")) {
       setFile(candidate);
-      importTvTime.reset();
+      setJobId(null);
+      start.reset();
     }
   };
 
@@ -111,6 +127,16 @@ export function ImportPage() {
     setDragging(false);
     pickZip(event.dataTransfer.files);
   };
+
+  const startImport = () => {
+    if (!file) return;
+    start.mutate(file, { onSuccess: (result) => setJobId(result.jobId) });
+  };
+
+  // « En cours » couvre l'upload, la préparation (job créé, pas encore d'état) et le traitement.
+  const running = start.isPending || status === "running" || (jobId != null && job === undefined);
+  const report = status === "done" ? (job?.report ?? null) : null;
+  const failed = start.isError || status === "error";
 
   return (
     <section className="mx-auto max-w-2xl space-y-6">
@@ -173,26 +199,55 @@ export function ImportPage() {
       </div>
 
       <div className="flex items-center gap-3">
-        <Button
-          disabled={!file || importTvTime.isPending}
-          onClick={() => file && importTvTime.mutate(file)}
-        >
-          {importTvTime.isPending ? "Import en cours…" : "Importer"}
+        <Button disabled={!file || running} onClick={startImport}>
+          {running ? "Import en cours…" : "Importer"}
         </Button>
-        {importTvTime.isPending && (
-          <p className="text-sm text-muted-foreground">
-            Rapprochement des titres au catalogue — cela peut prendre une minute.
-          </p>
-        )}
       </div>
 
-      {importTvTime.isError && (
+      {running && (
+        <div className="space-y-2 rounded-xl border bg-card p-4">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <Loader2 className="h-4 w-4 animate-spin text-primary" />
+            {job && job.progress.total > 0
+              ? `Rapprochement des titres — ${job.progress.processed}/${job.progress.total}`
+              : "Préparation de l'import…"}
+          </div>
+          {job && job.progress.total > 0 && (
+            <>
+              <div
+                className="h-2 w-full overflow-hidden rounded-full bg-muted"
+                role="progressbar"
+                aria-valuenow={job.progress.processed}
+                aria-valuemin={0}
+                aria-valuemax={job.progress.total}
+              >
+                <div
+                  className="h-full rounded-full bg-primary transition-all"
+                  style={{
+                    width: `${Math.round((job.progress.processed / job.progress.total) * 100)}%`,
+                  }}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {job.progress.imported} importés · {job.progress.pending} à rapprocher ·{" "}
+                {job.progress.unmatched} non trouvés
+              </p>
+            </>
+          )}
+          <p className="text-xs text-muted-foreground">
+            Vous pouvez fermer cette page ou verrouiller votre téléphone : l'import continue côté
+            serveur.
+          </p>
+        </div>
+      )}
+
+      {failed && (
         <p className="rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           L'import a échoué. Vérifiez que l'archive provient bien de TV Time, puis réessayez.
         </p>
       )}
 
-      {importTvTime.data && <Report report={importTvTime.data} />}
+      {report && <Report report={report} />}
     </section>
   );
 }
