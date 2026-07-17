@@ -48,6 +48,7 @@ class InMemoryLibraryRepository implements LibraryRepository {
       rating: null,
       isFavorite: false,
       addedAt: new Date(),
+      lastActivityAt: new Date(),
     };
     this.items.set(item.id, item);
     return item;

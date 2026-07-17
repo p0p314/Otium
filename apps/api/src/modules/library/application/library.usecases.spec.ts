@@ -28,6 +28,7 @@ const item: LibraryItem = {
   rating: null,
   isFavorite: false,
   addedAt: new Date("2026-01-01T00:00:00.000Z"),
+  lastActivityAt: new Date("2026-01-01T00:00:00.000Z"),
 };
 
 describe("Library use cases", () => {

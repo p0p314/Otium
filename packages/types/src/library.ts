@@ -9,6 +9,8 @@ export const LibraryItem = z.object({
   rating: Rating.nullable(),
   isFavorite: z.boolean(),
   addedAt: z.string().datetime(),
+  /** Date de visionnage (dernier épisode vu, ou dernière MAJ pour un film) — tri bibliothèque. */
+  lastActivityAt: z.string().datetime(),
 });
 export type LibraryItem = z.infer<typeof LibraryItem>;
 
