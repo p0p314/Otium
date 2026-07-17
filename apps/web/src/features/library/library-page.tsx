@@ -1,7 +1,7 @@
 import type { MediaType } from "@otium/types";
 import { Button, Skeleton, buttonVariants, cn } from "@otium/ui";
 import { Link } from "@tanstack/react-router";
-import { Heart, Trash2 } from "lucide-react";
+import { Heart, ListVideo, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useLibrary, useRemoveFromLibrary, useToggleFavorite } from "./api/use-library";
 import { StatusBadge } from "./components/status-badge";
@@ -46,9 +46,19 @@ export function LibraryPage() {
   return (
     <section className="space-y-6">
       <div className="space-y-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Ma bibliothèque</h1>
-          <p className="text-muted-foreground">Vos films et séries suivis, par catégorie.</p>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Ma bibliothèque</h1>
+            <p className="text-muted-foreground">Vos films et séries suivis, par catégorie.</p>
+          </div>
+          {/* « Mes listes » vit ici (retiré de la navigation principale). */}
+          <Link
+            to="/lists"
+            className={cn(buttonVariants({ variant: "outline", size: "sm" }), "shrink-0 gap-2")}
+          >
+            <ListVideo className="h-4 w-4" />
+            <span className="hidden sm:inline">Mes listes</span>
+          </Link>
         </div>
         {/* Segmented control : bascule de catégorie en 1 tap (mieux qu'un select sur mobile). */}
         <div
