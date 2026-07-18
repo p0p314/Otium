@@ -4,7 +4,8 @@
 <stop offset="0" stop-color="#c4b5fd"></stop><stop offset="1" stop-color="#6d28d9"></stop>
 </linearGradient>
 </defs>
-<path d="M256 30 C380 30 482 122 482 256 C482 390 380 482 256 482 C132 482 30 390 30 256 C30 122 132 30 256 30 Z" fill="url(#g1d)"></path>
-<circle cx="256" cy="256" r="128" fill="none" stroke="#fdf9f1" stroke-width="52" stroke-linecap="round"></circle>
-<path d="M244 178 Q322 216 320 258 Q318 300 240 336 Q262 300 262 258 Q262 216 244 178 Z" fill="#f38525"></path>
+<rect x="0" y="0" width="512" height="512" rx="112" ry="112" fill="#ffffff"></rect>
+<path d="M256 66 C368 66 446 150 446 256 C446 362 368 446 256 446 C144 446 66 362 66 256 C66 150 144 66 256 66 Z" fill="url(#g1d)"></path>
+<circle cx="256" cy="256" r="112" fill="none" stroke="#fdf9f1" stroke-width="46" stroke-linecap="round"></circle>
+<path d="M247 190 Q315 224 313 261 Q311 298 244 330 Q263 298 263 261 Q263 224 247 190 Z" fill="#f38525"></path>
 </svg>
