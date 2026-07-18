@@ -32,7 +32,9 @@ Fonctionnalités disponibles :
   même si l'onglet se ferme / le téléphone se verrouille ; progression en direct et
   bibliothèque qui se remplit au fil de l'eau ([ADR-0013](docs/adr/0013-import-tache-de-fond.md)).
 - **PWA** : app installable (écran d'accueil, plein écran mobile), service worker Workbox
-  (app shell précachée + cache des affiches TMDB) pour des visites suivantes plus rapides.
+  (app shell précachée) pour des visites suivantes plus rapides.
+- **Onboarding** : invite « Ajouter à l'écran d'accueil » (web mobile uniquement, une fois par
+  jour, ré-ouvrable depuis l'en-tête) ; proposition d'import TV Time juste après l'inscription.
 - **Validation i18n** : messages d'erreur Zod en français, partagés front/back.
 - **Événements de domaine** journalisés (`MediaAdded`, `EpisodeWatched`, `MediaRated`,
   `WatchStatusChanged`, `MovieCompleted`…) — socle des futures statistiques/recommandations.

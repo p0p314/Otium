@@ -6,6 +6,8 @@ import { NAV_ITEMS } from "../components/nav-items";
 import { BottomNav } from "../components/bottom-nav";
 import { ProfileMenu } from "../components/profile-menu";
 import { useAuth } from "../features/auth/api/use-auth";
+import { ImportOnboardingPrompt } from "../features/onboarding/import-onboarding-prompt";
+import { InstallEntry } from "../features/onboarding/install-entry";
 
 const NAV_LINK =
   "text-muted-foreground transition-colors hover:text-foreground [&.active]:text-foreground";
@@ -60,6 +62,8 @@ export function RootLayout() {
                 </Link>
               </>
             )}
+            {/* Uniquement sur navigateur mobile (téléphone) hors PWA. */}
+            <InstallEntry />
             <ThemeToggle />
           </div>
         </div>
@@ -73,6 +77,8 @@ export function RootLayout() {
       </main>
 
       <BottomNav />
+      {/* Invite d'import post-inscription (globale, s'ouvre à la demande du store). */}
+      <ImportOnboardingPrompt />
     </div>
   );
 }

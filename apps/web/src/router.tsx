@@ -109,10 +109,17 @@ const statsRoute = createRoute({
   component: StatsPage,
 });
 
+/** Onglet du profil ouvrable via l'URL (ex. lien « Importer maintenant » → onglet Import). */
+type ProfileTab = "profile" | "import" | "settings";
+
 const profileRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/profile",
   beforeLoad: requireAuth,
+  validateSearch: (search: Record<string, unknown>): { tab?: ProfileTab } => {
+    const tab = search.tab;
+    return tab === "import" || tab === "settings" || tab === "profile" ? { tab } : {};
+  },
   component: ProfilePage,
 });
 

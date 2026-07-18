@@ -6,6 +6,7 @@ import type {
 } from "@otium/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../../lib/api";
+import { useOnboardingStore } from "../../onboarding/onboarding-store";
 import { useAuthStore } from "../../../stores/auth-store";
 
 /** État de session courant (lecture). */
@@ -16,9 +17,14 @@ export function useAuth() {
 
 export function useRegister() {
   const setSession = useAuthStore((s) => s.setSession);
+  const openImportPrompt = useOnboardingStore((s) => s.openImportPrompt);
   return useMutation({
     mutationFn: (input: RegisterInput) => api.register(input),
-    onSuccess: (session) => setSession(session.user),
+    onSuccess: (session) => {
+      setSession(session.user);
+      // Nouvel utilisateur : on propose d'importer ses données TV Time.
+      openImportPrompt();
+    },
   });
 }
 
