@@ -1,4 +1,5 @@
 import { cn } from "@otium/ui";
+import { useSearch } from "@tanstack/react-router";
 import { useState } from "react";
 import { ImportPage } from "../import/import-page";
 import { ProfileInfo } from "./components/profile-info";
@@ -14,7 +15,9 @@ const TABS = [
 
 /** Page profil : infos utilisateur, import de données, et réglages. Mobile-first. */
 export function ProfilePage() {
-  const [tab, setTab] = useState<Tab>("profile");
+  // Onglet initial pilotable par l'URL (`?tab=import`) — ex. invite d'import post-inscription.
+  const search = useSearch({ strict: false }) as { tab?: Tab };
+  const [tab, setTab] = useState<Tab>(search.tab ?? "profile");
 
   return (
     <section className="mx-auto max-w-2xl space-y-6">
