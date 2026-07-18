@@ -15,3 +15,14 @@ createRoot(rootElement).render(
     <AppProviders />
   </StrictMode>,
 );
+
+// Retire l'écran de démarrage une fois le premier rendu peint (fondu enchaîné).
+const splash = document.getElementById("app-splash");
+if (splash) {
+  requestAnimationFrame(() => {
+    splash.style.opacity = "0";
+    splash.addEventListener("transitionend", () => splash.remove(), { once: true });
+    // Filet de sécurité si `transitionend` ne se déclenche pas (onglet en arrière-plan…).
+    window.setTimeout(() => splash.remove(), 800);
+  });
+}
