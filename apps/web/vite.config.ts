@@ -15,6 +15,9 @@ const hmrClientPort = process.env.VITE_HMR_CLIENT_PORT
 const hmrConfigured = Boolean(hmrHost || hmrProtocol || hmrClientPort);
 
 export default defineConfig({
+  // Identifiant de build : « buster » du cache persistant (invalidé à chaque déploiement,
+  // évite de restaurer des données d'un ancien schéma).
+  define: { __OTIUM_BUILD_ID__: JSON.stringify(String(Date.now())) },
   plugins: [
     react(),
     // PWA : app installable (écran d'accueil, plein écran) + service worker Workbox.
