@@ -16,9 +16,74 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Otium" />
+    <!-- Écran de démarrage (logo + nom) affiché immédiatement, avant le JS, pour éviter
+         l'écran blanc le temps du chargement. Retiré par main.tsx au premier rendu. -->
+    <style>
+      #app-splash {
+        position: fixed;
+        inset: 0;
+        z-index: 2147483647;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #faf7f0;
+        transition: opacity 0.35s ease;
+      }
+      #app-splash svg {
+        width: min(62vw, 300px);
+        height: auto;
+      }
+      #app-splash .otium-lockup-dark {
+        display: none;
+      }
+      @media (prefers-color-scheme: dark) {
+        #app-splash {
+          background: #1c1730;
+        }
+        #app-splash .otium-lockup-light {
+          display: none;
+        }
+        #app-splash .otium-lockup-dark {
+          display: block;
+        }
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
+    <div id="app-splash" role="status" aria-label="Chargement d'Otium">
+      <span class="otium-lockup-light">
+        <svg xmlns="http://www.w3.org/2000/svg" width="720" height="200" viewBox="0 0 720 200" role="img" aria-label="Otium">
+          <defs>
+            <linearGradient id="splash-lg1d" x1="0" y1="0" x2="180" y2="200" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#c4b5fd"></stop><stop offset="1" stop-color="#6d28d9"></stop>
+            </linearGradient>
+          </defs>
+          <g transform="translate(0,0) scale(0.39)">
+            <path d="M256 30 C380 30 482 122 482 256 C482 390 380 482 256 482 C132 482 30 390 30 256 C30 122 132 30 256 30 Z" fill="url(#splash-lg1d)"></path>
+            <circle cx="256" cy="256" r="128" fill="none" stroke="#fdf9f1" stroke-width="52" stroke-linecap="round"></circle>
+            <path d="M244 178 Q322 216 320 258 Q318 300 240 336 Q262 300 262 258 Q262 216 244 178 Z" fill="#f38525"></path>
+          </g>
+          <text x="222" y="126" font-family="Inter, system-ui, sans-serif" font-size="88" font-weight="700" letter-spacing="-1" fill="#2d2440">Otium</text>
+        </svg>
+      </span>
+      <span class="otium-lockup-dark">
+        <svg xmlns="http://www.w3.org/2000/svg" width="720" height="200" viewBox="0 0 720 200" role="img" aria-label="Otium">
+          <rect width="720" height="200" fill="#1c1730"></rect>
+          <defs>
+            <linearGradient id="splash-lg3b" x1="0" y1="0" x2="180" y2="200" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#ddd6fe"></stop><stop offset="1" stop-color="#8b5cf6"></stop>
+            </linearGradient>
+          </defs>
+          <g transform="translate(0,0) scale(0.39)">
+            <path d="M256 30 C380 30 482 122 482 256 C482 390 380 482 256 482 C132 482 30 390 30 256 C30 122 132 30 256 30 Z" fill="url(#splash-lg3b)"></path>
+            <circle cx="256" cy="256" r="128" fill="none" stroke="#1c1730" stroke-width="52" stroke-linecap="round"></circle>
+            <path d="M244 178 Q322 216 320 258 Q318 300 240 336 Q262 300 262 258 Q262 216 244 178 Z" fill="#f38525"></path>
+          </g>
+          <text x="222" y="126" font-family="Inter, system-ui, sans-serif" font-size="88" font-weight="700" letter-spacing="-1" fill="#f5f2ff">Otium</text>
+        </svg>
+      </span>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

@@ -26,7 +26,8 @@ export function RootLayout() {
       >
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4">
           <div className="flex items-center gap-6">
-            <Link to="/" className="text-lg font-semibold tracking-tight">
+            <Link to="/" className="flex items-center gap-2 text-lg font-semibold tracking-tight">
+              <img src="/favicon.svg" alt="" aria-hidden className="h-7 w-7" />
               Otium<span className="text-primary">.</span>
             </Link>
             {/* Navigation inline : desktop uniquement (mobile → barre d'onglets). */}
