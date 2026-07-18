@@ -59,9 +59,22 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
+/** Procédure de l'autre plateforme, repliée : filet de sécurité si la détection se trompe. */
+function OtherPlatform({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <details className="rounded-lg border bg-card px-4 py-3">
+      <summary className="cursor-pointer text-sm font-medium text-muted-foreground">
+        Vous êtes plutôt sur {label} ?
+      </summary>
+      <div className="mt-3">{children}</div>
+    </details>
+  );
+}
+
 /**
- * Explique comment ajouter Otium à l'écran d'accueil. On met en avant la plateforme
- * détectée, tout en gardant les deux jeux d'instructions (iOS + Android) disponibles.
+ * Explique comment ajouter Otium à l'écran d'accueil. La plateforme est **détectée**
+ * (iOS / Android) : on n'affiche que sa procédure ; l'autre reste repliée en secours.
+ * Plateforme inconnue → on montre les deux.
  */
 export function AddToHomeModal({
   open,
@@ -72,9 +85,6 @@ export function AddToHomeModal({
   platform: InstallPlatform;
   onClose: () => void;
 }) {
-  const ios = <Section title="iPhone / iPad (Safari)">{<IosSteps />}</Section>;
-  const android = <Section title="Android (Chrome)">{<AndroidSteps />}</Section>;
-
   return (
     <Modal
       open={open}
@@ -84,16 +94,32 @@ export function AddToHomeModal({
       footer={<Button onClick={onClose}>J'ai compris</Button>}
     >
       <div className="space-y-3">
-        {/* La plateforme détectée en premier ; l'autre reste consultable. */}
-        {platform === "android" ? (
+        {platform === "ios" ? (
           <>
-            {android}
-            {ios}
+            <Section title="iPhone / iPad (Safari)">
+              <IosSteps />
+            </Section>
+            <OtherPlatform label="Android">
+              <AndroidSteps />
+            </OtherPlatform>
+          </>
+        ) : platform === "android" ? (
+          <>
+            <Section title="Android (Chrome)">
+              <AndroidSteps />
+            </Section>
+            <OtherPlatform label="iPhone / iPad">
+              <IosSteps />
+            </OtherPlatform>
           </>
         ) : (
           <>
-            {ios}
-            {android}
+            <Section title="iPhone / iPad (Safari)">
+              <IosSteps />
+            </Section>
+            <Section title="Android (Chrome)">
+              <AndroidSteps />
+            </Section>
           </>
         )}
       </div>
