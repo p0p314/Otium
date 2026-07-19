@@ -25,7 +25,9 @@ export function toLibraryItemDto(item: LibraryItem): LibraryItemDto {
       title: item.media.title,
       year: item.media.year,
       posterUrl: item.media.posterUrl,
-      genres: [],
+      // Libellés persistés à l'ajout (id = libellé, faute d'identifiant de genre stocké) :
+      // alimentent le filtre par genre de la recherche avancée, sans requête supplémentaire.
+      genres: (item.media.genres ?? []).map((label) => ({ id: label, label })),
       externalRef: item.media.externalRef,
     },
     status: item.status,

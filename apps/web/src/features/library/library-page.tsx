@@ -2,9 +2,16 @@ import type { MediaType } from "@otium/types";
 import { Button, Skeleton, buttonVariants, cn } from "@otium/ui";
 import { Link } from "@tanstack/react-router";
 import { Heart, ListVideo, Trash2 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLibrary, useRemoveFromLibrary, useToggleFavorite } from "./api/use-library";
 import { StatusBadge } from "./components/status-badge";
+import { LibraryToolbar } from "./components/library-toolbar";
+import {
+  availableGenres,
+  DEFAULT_LIBRARY_QUERY,
+  type LibraryQuery,
+  queryLibrary,
+} from "./lib/filter-library";
 
 const GRID = "grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5";
 
@@ -19,6 +26,13 @@ export function LibraryPage() {
   const remove = useRemoveFromLibrary();
   const toggleFavorite = useToggleFavorite();
   const [category, setCategory] = useState<MediaType>("SERIES");
+  const [query, setQuery] = useState<LibraryQuery>(DEFAULT_LIBRARY_QUERY);
+
+  // Changer de catégorie remet le genre à « tous » (les genres diffèrent films/séries).
+  const selectCategory = (next: MediaType) => {
+    setCategory(next);
+    setQuery((q) => ({ ...q, genre: "ALL" }));
+  };
 
   const counts: Record<MediaType, number> = {
     SERIES: (data ?? []).filter((item) => item.media.type === "SERIES").length,
@@ -41,7 +55,12 @@ export function LibraryPage() {
   }, [data]);
 
   const current = CATEGORIES[category];
-  const items = (data ?? []).filter((item) => item.media.type === category);
+  const categoryItems = useMemo(
+    () => (data ?? []).filter((item) => item.media.type === category),
+    [data, category],
+  );
+  const genres = useMemo(() => availableGenres(categoryItems), [categoryItems]);
+  const items = useMemo(() => queryLibrary(categoryItems, query), [categoryItems, query]);
 
   return (
     <section className="space-y-6">
@@ -71,7 +90,7 @@ export function LibraryPage() {
               key={value}
               role="tab"
               aria-selected={category === value}
-              onClick={() => setCategory(value)}
+              onClick={() => selectCategory(value)}
               className={cn(
                 "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
                 category === value
@@ -86,13 +105,26 @@ export function LibraryPage() {
         </div>
       </div>
 
+      {/* Recherche avancée (titre, statut, genre, favoris, tri) — masquée si la catégorie
+          est vide (rien à filtrer). Filtrage 100 % client sur la bibliothèque déjà chargée. */}
+      {!isLoading && categoryItems.length > 0 ? (
+        <LibraryToolbar
+          query={query}
+          onChange={setQuery}
+          type={category}
+          genres={genres}
+          resultCount={items.length}
+          onReset={() => setQuery(DEFAULT_LIBRARY_QUERY)}
+        />
+      ) : null}
+
       {isLoading ? (
         <div className={GRID}>
           {Array.from({ length: 5 }).map((_, i) => (
             <Skeleton key={i} className="aspect-[2/3] w-full" />
           ))}
         </div>
-      ) : items.length === 0 ? (
+      ) : categoryItems.length === 0 ? (
         <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed py-16 text-center">
           <p className="font-medium">{current.empty}</p>
           <p className="max-w-xs text-sm text-muted-foreground">
@@ -101,6 +133,16 @@ export function LibraryPage() {
           <Link to="/search" className={buttonVariants({ size: "sm" })}>
             Rechercher un média
           </Link>
+        </div>
+      ) : items.length === 0 ? (
+        <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed py-16 text-center">
+          <p className="font-medium">Aucun résultat pour ces filtres.</p>
+          <p className="max-w-xs text-sm text-muted-foreground">
+            Ajustez votre recherche ou réinitialisez les filtres.
+          </p>
+          <Button variant="outline" size="sm" onClick={() => setQuery(DEFAULT_LIBRARY_QUERY)}>
+            Réinitialiser les filtres
+          </Button>
         </div>
       ) : (
         <ul className={GRID}>

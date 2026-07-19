@@ -62,7 +62,10 @@ Objectif atteint : un utilisateur s'inscrit, cherche, ajoute, note/commente et s
 7. **Favoris** ✅ + **listes personnalisées** ✅ — CRUD de listes (`/lists`), ajout/retrait de
    médias (au niveau `Media`), événements `ListCreated`/`ListItemAdded`/`ListItemRemoved`/`ListDeleted`.
 8. **Notation** ✅ + **avis** ✅ + **historique** (à dériver des événements journalisés).
-9. **Recherche avancée** — Postgres FTS, filtres, genres, tri, pagination.
+9. **Recherche avancée (bibliothèque)** ✅ — recherche dans la bibliothèque personnelle
+   (titre insensible casse/accents, filtres statut / genre / favoris, tri) réalisée **côté
+   client** sur les données déjà chargées, sans appel réseau supplémentaire (ADR-0015). La
+   recherche FTS Postgres reste réservée à une éventuelle recherche de **catalogue** (ADR-0005).
 10. **Statistiques de visionnage** ✅ — tableau de bord `/stats` (`GET /stats`) : totaux
     (films/séries/épisodes, temps), répartition, genres les plus regardés, activité par mois,
     note moyenne, records. Agrégations Prisma + builder pur ; graphiques recharts (chunk
