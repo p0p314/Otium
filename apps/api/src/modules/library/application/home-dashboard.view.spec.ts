@@ -143,6 +143,24 @@ describe("buildHomeDashboard", () => {
     expect(d.series.toResume).toEqual([]);
   });
 
+  it("exclut une série à jour dont le prochain épisode n'a pas de date de diffusion connue", () => {
+    // e1/e2 diffusés et vus ; e3 annoncé sans date (airDate null). L'utilisateur est à jour
+    // sur tout ce qui est réellement sorti → la série ne doit pas apparaître dans « à voir ».
+    const d = buildHomeDashboard(
+      [
+        record({
+          itemId: "sansdate",
+          watchedIds: new Set(["e1", "e2"]),
+          lastWatchedAt: RECENT,
+          seasons: oneSeason([ep("e1", 1, AIRED), ep("e2", 2, AIRED), ep("e3", 3, null)]),
+        }),
+      ],
+      NOW,
+    );
+    expect(d.series.toWatch).toEqual([]);
+    expect(d.series.toResume).toEqual([]);
+  });
+
   it("ignore les séries abandonnées et en pause", () => {
     const d = buildHomeDashboard(
       [

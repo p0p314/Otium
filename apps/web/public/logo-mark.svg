@@ -4,7 +4,6 @@
 <stop offset="0" stop-color="#a78bfa"></stop><stop offset="1" stop-color="#6d28d9"></stop>
 </linearGradient>
 </defs>
-<rect x="0" y="0" width="512" height="512" rx="112" ry="112" fill="#ffffff"></rect>
 <g transform="translate(8,14)">
 <circle cx="232" cy="240" r="134" fill="none" stroke="url(#om)" stroke-width="58"></circle>
 <circle cx="392" cy="372" r="35" fill="#f38525"></circle>

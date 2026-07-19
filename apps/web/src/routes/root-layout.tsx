@@ -17,7 +17,7 @@ export function RootLayout() {
   const { user, isAuthenticated } = useAuth();
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-dvh bg-background text-foreground">
       {/* Zone sûre iOS (encoche / barre d'état) en haut : le contenu de l'en-tête reste
           sous la barre d'état système et donc cliquable (PWA plein écran). */}
       <header
@@ -27,7 +27,7 @@ export function RootLayout() {
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4">
           <div className="flex items-center gap-6">
             <Link to="/" className="flex items-center gap-2 text-lg font-semibold tracking-tight">
-              <img src="/favicon.svg" alt="" aria-hidden className="h-7 w-7" />
+              <img src="/logo-mark.svg" alt="" aria-hidden className="h-7 w-7" />
               <span>
                 Otium<span className="text-primary">.</span>
               </span>

@@ -74,6 +74,34 @@ export function hasUnwatchedAired(
 }
 
 /**
+ * Un épisode est **diffusé** si sa date de diffusion est **connue** et passée.
+ * Contrairement à {@link isAired} (qui traite une date inconnue comme sortie), une
+ * diffusion sans date ne compte **pas** : un épisode simplement annoncé (sans date TMDB)
+ * ne doit pas faire croire à une nouveauté « à voir » sur une série pourtant à jour.
+ */
+export function isReleased(episode: EpisodeRef, now: Date): boolean {
+  return episode.airDate !== null && episode.airDate.getTime() <= now.getTime();
+}
+
+/** Premier épisode **diffusé (date connue et passée) et non vu** dans l'ordre, ou `null`. */
+export function nextUnwatchedReleased(
+  seasons: readonly SeasonRef[],
+  watched: ReadonlySet<string>,
+  now: Date,
+): EpisodeRef | null {
+  return orderedEpisodes(seasons).find((e) => !watched.has(e.id) && isReleased(e, now)) ?? null;
+}
+
+/** Vrai s'il reste au moins un épisode **diffusé (date connue)** non vu. */
+export function hasUnwatchedReleased(
+  seasons: readonly SeasonRef[],
+  watched: ReadonlySet<string>,
+  now: Date,
+): boolean {
+  return nextUnwatchedReleased(seasons, watched, now) !== null;
+}
+
+/**
  * Premier épisode (numéro le plus bas) de la **dernière saison entamée en diffusion**
  * (plus grand numéro de saison ayant au moins un épisode sorti), ou `null`. Sert à
  * détecter le lancement d'une nouvelle saison.
