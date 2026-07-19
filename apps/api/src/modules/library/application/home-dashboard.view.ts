@@ -2,8 +2,8 @@ import type { HomeDashboard, HomeSeries } from "@otium/types";
 import {
   airedCount,
   hasRecentSeasonPremiere,
-  hasUnwatchedAired,
-  nextUnwatchedAired,
+  hasUnwatchedReleased,
+  nextUnwatchedReleased,
   type SeriesProgressRecord,
   totalEpisodes,
 } from "../domain";
@@ -20,7 +20,7 @@ export const STALE_ACTIVITY_DAYS = 90;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 function toHomeSeries(record: SeriesProgressRecord, now: Date): HomeSeries {
-  const next = nextUnwatchedAired(record.seasons, record.watchedIds, now);
+  const next = nextUnwatchedReleased(record.seasons, record.watchedIds, now);
   return {
     itemId: record.itemId,
     title: record.title,
@@ -48,9 +48,11 @@ function time(iso: string | null): number {
  * Assemble le tableau de bord de l'accueil (**pur**, testable sans I/O) à partir de
  * toutes les séries suivies, selon l'ancienneté du **dernier visionnage** :
  * - **à voir** : série commencée et **active** (vue il y a < {@link RECENT_ACTIVITY_DAYS} j)
- *   avec un épisode sorti non vu — **ou** série « à voir »/« en cours » dont la saison en
- *   cours vient de démarrer (premier épisode sorti il y a < {@link RECENT_ACTIVITY_DAYS} j),
- *   même sans aucun épisode vu de cette saison ;
+ *   avec un épisode **diffusé (date connue et passée)** non vu — **ou** série « à voir »/« en
+ *   cours » dont la saison en cours vient de démarrer (premier épisode sorti il y a
+ *   < {@link RECENT_ACTIVITY_DAYS} j), même sans aucun épisode vu de cette saison. Une série
+ *   à jour sur tous ses épisodes diffusés n'y figure **pas** (un épisode simplement annoncé,
+ *   sans date de diffusion, ne compte pas comme « à voir ») ;
  * - **à reprendre** : série commencée puis laissée de côté (dernier visionnage entre
  *   {@link RECENT_ACTIVITY_DAYS} et {@link STALE_ACTIVITY_DAYS} jours) avec un épisode à voir ;
  * - **à commencer** : série jamais commencée ayant un épisode déjà sorti.
@@ -76,7 +78,7 @@ export function buildHomeDashboard(
     // épisode de cette saison n'a encore été vu.
     if (
       (record.status === "PLANNED" || record.status === "IN_PROGRESS") &&
-      hasUnwatchedAired(record.seasons, record.watchedIds, now) &&
+      hasUnwatchedReleased(record.seasons, record.watchedIds, now) &&
       hasRecentSeasonPremiere(record.seasons, now, RECENT_ACTIVITY_DAYS)
     ) {
       toWatch.push(toHomeSeries(record, now));
@@ -84,8 +86,9 @@ export function buildHomeDashboard(
     }
 
     if (started) {
-      // Rien de sorti à voir → la série relève de « À venir », pas de l'accueil.
-      if (!hasUnwatchedAired(record.seasons, record.watchedIds, now)) continue;
+      // À jour sur les épisodes diffusés → la série relève de « À venir », pas de l'accueil.
+      // (Un épisode sans date de diffusion connue ne compte pas comme « à voir ».)
+      if (!hasUnwatchedReleased(record.seasons, record.watchedIds, now)) continue;
       const days = daysSinceLastWatch(record, now);
       if (days < RECENT_ACTIVITY_DAYS) toWatch.push(toHomeSeries(record, now));
       else if (days < STALE_ACTIVITY_DAYS) toResume.push(toHomeSeries(record, now));

@@ -17,7 +17,7 @@ export function RootLayout() {
   const { user, isAuthenticated } = useAuth();
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-dvh bg-background text-foreground">
       {/* Zone sûre iOS (encoche / barre d'état) en haut : le contenu de l'en-tête reste
           sous la barre d'état système et donc cliquable (PWA plein écran). */}
       <header
