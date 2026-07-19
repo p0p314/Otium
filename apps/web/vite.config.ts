@@ -26,7 +26,7 @@ export default defineConfig({
     VitePWA({
       registerType: "autoUpdate",
       injectRegister: "script",
-      includeAssets: ["favicon.svg", "logo-mark.svg", "apple-touch-icon-v3.png"],
+      includeAssets: ["favicon.svg", "logo-mark.svg", "apple-touch-icon-v4.png"],
       manifest: {
         name: "Otium",
         short_name: "Otium",
@@ -39,10 +39,10 @@ export default defineConfig({
         background_color: "#131019",
         theme_color: "#6d3bce",
         icons: [
-          { src: "/icons/icon-192-v3.png", sizes: "192x192", type: "image/png" },
-          { src: "/icons/icon-512-v3.png", sizes: "512x512", type: "image/png" },
+          { src: "/icons/icon-192-v4.png", sizes: "192x192", type: "image/png" },
+          { src: "/icons/icon-512-v4.png", sizes: "512x512", type: "image/png" },
           {
-            src: "/icons/icon-maskable-512-v3.png",
+            src: "/icons/icon-maskable-512-v4.png",
             sizes: "512x512",
             type: "image/png",
             purpose: "maskable",
