@@ -3,21 +3,21 @@ import { useSearch } from "@tanstack/react-router";
 import { useState } from "react";
 import { ImportPage } from "../import/import-page";
 import { ProfileInfo } from "./components/profile-info";
-import { SearchSettings } from "./components/search-settings";
 
-type Tab = "profile" | "import" | "settings";
+type Tab = "profile" | "import";
 
 const TABS = [
   ["profile", "Profil"],
   ["import", "Importer"],
-  ["settings", "Réglages"],
 ] as const;
 
-/** Page profil : infos utilisateur, import de données, et réglages. Mobile-first. */
+/** Page profil : infos utilisateur et import de données. Mobile-first. */
 export function ProfilePage() {
   // Onglet initial pilotable par l'URL (`?tab=import`) — ex. invite d'import post-inscription.
-  const search = useSearch({ strict: false }) as { tab?: Tab };
-  const [tab, setTab] = useState<Tab>(search.tab ?? "profile");
+  // On valide la valeur au lieu de la croire sur parole : un ancien lien (`?tab=settings`,
+  // onglet supprimé) ou une URL bricolée doit retomber sur le profil, pas ailleurs.
+  const search = useSearch({ strict: false }) as { tab?: string };
+  const [tab, setTab] = useState<Tab>(search.tab === "import" ? "import" : "profile");
 
   return (
     <section className="mx-auto max-w-2xl space-y-6">
@@ -46,7 +46,7 @@ export function ProfilePage() {
         ))}
       </div>
 
-      {tab === "profile" ? <ProfileInfo /> : tab === "import" ? <ImportPage /> : <SearchSettings />}
+      {tab === "profile" ? <ProfileInfo /> : <ImportPage />}
     </section>
   );
 }

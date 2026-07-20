@@ -4,6 +4,7 @@ import { useDebouncedValue } from "../../hooks/use-debounced-value";
 import { AddToLibraryButton } from "../library/components/add-to-library-button";
 import { MIN_QUERY_LENGTH, useMediaSearch } from "./api/use-media-search";
 import { MediaResults } from "./components/media-results";
+import { SearchTypeFilter } from "./components/search-type-filter";
 import { TrendingShowcase } from "./components/trending-showcase";
 
 /** Page de recherche : saisie débouncée → hook de données → présentation des résultats. */
@@ -17,12 +18,15 @@ export function SearchPage() {
     <section className="space-y-6">
       <div className="hidden md:block">
         <h1 className="text-2xl font-bold tracking-tight">Rechercher</h1>
-        <p className="text-muted-foreground">Films et séries, propulsés par TMDB.</p>
+        <p className="text-muted-foreground">
+          Films et séries via TMDB, livres via Google Books et Open Library.
+        </p>
       </div>
 
-      {/* Barre collante sur mobile (reste accessible en faisant défiler les résultats). */}
-      <div className="sticky top-[calc(4rem_+_env(safe-area-inset-top))] z-20 -mx-4 bg-background/95 px-4 py-3 backdrop-blur md:static md:mx-0 md:max-w-xl md:bg-transparent md:p-0">
-        <div className="relative">
+      {/* Barre + filtre collants sur mobile : on garde sous la main de quoi corriger la
+          requête *et* son périmètre en faisant défiler les résultats. */}
+      <div className="sticky top-[calc(4rem_+_env(safe-area-inset-top))] z-20 -mx-4 space-y-3 bg-background/95 px-4 py-3 backdrop-blur md:static md:mx-0 md:bg-transparent md:p-0">
+        <div className="relative md:max-w-xl">
           <Search
             className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground"
             aria-hidden
@@ -31,11 +35,12 @@ export function SearchPage() {
             type="search"
             value={term}
             onChange={(event) => setTerm(event.target.value)}
-            placeholder="Un titre… (ex. Dune)"
-            aria-label="Rechercher un film ou une série"
+            placeholder="Un titre, un auteur, un ISBN…"
+            aria-label="Rechercher un film, une série ou un livre"
             className="h-12 w-full rounded-full border border-input bg-background pl-11 pr-4 text-base outline-none focus-visible:ring-2 focus-visible:ring-ring md:h-11 md:rounded-lg md:text-sm"
           />
         </div>
+        <SearchTypeFilter />
       </div>
 
       {hasQuery ? (
