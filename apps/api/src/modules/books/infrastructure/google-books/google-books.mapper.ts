@@ -1,4 +1,4 @@
-import type { BookRecord } from "../../domain";
+import type { BookRecord, BookSeriesRef } from "../../domain";
 import { isIsbn, normalizeIsbn } from "../../domain";
 import type { GoogleImageLinks, GoogleVolume } from "./google-books.types";
 
@@ -58,6 +58,30 @@ function largestCover(links: GoogleImageLinks | undefined, zoom: number): string
   );
 }
 
+/**
+ * Série du volume, si Google la connaît. Un volume peut appartenir à plusieurs séries
+ * (édition reliée **et** parution en chapitres) : on retient la première, celle que
+ * l'API place en tête et qui correspond à l'édition du volume consulté.
+ */
+function series(volume: GoogleVolume): BookSeriesRef | null {
+  const info = volume.volumeInfo?.seriesInfo;
+  const first = info?.volumeSeries?.[0];
+  const id = text(first?.seriesId);
+  if (!id) return null;
+
+  // Le numéro affiché est plus fiable que `orderNumber`, qui vaut parfois 0 par défaut.
+  const display = text(info?.bookDisplayNumber);
+  const position = display && /^\d+$/.test(display) ? Number(display) : (first?.orderNumber ?? null);
+
+  const kind = first?.seriesBookType;
+  return {
+    id,
+    source: GOOGLE_BOOKS_SOURCE,
+    position: position !== null && position > 0 ? position : null,
+    kind: kind === "COLLECTED_EDITION" || kind === "SERIAL" ? kind : "UNKNOWN",
+  };
+}
+
 /** Identifiant du type demandé, seulement s'il est structurellement valide. */
 function isbn(volume: GoogleVolume, type: "ISBN_10" | "ISBN_13"): string | null {
   const found = volume.volumeInfo?.industryIdentifiers?.find((i) => i.type === type)?.identifier;
@@ -103,5 +127,6 @@ export function toBookRecord(volume: GoogleVolume): BookRecord | null {
     averageRating: info?.averageRating != null ? info.averageRating * 2 : null,
     ratingsCount: info?.ratingsCount ?? null,
     sources: [GOOGLE_BOOKS_SOURCE],
+    series: series(volume),
   };
 }

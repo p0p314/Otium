@@ -46,6 +46,7 @@ function toBookDetailsDto(book: CatalogBookDetails): NonNullable<MediaDetails["b
     infoUrl: book.infoUrl,
     previewUrl: book.previewUrl,
     sources: [...book.sources],
+    collection: book.collection ? { ...book.collection } : null,
   };
 }
 

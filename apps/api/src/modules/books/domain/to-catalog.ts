@@ -65,6 +65,9 @@ export function toCatalogMediaDetails(book: BookRecord): CatalogMediaDetails {
       previewUrl: book.previewUrl,
       coverUrlLarge: book.coverUrlLarge,
       sources: [...book.sources],
+      collection: book.series
+        ? { id: book.series.id, provider: book.series.source, position: book.series.position }
+        : null,
     },
   };
 }

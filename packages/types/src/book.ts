@@ -15,6 +15,18 @@ export const BookIdentifiers = z.object({
 export type BookIdentifiers = z.infer<typeof BookIdentifiers>;
 
 /**
+ * Œuvre dont un volume fait partie : c'est ce qui permettra d'afficher **une** fiche
+ * « One Piece » plutôt que 111 tomes indépendants. `position` est le rang du volume,
+ * absent pour un hors-série.
+ */
+export const BookCollectionRef = z.object({
+  id: z.string(),
+  provider: z.string(),
+  position: z.number().int().positive().nullable(),
+});
+export type BookCollectionRef = z.infer<typeof BookCollectionRef>;
+
+/**
  * Données propres à un livre, en **complément** des champs communs de `MediaDetails`
  * (titre, couverture, description, genres, note moyenne… restent au niveau `Media`,
  * conformément à ADR-0003). N'y figure que ce qui n'a pas d'équivalent générique.
@@ -35,5 +47,7 @@ export const BookDetails = z.object({
   previewUrl: z.string().url().nullable(),
   /** Sources ayant contribué à la fiche, dans l'ordre de priorité (traçabilité). */
   sources: z.array(z.string()),
+  /** Œuvre dont ce volume fait partie (`null` pour un livre isolé). */
+  collection: BookCollectionRef.nullable(),
 });
 export type BookDetails = z.infer<typeof BookDetails>;

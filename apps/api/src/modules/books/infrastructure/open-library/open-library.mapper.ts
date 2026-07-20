@@ -64,6 +64,9 @@ export function toBookRecord(doc: OpenLibraryDoc): BookRecord | null {
     averageRating: null,
     ratingsCount: null,
     sources: [OPEN_LIBRARY_SOURCE],
+    // Mesuré : le champ `series` des résultats Open Library est vide en pratique. On ne
+    // devine pas l'appartenance à une œuvre à partir du titre (trop de faux positifs).
+    series: null,
   };
 }
 

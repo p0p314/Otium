@@ -1,4 +1,25 @@
 /**
+ * Appartenance d'un volume à une **œuvre** (série de tomes, cycle de romans…).
+ *
+ * C'est la clé du regroupement : sans elle, les 111 tomes d'un manga sont 111 résultats
+ * indépendants. L'identifiant vient du fournisseur — on ne le déduit **pas** du titre, un
+ * rapprochement par texte produisant trop de faux regroupements (« Dune » / « Dune, le
+ * mook »). Le numéro peut manquer alors que la série est connue : un tome hors-série
+ * appartient à l'œuvre sans occuper de rang.
+ */
+export interface BookSeriesRef {
+  readonly id: string;
+  readonly source: string;
+  /** Rang du volume dans l'œuvre (`null` si le fournisseur ne le donne pas). */
+  readonly position: number | null;
+  /**
+   * Nature de l'édition : les tomes reliés et la parution en chapitres forment deux
+   * œuvres distinctes chez le fournisseur, et doivent le rester à l'affichage.
+   */
+  readonly kind: "COLLECTED_EDITION" | "SERIAL" | "UNKNOWN";
+}
+
+/**
  * Modèle **normalisé** d'un livre, indépendant de toute source. Chaque fournisseur mappe
  * sa réponse vers cette forme ; la fusion et le reste du module ne manipulent qu'elle
  * (ADR-0004). Tout champ inconnu vaut `null` / tableau vide — jamais `undefined` : la
@@ -34,6 +55,8 @@ export interface BookRecord {
   readonly ratingsCount: number | null;
   /** Sources ayant contribué, dans l'ordre de priorité (traçabilité de la fusion). */
   readonly sources: readonly string[];
+  /** Œuvre dont ce volume fait partie, si le fournisseur la connaît. */
+  readonly series: BookSeriesRef | null;
 }
 
 /** Une page de résultats de recherche chez une source. */

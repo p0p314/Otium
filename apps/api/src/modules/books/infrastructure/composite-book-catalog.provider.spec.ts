@@ -30,6 +30,7 @@ function record(overrides: Partial<BookRecord> = {}): BookRecord {
     averageRating: null,
     ratingsCount: null,
     sources: ["google-books"],
+    series: null,
     ...overrides,
   };
 }

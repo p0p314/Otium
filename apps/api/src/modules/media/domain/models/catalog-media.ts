@@ -87,6 +87,14 @@ export interface CatalogWatchProvider {
  * n'a pas d'équivalent générique : titre, couverture, description, genres et note moyenne
  * restent au niveau `CatalogMediaDetails` (ADR-0003).
  */
+/** Œuvre (série de tomes, cycle) dont un média fait partie. */
+export interface CatalogCollectionRef {
+  readonly id: string;
+  readonly provider: string;
+  /** Rang du volume dans l'œuvre, `null` si le fournisseur ne le donne pas. */
+  readonly position: number | null;
+}
+
 export interface CatalogBookDetails {
   readonly subtitle: string | null;
   readonly authors: readonly string[];
@@ -106,6 +114,8 @@ export interface CatalogBookDetails {
   readonly coverUrlLarge: string | null;
   /** Fournisseurs ayant contribué à la fiche après fusion (ADR-0016). */
   readonly sources: readonly string[];
+  /** Œuvre dont ce volume fait partie (un tome de manga, un cycle de romans). */
+  readonly collection: CatalogCollectionRef | null;
 }
 
 /**
