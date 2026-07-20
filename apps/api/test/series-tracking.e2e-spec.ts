@@ -6,7 +6,7 @@ import { EVENT_PUBLISHER } from "../src/shared/domain";
 import { Email, USER_REPOSITORY, User } from "../src/modules/user/domain";
 import { SESSION_STORE } from "../src/modules/authentication/domain/ports/session-store";
 import { AuthGuard } from "../src/modules/authentication/presentation/auth.guard";
-import { MEDIA_CATALOG_PROVIDER } from "../src/modules/media/domain";
+import { SERIES_CATALOG_PROVIDER } from "../src/modules/media/domain";
 import {
   SERIES_TRACKING_REPOSITORY,
   type PersistableSeason,
@@ -127,7 +127,7 @@ describe("Series tracking (e2e)", () => {
         ToggleEpisodesWatchedUseCase,
         AuthGuard,
         { provide: SERIES_TRACKING_REPOSITORY, useClass: InMemorySeriesRepo },
-        { provide: MEDIA_CATALOG_PROVIDER, useValue: provider },
+        { provide: SERIES_CATALOG_PROVIDER, useValue: provider },
         { provide: EVENT_PUBLISHER, useValue: { publish: async () => undefined, publishAll: async () => undefined } },
         { provide: SESSION_STORE, useValue: { resolve: async (t: string) => (t === TOKEN ? USER_ID : null) } },
         { provide: USER_REPOSITORY, useValue: { findById: async (id: string) => (id === USER_ID ? user : null) } },

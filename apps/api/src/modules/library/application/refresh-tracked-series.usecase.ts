@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from "@nestjs/common";
 import type { UseCase } from "../../../shared/application/use-case";
-import { MEDIA_CATALOG_PROVIDER, type MediaCatalogProvider } from "../../media/domain";
+import { SERIES_CATALOG_PROVIDER, type SeriesCatalogProvider } from "../../media/domain";
 import {
   SERIES_TRACKING_REPOSITORY,
   type SeriesTrackingRepository,
@@ -29,7 +29,7 @@ export class RefreshTrackedSeriesUseCase implements UseCase<string, void> {
 
   constructor(
     @Inject(SERIES_TRACKING_REPOSITORY) private readonly tracking: SeriesTrackingRepository,
-    @Inject(MEDIA_CATALOG_PROVIDER) private readonly catalog: MediaCatalogProvider,
+    @Inject(SERIES_CATALOG_PROVIDER) private readonly catalog: SeriesCatalogProvider,
   ) {}
 
   async execute(userId: string): Promise<void> {

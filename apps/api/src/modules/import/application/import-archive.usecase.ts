@@ -7,7 +7,7 @@ import type {
   UnmatchedImportEntry,
 } from "@otium/types";
 import { GetLibraryUseCase } from "../../library/application/get-library.usecase";
-import { MEDIA_CATALOG_PROVIDER, type CatalogMedia, type MediaCatalogProvider } from "../../media/domain";
+import { MEDIA_CATALOG_REGISTRY, type CatalogMedia, type MediaCatalogRegistry } from "../../media/domain";
 import type { UseCase } from "../../../shared/application/use-case";
 import {
   ARCHIVE_READER,
@@ -80,7 +80,7 @@ export class ImportArchiveUseCase implements UseCase<ImportArchiveInput, ImportR
   constructor(
     @Inject(ARCHIVE_READER) private readonly archiveReader: ArchiveReader,
     @Inject(IMPORT_SOURCE_PARSERS) private readonly parsers: readonly ImportSourceParser[],
-    @Inject(MEDIA_CATALOG_PROVIDER) private readonly catalog: MediaCatalogProvider,
+    @Inject(MEDIA_CATALOG_REGISTRY) private readonly catalog: MediaCatalogRegistry,
     private readonly getLibrary: GetLibraryUseCase,
     private readonly importer: MediaImporter,
   ) {}
@@ -180,7 +180,9 @@ export class ImportArchiveUseCase implements UseCase<ImportArchiveInput, ImportR
     const { title, year: titleYear } = extractTitleYear(media.title);
     const year = media.year ?? titleYear;
     try {
-      const result = await this.catalog.search({ query: title, page: 1, pageSize: SEARCH_PAGE_SIZE, type: media.type });
+      const result = await this.catalog
+        .forType(media.type)
+        .search({ query: title, page: 1, pageSize: SEARCH_PAGE_SIZE, type: media.type });
       if (result.items.length === 0) return { kind: "unmatched" };
 
       const byId = new Map(result.items.map((item) => [item.externalRef.externalId, item]));

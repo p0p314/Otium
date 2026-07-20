@@ -9,9 +9,10 @@ import type {
   CatalogMediaType,
   CatalogSearchResult,
   CatalogSeriesDetails,
-  MediaCatalogProvider,
   MediaCatalogSearchParams,
   MediaCatalogTrendingParams,
+  SeriesCatalogProvider,
+  TrendingCatalogProvider,
 } from "../../../domain";
 import {
   toCatalogEpisodeDetails,
@@ -30,12 +31,13 @@ import type {
 } from "./tmdb.types";
 
 /**
- * Adapter TMDB du port `MediaCatalogProvider`. Normalise les réponses TMDB vers le
- * modèle catalogue et met en cache (mémoire) pour limiter les appels réseau (éco-conception).
- * La panne du cache n'empêche pas les requêtes (dégradation gracieuse — risque R1).
+ * Adapter TMDB du catalogue : socle (`MediaCatalogProvider`) + capacités « séries » et
+ * « tendances ». Normalise les réponses TMDB vers le modèle catalogue et met en cache
+ * (mémoire) pour limiter les appels réseau (éco-conception). La panne du cache n'empêche
+ * pas les requêtes (dégradation gracieuse — risque R1).
  */
 @Injectable()
-export class TmdbProvider implements MediaCatalogProvider {
+export class TmdbProvider implements SeriesCatalogProvider, TrendingCatalogProvider {
   readonly name = "tmdb";
 
   constructor(
@@ -72,6 +74,7 @@ export class TmdbProvider implements MediaCatalogProvider {
   }
 
   async getTrending(params: MediaCatalogTrendingParams): Promise<CatalogSearchResult> {
+    if (params.type) this.assertSupported(params.type);
     const tmdbType =
       params.type === "MOVIE" ? "movie" : params.type === "SERIES" ? "tv" : "all";
     const cacheKey = `tmdb:trending:${tmdbType}:${params.page}`;
@@ -103,6 +106,7 @@ export class TmdbProvider implements MediaCatalogProvider {
     type: CatalogMediaType,
     externalId: string,
   ): Promise<CatalogMediaDetails> {
+    this.assertSupported(type);
     const cacheKey = `tmdb:details:${type}:${externalId}`;
     const cached = await this.cacheGet<CatalogMediaDetails>(cacheKey);
     if (cached) return cached;
@@ -127,6 +131,17 @@ export class TmdbProvider implements MediaCatalogProvider {
 
     await this.cacheSet(cacheKey, result);
     return result;
+  }
+
+  /**
+   * TMDB ne couvre que l'audiovisuel : tout autre type relève d'un autre catalogue.
+   * Garde-fou explicite plutôt qu'un repli silencieux sur « série » (le registry route
+   * normalement ces types ailleurs — cette erreur signale un câblage fautif).
+   */
+  private assertSupported(type: CatalogMediaType): void {
+    if (type !== "MOVIE" && type !== "SERIES") {
+      throw new ServiceUnavailableException(`TMDB ne couvre pas le type de média « ${type} ».`);
+    }
   }
 
   /** Racine des images TMDB (sans segment de taille), dérivée de la base configurée. */

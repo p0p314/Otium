@@ -1,7 +1,8 @@
 import { NotFoundException } from "@nestjs/common";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { EventPublisher } from "../../../shared/domain";
-import type { MediaCatalogProvider } from "../../media/domain";
+import type { SeriesCatalogProvider } from "../../media/domain";
+import { singleProviderRegistry } from "../../../../test/support/catalog-registry.fake";
 import type {
   LibraryItem,
   LibraryRepository,
@@ -34,7 +35,7 @@ const item: LibraryItem = {
 describe("Library use cases", () => {
   let repo: LibraryRepository;
   let events: EventPublisher;
-  let catalog: MediaCatalogProvider;
+  let catalog: SeriesCatalogProvider;
   // Suivi de séries : non sollicité par ces tests (média MOVIE), fourni pour le constructeur.
   const tracking = {
     getContext: vi.fn().mockResolvedValue(null),
@@ -60,7 +61,6 @@ describe("Library use cases", () => {
     catalog = {
       name: "fake",
       search: vi.fn(),
-      getTrending: vi.fn(),
       getMediaDetails: vi.fn().mockRejectedValue(new Error("no details")),
       getSeriesDetails: vi.fn(),
       getEpisodeDetails: vi.fn(),
@@ -68,7 +68,7 @@ describe("Library use cases", () => {
   });
 
   it("ajoute un média et émet MediaAdded", async () => {
-    const useCase = new AddMediaToLibraryUseCase(repo, events, catalog, tracking);
+    const useCase = new AddMediaToLibraryUseCase(repo, events, singleProviderRegistry(catalog), catalog, tracking);
     const result = await useCase.execute({ userId: "u1", media });
     expect(result).toBe(item);
     expect(repo.add).toHaveBeenCalledWith("u1", media);
@@ -82,9 +82,9 @@ describe("Library use cases", () => {
         { id: "878", label: "Science-Fiction" },
       ],
       runtimeMinutes: 155,
-    } as unknown as Awaited<ReturnType<MediaCatalogProvider["getMediaDetails"]>>);
+    } as unknown as Awaited<ReturnType<SeriesCatalogProvider["getMediaDetails"]>>);
 
-    await new AddMediaToLibraryUseCase(repo, events, catalog, tracking).execute({
+    await new AddMediaToLibraryUseCase(repo, events, singleProviderRegistry(catalog), catalog, tracking).execute({
       userId: "u1",
       media,
     });
@@ -111,7 +111,7 @@ describe("Library use cases", () => {
   });
 
   it("marque un film « vu » et émet WatchStatusChanged puis MovieCompleted", async () => {
-    const useCase = new SetWatchStatusUseCase(repo, events, catalog);
+    const useCase = new SetWatchStatusUseCase(repo, events, singleProviderRegistry(catalog));
     const result = await useCase.execute({ userId: "u1", itemId: "item-1", status: "COMPLETED" });
 
     expect(result.status).toBe("COMPLETED");
@@ -125,8 +125,8 @@ describe("Library use cases", () => {
     vi.mocked(catalog.getMediaDetails).mockResolvedValue({
       genres: [{ id: "18", label: "Drame" }],
       runtimeMinutes: 155,
-    } as unknown as Awaited<ReturnType<MediaCatalogProvider["getMediaDetails"]>>);
-    const useCase = new SetWatchStatusUseCase(repo, events, catalog);
+    } as unknown as Awaited<ReturnType<SeriesCatalogProvider["getMediaDetails"]>>);
+    const useCase = new SetWatchStatusUseCase(repo, events, singleProviderRegistry(catalog));
 
     await useCase.execute({ userId: "u1", itemId: "item-1", status: "COMPLETED" });
 
@@ -143,7 +143,7 @@ describe("Library use cases", () => {
       status: "COMPLETED",
       media: { ...media, runtimeMinutes: 120 },
     });
-    const useCase = new SetWatchStatusUseCase(repo, events, catalog);
+    const useCase = new SetWatchStatusUseCase(repo, events, singleProviderRegistry(catalog));
 
     await useCase.execute({ userId: "u1", itemId: "item-1", status: "COMPLETED" });
 
@@ -154,7 +154,7 @@ describe("Library use cases", () => {
   it("n'échoue pas le passage « vu » si le catalogue est indisponible", async () => {
     vi.mocked(repo.setStatus).mockResolvedValue({ ...item, status: "COMPLETED" });
     // catalog.getMediaDetails rejette par défaut (voir beforeEach)
-    const useCase = new SetWatchStatusUseCase(repo, events, catalog);
+    const useCase = new SetWatchStatusUseCase(repo, events, singleProviderRegistry(catalog));
 
     const result = await useCase.execute({ userId: "u1", itemId: "item-1", status: "COMPLETED" });
 
@@ -166,7 +166,7 @@ describe("Library use cases", () => {
 
   it("ne réémet rien si le statut est inchangé", async () => {
     vi.mocked(repo.findItem).mockResolvedValue({ ...item, status: "COMPLETED" });
-    const useCase = new SetWatchStatusUseCase(repo, events, catalog);
+    const useCase = new SetWatchStatusUseCase(repo, events, singleProviderRegistry(catalog));
     await useCase.execute({ userId: "u1", itemId: "item-1", status: "COMPLETED" });
 
     expect(repo.setStatus).not.toHaveBeenCalled();
@@ -181,7 +181,7 @@ describe("Library use cases", () => {
     };
     vi.mocked(repo.findItem).mockResolvedValue(seriesItem);
     vi.mocked(repo.setStatus).mockResolvedValue({ ...seriesItem, status: "PLANNED" });
-    const useCase = new SetWatchStatusUseCase(repo, events, catalog);
+    const useCase = new SetWatchStatusUseCase(repo, events, singleProviderRegistry(catalog));
     await useCase.execute({ userId: "u1", itemId: "item-1", status: "PLANNED" });
 
     const names = vi.mocked(events.publish).mock.calls.map((c) => (c[0] as { name: string }).name);

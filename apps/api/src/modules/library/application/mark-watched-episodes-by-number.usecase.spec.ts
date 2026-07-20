@@ -1,6 +1,6 @@
 import { NotFoundException } from "@nestjs/common";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { MediaCatalogProvider } from "../../media/domain";
+import type { SeriesCatalogProvider } from "../../media/domain";
 import type { SeriesTrackingRepository } from "../domain";
 import { MarkWatchedEpisodesByNumberUseCase } from "./mark-watched-episodes-by-number.usecase";
 
@@ -16,7 +16,7 @@ const seasons = [
 
 describe("MarkWatchedEpisodesByNumberUseCase", () => {
   let repo: SeriesTrackingRepository;
-  let catalog: MediaCatalogProvider;
+  let catalog: SeriesCatalogProvider;
 
   beforeEach(() => {
     repo = {
@@ -54,7 +54,7 @@ describe("MarkWatchedEpisodesByNumberUseCase", () => {
           },
         ],
       })),
-    } as unknown as MediaCatalogProvider;
+    } as unknown as SeriesCatalogProvider;
   });
 
   it("charge la structure manquante puis marque les épisodes rapprochés", async () => {

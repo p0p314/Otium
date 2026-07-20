@@ -1,7 +1,7 @@
 import { Inject, Injectable, Logger, NotFoundException } from "@nestjs/common";
 import type { UseCase } from "../../../shared/application/use-case";
 import { EVENT_PUBLISHER, type EventPublisher } from "../../../shared/domain";
-import { MEDIA_CATALOG_PROVIDER, type MediaCatalogProvider } from "../../media/domain";
+import { MEDIA_CATALOG_REGISTRY, type MediaCatalogRegistry } from "../../media/domain";
 import {
   LIBRARY_REPOSITORY,
   type LibraryItem,
@@ -29,7 +29,7 @@ export class SetWatchStatusUseCase implements UseCase<SetWatchStatusInput, Libra
   constructor(
     @Inject(LIBRARY_REPOSITORY) private readonly library: LibraryRepository,
     @Inject(EVENT_PUBLISHER) private readonly events: EventPublisher,
-    @Inject(MEDIA_CATALOG_PROVIDER) private readonly catalog: MediaCatalogProvider,
+    @Inject(MEDIA_CATALOG_REGISTRY) private readonly catalog: MediaCatalogRegistry,
   ) {}
 
   async execute({ userId, itemId, status }: SetWatchStatusInput): Promise<LibraryItem> {
@@ -55,10 +55,9 @@ export class SetWatchStatusUseCase implements UseCase<SetWatchStatusInput, Libra
   private async ensureMovieRuntime(item: LibraryItem): Promise<void> {
     if (item.media.runtimeMinutes != null) return;
     try {
-      const details = await this.catalog.getMediaDetails(
-        item.media.type,
-        item.media.externalRef.externalId,
-      );
+      const details = await this.catalog
+        .forType(item.media.type)
+        .getMediaDetails(item.media.type, item.media.externalRef.externalId);
       await this.library.backfillMediaMetadata(item.media.externalRef, {
         genres: details.genres.map((g) => g.label),
         runtimeMinutes: details.runtimeMinutes ?? null,

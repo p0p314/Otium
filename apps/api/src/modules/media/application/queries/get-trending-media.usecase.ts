@@ -1,7 +1,7 @@
 import { Inject, Injectable } from "@nestjs/common";
 import type { UseCase } from "../../../../shared/application/use-case";
 import type { CatalogMediaType, CatalogSearchResult } from "../../domain";
-import { MEDIA_CATALOG_PROVIDER, type MediaCatalogProvider } from "../../domain";
+import { TRENDING_CATALOG_PROVIDER, type TrendingCatalogProvider } from "../../domain";
 
 export interface GetTrendingMediaInput {
   readonly page: number;
@@ -10,13 +10,14 @@ export interface GetTrendingMediaInput {
 }
 
 /**
- * Tendances du moment via le port `MediaCatalogProvider` (mise en avant sous la
- * recherche). Le use case ignore quel fournisseur concret répond (ADR-0004).
+ * Tendances du moment via la capacité `TrendingCatalogProvider` (mise en avant sous la
+ * recherche). Capacité **optionnelle** du catalogue : tous les types de média n'en ont pas
+ * (les livres, par exemple — voir ADR-0015). Le use case ignore quel fournisseur répond.
  */
 @Injectable()
 export class GetTrendingMediaUseCase implements UseCase<GetTrendingMediaInput, CatalogSearchResult> {
   constructor(
-    @Inject(MEDIA_CATALOG_PROVIDER) private readonly catalog: MediaCatalogProvider,
+    @Inject(TRENDING_CATALOG_PROVIDER) private readonly catalog: TrendingCatalogProvider,
   ) {}
 
   execute(input: GetTrendingMediaInput): Promise<CatalogSearchResult> {
