@@ -1,3 +1,4 @@
+export * from "./group-volumes";
 export * from "./isbn";
 export * from "./merge-books";
 export * from "./models/book";

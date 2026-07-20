@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { MediaSummary, MediaType } from "./media.js";
+import { ExternalRef, MediaSummary, MediaType } from "./media.js";
 
 /**
  * Liste de types transmise en query string sous forme `types=MOVIE,BOOK`. Ajout
@@ -29,7 +29,31 @@ export const Paginated = <T extends z.ZodTypeAny>(item: T) =>
     total: z.number().int().nonnegative(),
   });
 
-export const SearchMediaResult = Paginated(MediaSummary);
+/**
+ * Œuvre reconstituée à partir des volumes trouvés (série de tomes, cycle de romans) :
+ * une entrée unique au lieu de N volumes.
+ */
+export const CollectionSummary = z.object({
+  externalRef: ExternalRef,
+  title: z.string(),
+  coverUrl: z.string().url().nullable(),
+  authors: z.array(z.string()),
+  /** Nombre de volumes **trouvés**, pas le total réel de l'œuvre (souvent plus grand). */
+  volumeCount: z.number().int().positive(),
+  /** Rangs connus, pour situer l'étendue trouvée sans charger les volumes. */
+  positions: z.array(z.number().int().positive()),
+  volumes: z.array(MediaSummary),
+});
+export type CollectionSummary = z.infer<typeof CollectionSummary>;
+
+/**
+ * Résultats de recherche. `collections` est **additif** : les clients qui l'ignorent
+ * conservent exactement le comportement antérieur, et les volumes regroupés sont
+ * simplement absents d'`items` (ils vivent dans leur œuvre).
+ */
+export const SearchMediaResult = Paginated(MediaSummary).extend({
+  collections: z.array(CollectionSummary).optional(),
+});
 export type SearchMediaResult = z.infer<typeof SearchMediaResult>;
 
 /** Tendances du moment (films/séries), pour la mise en avant sous la recherche. */

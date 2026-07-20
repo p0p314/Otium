@@ -3,6 +3,7 @@ import { ConfigService } from "@nestjs/config";
 import { CacheService } from "../../../shared/infrastructure/cache/cache.service";
 import type { Env } from "../../../shared/infrastructure/config/env";
 import type {
+  CatalogCollection,
   CatalogMediaDetails,
   CatalogMediaType,
   CatalogSearchResult,
@@ -12,8 +13,11 @@ import type {
 import {
   type BookProvider,
   type BookRecord,
+  type BookRecord as Book,
   dedupeBooks,
   FALLBACK_BOOK_PROVIDER,
+  groupVolumes,
+  type VolumeGroup,
   mergeBooks,
   needsFallback,
   parseIsbn,
@@ -21,6 +25,7 @@ import {
   toCatalogMedia,
   toCatalogMediaDetails,
 } from "../domain";
+import { BOOKS_PROVIDER } from "../domain";
 
 /**
  * Adapter « livres » du socle `MediaCatalogProvider` : c'est lui qui applique la stratégie
@@ -65,15 +70,41 @@ export class CompositeBookCatalogProvider implements MediaCatalogProvider {
       );
     }
 
-    const items = dedupeBooks([...(primary?.items ?? []), ...(fallback?.items ?? [])]);
+    const deduped = dedupeBooks([...(primary?.items ?? []), ...(fallback?.items ?? [])]);
+    // Les tomes d'une même œuvre sont réunis en une entrée : une recherche « One Piece »
+    // ne doit pas noyer les autres résultats sous cent onze volumes.
+    const { groups, standalone } = groupVolumes(deduped);
+
     const result: CatalogSearchResult = {
-      items: items.slice(0, params.pageSize).map(toCatalogMedia),
+      items: standalone.slice(0, params.pageSize).map(toCatalogMedia),
       page: params.page,
       pageSize: params.pageSize,
       total: primary?.total ?? fallback?.total ?? 0,
+      ...(groups.length > 0 ? { collections: groups.map((g) => this.toCollection(g)) } : {}),
     };
     this.cacheSet(cacheKey, result);
     return result;
+  }
+
+  /**
+   * Traduit une œuvre reconstituée vers le modèle catalogue. Sa couverture et ses auteurs
+   * sont ceux du premier volume disposant de l'information — en pratique le tome 1, qui
+   * porte l'identité visuelle de l'œuvre.
+   */
+  private toCollection(group: VolumeGroup): CatalogCollection {
+    const withCover = group.volumes.find((v: Book) => v.coverUrl !== null);
+    const withAuthors = group.volumes.find((v: Book) => v.authors.length > 0);
+    return {
+      ref: { provider: BOOKS_PROVIDER, externalId: group.key },
+      title: group.title,
+      coverUrl: withCover?.coverUrl ?? null,
+      authors: withAuthors ? [...withAuthors.authors] : [],
+      volumeCount: group.volumes.length,
+      positions: group.volumes
+        .map((v: Book) => v.series?.position ?? null)
+        .filter((p): p is number => p !== null),
+      volumes: group.volumes.map(toCatalogMedia),
+    };
   }
 
   async getMediaDetails(
