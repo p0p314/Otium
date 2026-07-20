@@ -9,24 +9,30 @@ séries, les livres, mangas, animés, jeux vidéo, podcasts, musique et document
 
 ## État du projet
 
-🟢 **MVP « films & séries » complet, sur `main`.** Vérifié de bout en bout (données réelles
+🟢 **MVP « films, séries & livres » complet, sur `main`.** Vérifié de bout en bout (données réelles
 TMDB, PostgreSQL) ; `typecheck`, `lint`, `test` et `build` passent.
 
 Fonctionnalités disponibles :
 
-- **Recherche** de films/séries (via TMDB, abstraction de fournisseur + cache **mémoire**), avec
-  **mise en avant des tendances** du moment sous la barre de recherche.
+- **Recherche** de films, séries et **livres** — multi-catalogues (TMDB · Google Books avec
+  Open Library en secours), via un registry par type de média ([ADR-0015](docs/adr/0015-registry-catalogues-par-type.md))
+  et un cache **mémoire** ; **mise en avant des tendances** du moment sous la barre de recherche.
+  Recherche de livres par titre, auteur ou **ISBN**.
 - **Fiche média détaillée** (page unique recherche/bibliothèque) : backdrop, note TMDB, synopsis,
   genres, durée/saisons, casting, réalisateur/créateurs, sociétés de production, plateformes.
 - **Authentification** (inscription/connexion, hachage bcrypt, sessions **Postgres**, routes
   protégées), jeton de session en **cookie httpOnly** (durcissement anti-XSS).
-- **Bibliothèque** : ajout/retrait, statut (**vu / à voir**…), favoris (au niveau `Media`),
-  affichage **par catégorie** (Films / Séries).
+- **Bibliothèque** : ajout/retrait, statut (**vu / à voir / à lire**…), favoris (au niveau
+  `Media`), affichage **par catégorie** (Séries / Films / Livres).
 - **Accueil personnalisé** : séries **en cours** et séries **laissées de côté** (> 1 mois).
 - **Listes personnalisées** : création/suppression de listes, ajout/retrait de films et séries.
-- **Statistiques de visionnage** (`/stats`) : totaux, temps, répartition films/séries, genres
-  les plus regardés, activité par mois, note moyenne, records — cartes et graphiques.
+- **Statistiques** (`/stats`) : totaux, temps, répartition par type, genres les plus regardés,
+  activité par mois, note moyenne, records — et un **volet lecture** (livres lus, pages lues,
+  pages par mois, auteurs les plus lus, rythme de lecture).
 - **Suivi de séries** : saisons/épisodes, épisodes vus, progression, **reprise automatique**.
+- **Suivi de lecture** : progression en **pages** ou en **pourcentage**, pages restantes, statut et
+  dates de lecture déduits automatiquement, historique horodaté
+  ([ADR-0017](docs/adr/0017-progression-polymorphe.md)).
 - **Notation** (0–10) et **avis** (texte), au niveau `Media`.
 - **Import TV Time** (export RGPD) **en tâche de fond** : le traitement continue côté serveur
   même si l'onglet se ferme / le téléphone se verrouille ; progression en direct et
@@ -49,6 +55,7 @@ Prérequis : Node ≥ 20, **pnpm via `corepack`**, **Docker Desktop démarré** 
 ```bash
 docker compose up -d                        # démarre PostgreSQL (plus de Redis — ADR-0012)
 cp .env.example .env                        # puis renseigner TMDB_ACCESS_TOKEN (clé TMDB v3 ou v4)
+                                            # GOOGLE_BOOKS_API_KEY est facultative (quota anonyme sinon)
 corepack pnpm@9.15.0 install                # installe les dépendances
 pnpm --filter @otium/api prisma:generate
 pnpm --filter @otium/api prisma:migrate     # applique le schéma (base neuve)
@@ -58,8 +65,8 @@ pnpm dev                                     # web http://localhost:5173 · API 
 > **Ports** : l'API écoute sur **`PORT`** (défaut 3000 ; `3001` recommandé dans `.env` si 3000 est
 > déjà pris). Le front lit **`VITE_API_URL`** (défaut `http://localhost:3000/api`) — l'aligner sur
 > le port de l'API (ex. `apps/web/.env` → `VITE_API_URL=http://localhost:3001/api`).
-> `.env` n'est pas versionné ; sans `TMDB_ACCESS_TOKEN`, la recherche renvoie 503 (le reste
-> fonctionne). L'API démarre même sans base (dégradation gracieuse).
+> `.env` n'est pas versionné ; sans `TMDB_ACCESS_TOKEN`, la recherche de films/séries renvoie 503
+> (le reste fonctionne, livres compris). L'API démarre même sans base (dégradation gracieuse).
 >
 > Les commandes `prisma:migrate` / `prisma:deploy` / `prisma:studio` chargent le `.env` **de la
 > racine** du monorepo (via `dotenv-cli`) : elles fonctionnent quel que soit le répertoire courant,

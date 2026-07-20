@@ -26,6 +26,10 @@ import { SetWatchStatusUseCase } from "../src/modules/library/application/set-wa
 import { ToggleFavoriteUseCase } from "../src/modules/library/application/toggle-favorite.usecase";
 import { GetLibraryItemUseCase } from "../src/modules/library/application/get-library-item.usecase";
 import { RateMediaUseCase } from "../src/modules/library/application/rate-media.usecase";
+import {
+  SetConsumptionDatesUseCase,
+  UpdateProgressUseCase,
+} from "../src/modules/library/application/update-progress.usecase";
 import { LibraryController } from "../src/modules/library/presentation/library.controller";
 
 class InMemoryLibraryRepository implements LibraryRepository {
@@ -50,9 +54,18 @@ class InMemoryLibraryRepository implements LibraryRepository {
       isFavorite: false,
       addedAt: new Date(),
       lastActivityAt: new Date(),
+      startedAt: null,
+      finishedAt: null,
+      progress: null,
     };
     this.items.set(item.id, item);
     return item;
+  }
+  async saveProgress(): Promise<LibraryItem> {
+    throw new Error("non utilisé dans ce test");
+  }
+  async setConsumptionDates(): Promise<LibraryItem> {
+    throw new Error("non utilisé dans ce test");
   }
   async findByUser(userId: string): Promise<LibraryItem[]> {
     return [...this.items.values()].filter((i) => i.userId === userId);
@@ -126,6 +139,8 @@ describe("Library (e2e)", () => {
         RemoveFromLibraryUseCase,
         ToggleFavoriteUseCase,
         RateMediaUseCase,
+        UpdateProgressUseCase,
+        SetConsumptionDatesUseCase,
         SetWatchStatusUseCase,
         GetHomeDashboardUseCase,
         GetUpcomingUseCase,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MediaType, Rating, WatchStatus } from "./media.js";
+import { FUTURE_MEDIA_TYPES, MediaType, Rating, WatchStatus } from "./media.js";
 
 describe("Rating (0–10)", () => {
   it("accepte les entiers de 0 à 10", () => {
@@ -15,8 +15,13 @@ describe("Rating (0–10)", () => {
 });
 
 describe("Enums de média", () => {
-  it("MediaType supporte MOVIE et SERIES en V1", () => {
-    expect(MediaType.options).toEqual(["MOVIE", "SERIES"]);
+  it("MediaType couvre les types actifs (films, séries, livres)", () => {
+    expect(MediaType.options).toEqual(["MOVIE", "SERIES", "BOOK"]);
+  });
+
+  it("les types encore à venir ne sont pas acceptés par le contrat", () => {
+    expect(FUTURE_MEDIA_TYPES).not.toContain("BOOK");
+    expect(MediaType.safeParse("MANGA").success).toBe(false);
   });
 
   it("WatchStatus couvre les états de consommation", () => {

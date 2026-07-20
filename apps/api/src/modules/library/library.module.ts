@@ -30,6 +30,10 @@ import { ToggleEpisodeWatchedUseCase } from "./application/toggle-episode-watche
 import { ToggleEpisodesWatchedUseCase } from "./application/toggle-episodes-watched.usecase";
 import { ToggleFavoriteUseCase } from "./application/toggle-favorite.usecase";
 import {
+  SetConsumptionDatesUseCase,
+  UpdateProgressUseCase,
+} from "./application/update-progress.usecase";
+import {
   DeleteEpisodeReviewUseCase,
   GetEpisodeReviewUseCase,
   SaveEpisodeReviewUseCase,
@@ -69,6 +73,8 @@ import { SeriesTrackingController } from "./presentation/series-tracking.control
     ToggleFavoriteUseCase,
     RateMediaUseCase,
     SetWatchStatusUseCase,
+    UpdateProgressUseCase,
+    SetConsumptionDatesUseCase,
     GetSeriesTrackingUseCase,
     MarkWatchedEpisodesByNumberUseCase,
     GetHomeDashboardUseCase,

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { BookDetails } from "./book.js";
 import { ExternalRef, Genre, MediaType } from "./media.js";
 
 /** Un acteur principal (nom, rôle, photo). */
@@ -24,9 +25,10 @@ export const WatchProvider = z.object({
 export type WatchProvider = z.infer<typeof WatchProvider>;
 
 /**
- * Fiche détaillée d'un média issue du catalogue externe (TMDB en V1). Modèle **générique** :
- * champs communs film/série + champs spécifiques nullables (durée film, saisons série).
- * Extensible : `cast`, `productionCompanies`, `watchProviders` peuvent être vides.
+ * Fiche détaillée d'un média issue d'un catalogue externe (TMDB, Google Books…). Modèle
+ * **générique** : champs communs + blocs spécifiques nullables (durée film, saisons série,
+ * `book` pour un livre). Extensible : `cast`, `productionCompanies`, `watchProviders`
+ * peuvent être vides. Ajouter un type de média = ajouter un bloc, sans toucher au reste.
  */
 export const MediaDetails = z.object({
   externalRef: ExternalRef,
@@ -51,9 +53,11 @@ export const MediaDetails = z.object({
   numberOfSeasons: z.number().int().nonnegative().nullable(),
   numberOfEpisodes: z.number().int().nonnegative().nullable(),
   cast: z.array(CastMember),
-  /** Réalisateur(s) pour un film, créateur(s) pour une série. */
+  /** Réalisateur(s) pour un film, créateur(s) pour une série, auteur(s) pour un livre. */
   directors: z.array(z.string()),
   productionCompanies: z.array(ProductionCompany),
   watchProviders: z.array(WatchProvider),
+  /** Livre : données propres au type (auteurs, ISBN, éditeur…). Null sinon. */
+  book: BookDetails.nullable(),
 });
 export type MediaDetails = z.infer<typeof MediaDetails>;

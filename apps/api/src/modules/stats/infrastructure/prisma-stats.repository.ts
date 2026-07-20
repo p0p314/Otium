@@ -22,6 +22,9 @@ export class PrismaStatsRepository implements StatsRepository {
       episodeRows,
       movieRows,
       genreRows,
+      books,
+      progressRows,
+      bookRows,
     ] = await Promise.all([
       this.prisma.libraryItem.count({ where: { userId, status: "COMPLETED", media: { type: "MOVIE" } } }),
       this.prisma.libraryItem.count({ where: { userId, status: "COMPLETED", media: { type: "SERIES" } } }),
@@ -50,6 +53,21 @@ export class PrismaStatsRepository implements StatsRepository {
         where: { userId, status: { in: ["COMPLETED", "IN_PROGRESS"] } },
         select: { media: { select: { genres: true } } },
       }),
+      this.prisma.libraryItem.count({ where: { userId, media: { type: "BOOK" } } }),
+      // Historique d'avancement : seule source fiable des pages lues dans le temps.
+      this.prisma.progressEntry.findMany({
+        where: { libraryItem: { userId } },
+        select: { occurredAt: true, unit: true, fromValue: true, toValue: true },
+      }),
+      this.prisma.libraryItem.findMany({
+        where: { userId, media: { type: "BOOK" } },
+        select: {
+          status: true,
+          finishedAt: true,
+          rating: true,
+          media: { select: { book: { select: { authors: true } } } },
+        },
+      }),
     ]);
 
     return {
@@ -70,6 +88,19 @@ export class PrismaStatsRepository implements StatsRepository {
         minutes: row.media.runtimeMinutes ?? 0,
       })),
       watchedGenres: genreRows.flatMap((row) => row.media.genres),
+      books,
+      progressEntries: progressRows.map((row) => ({
+        occurredAt: row.occurredAt,
+        // Un avancement en pourcentage ne représente pas un nombre de pages connu :
+        // il compte dans l'activité, pas dans le total de pages lues.
+        pages: row.unit === "PAGES" ? Math.max(0, row.toValue - row.fromValue) : 0,
+      })),
+      booksInLibrary: bookRows.map((row) => ({
+        status: row.status,
+        finishedAt: row.finishedAt,
+        rating: row.rating,
+        authors: row.media.book?.authors ?? [],
+      })),
     };
   }
 }

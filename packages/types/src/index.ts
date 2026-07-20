@@ -1,4 +1,6 @@
 export * from "./auth.js";
+export * from "./book.js";
+export * from "./progress.js";
 export * from "./home.js";
 export * from "./i18n.js";
 export * from "./import.js";

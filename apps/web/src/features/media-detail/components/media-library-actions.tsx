@@ -4,10 +4,12 @@ import { useRateMedia } from "../../library/api/use-item-detail";
 import { useLibrary } from "../../library/api/use-library";
 import { AddToLibraryButton } from "../../library/components/add-to-library-button";
 import { RatingControl } from "../../library/components/rating-control";
+import { ReadingProgressControl } from "../../library/components/reading-progress-control";
 import { ReviewEditor } from "../../library/components/review-editor";
 import { SeriesTrackingSection } from "../../library/components/series-tracking-section";
 import { StatusSelect } from "../../library/components/status-select";
 import { AddToListControl } from "../../lists/components/add-to-list-control";
+import { hasContinuousProgress } from "../../../lib/media-type";
 
 /** Construit le résumé attendu par les actions bibliothèque depuis la fiche détaillée. */
 function toSummary(details: MediaDetails): MediaSummary {
@@ -25,7 +27,15 @@ function toSummary(details: MediaDetails): MediaSummary {
  * Contrôles personnels quand le média est dans la bibliothèque. Isolé dans un composant
  * pour n'appeler ses hooks (`useRateMedia`…) que lorsqu'un `itemId` existe réellement.
  */
-function LibraryControls({ item, media }: { item: LibraryItem; media: MediaSummary }) {
+function LibraryControls({
+  item,
+  media,
+  details,
+}: {
+  item: LibraryItem;
+  media: MediaSummary;
+  details: MediaDetails;
+}) {
   const rate = useRateMedia(item.id);
   const isSeries = item.media.type === "SERIES";
 
@@ -49,6 +59,9 @@ function LibraryControls({ item, media }: { item: LibraryItem; media: MediaSumma
           onRate={(rating) => rate.mutate(rating)}
         />
       </div>
+      {hasContinuousProgress(item.media.type) ? (
+        <ReadingProgressControl item={item} totalPages={details.book?.pageCount ?? null} />
+      ) : null}
       <ReviewEditor itemId={item.id} />
       {isSeries ? (
         <div className="space-y-3">
@@ -90,5 +103,5 @@ export function MediaLibraryActions({ details }: { details: MediaDetails }) {
       </div>
     );
   }
-  return <LibraryControls item={item} media={media} />;
+  return <LibraryControls item={item} media={media} details={details} />;
 }

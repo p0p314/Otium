@@ -4,12 +4,11 @@ import { z } from "zod";
  * Type de média. Enum **fermé mais extensible** : ajouter un type = ajouter une valeur
  * (Open/Closed), sans refonte des capacités transversales. Voir ADR-0003.
  */
-export const MediaType = z.enum(["MOVIE", "SERIES"]);
+export const MediaType = z.enum(["MOVIE", "SERIES", "BOOK"]);
 export type MediaType = z.infer<typeof MediaType>;
 
-/** Types de média prévus mais non actifs en V1 (documentés pour l'extension future). */
+/** Types de média prévus mais non actifs (documentés pour l'extension future). */
 export const FUTURE_MEDIA_TYPES = [
-  "BOOK",
   "MANGA",
   "ANIME",
   "GAME",

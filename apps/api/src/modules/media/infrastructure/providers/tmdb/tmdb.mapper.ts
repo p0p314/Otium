@@ -194,6 +194,8 @@ export function toCatalogMovieDetails(
     directors: unique(directors),
     productionCompanies: toCompanies(movie.production_companies, imageRoot),
     watchProviders: toWatchProviders(movie["watch/providers"], region, imageRoot),
+    // Bloc « livre » sans objet pour l'audiovisuel (modèle générique, ADR-0003).
+    book: null,
   };
 }
 
@@ -225,5 +227,6 @@ export function toCatalogTvDetails(
     directors: unique(creators),
     productionCompanies: toCompanies(tv.production_companies, imageRoot),
     watchProviders: toWatchProviders(tv["watch/providers"], region, imageRoot),
+    book: null,
   };
 }

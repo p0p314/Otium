@@ -3,7 +3,7 @@
  * Domaine pur : aucune dépendance à un fournisseur concret (TMDB…) ni à un framework.
  * L'identité provient de la source externe via `externalRef` (ADR-0003 / ADR-0004).
  */
-export type CatalogMediaType = "MOVIE" | "SERIES";
+export type CatalogMediaType = "MOVIE" | "SERIES" | "BOOK";
 
 export interface CatalogExternalRef {
   readonly provider: string;
@@ -83,8 +83,34 @@ export interface CatalogWatchProvider {
 }
 
 /**
- * Fiche détaillée normalisée d'un média (film ou série). Modèle générique : champs
- * communs + champs spécifiques nullables. Aucune dépendance à un fournisseur concret.
+ * Bloc propre aux livres, dans le modèle normalisé du catalogue. N'y figure que ce qui
+ * n'a pas d'équivalent générique : titre, couverture, description, genres et note moyenne
+ * restent au niveau `CatalogMediaDetails` (ADR-0003).
+ */
+export interface CatalogBookDetails {
+  readonly subtitle: string | null;
+  readonly authors: readonly string[];
+  readonly publisher: string | null;
+  /** Date de publication brute (`YYYY`, `YYYY-MM` ou `YYYY-MM-DD`). */
+  readonly publishedDate: string | null;
+  readonly pageCount: number | null;
+  /** Code langue ISO 639-1, ex. `fr`. */
+  readonly language: string | null;
+  readonly isbn10: string | null;
+  readonly isbn13: string | null;
+  readonly googleBooksId: string | null;
+  readonly openLibraryId: string | null;
+  readonly infoUrl: string | null;
+  readonly previewUrl: string | null;
+  /** Couverture haute résolution si le fournisseur en propose une. */
+  readonly coverUrlLarge: string | null;
+  /** Fournisseurs ayant contribué à la fiche après fusion (ADR-0016). */
+  readonly sources: readonly string[];
+}
+
+/**
+ * Fiche détaillée normalisée d'un média (film, série ou livre). Modèle générique : champs
+ * communs + blocs spécifiques nullables. Aucune dépendance à un fournisseur concret.
  */
 export interface CatalogMediaDetails {
   readonly externalRef: CatalogExternalRef;
@@ -107,4 +133,6 @@ export interface CatalogMediaDetails {
   readonly directors: readonly string[];
   readonly productionCompanies: readonly CatalogCompany[];
   readonly watchProviders: readonly CatalogWatchProvider[];
+  /** Livre : données propres au type. `null` pour les autres médias. */
+  readonly book: CatalogBookDetails | null;
 }

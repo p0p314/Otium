@@ -1,4 +1,19 @@
 import type { LibraryItem, MediaDescriptor, WatchStatus } from "../models/library-item";
+import type { ProgressState } from "../reading-progress";
+
+/**
+ * Écriture atomique d'une progression : état courant, statut/dates déduits par le domaine,
+ * et delta à journaliser. Regroupés en une opération pour que l'historique ne puisse pas
+ * diverger de l'état courant.
+ */
+export interface ProgressUpdate {
+  readonly progress: ProgressState;
+  readonly status: WatchStatus;
+  readonly startedAt: Date | null;
+  readonly finishedAt: Date | null;
+  /** Delta horodaté alimentant les statistiques (`null` si l'avancement n'a pas bougé). */
+  readonly entry: { readonly from: number; readonly to: number; readonly occurredAt: Date } | null;
+}
 
 /** Un film de la bibliothèque dont la sortie est à venir (pour l'agenda « À venir »). */
 export interface UpcomingMovieRecord {
@@ -36,6 +51,14 @@ export interface LibraryRepository {
   ): Promise<void>;
   /** Films de la bibliothèque dont la date de sortie est postérieure à `now`. */
   listUpcomingMovies(userId: string, now: Date): Promise<UpcomingMovieRecord[]>;
+  /** Enregistre progression, statut, dates et delta d'historique en une seule opération. */
+  saveProgress(userId: string, itemId: string, update: ProgressUpdate): Promise<LibraryItem>;
+  /** Fixe les dates de consommation saisies par l'utilisateur (`null` = effacer). */
+  setConsumptionDates(
+    userId: string,
+    itemId: string,
+    dates: { startedAt?: Date | null; finishedAt?: Date | null },
+  ): Promise<LibraryItem>;
 }
 
 export const LIBRARY_REPOSITORY = Symbol("LIBRARY_REPOSITORY");

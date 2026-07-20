@@ -42,12 +42,14 @@ function registryOf(map: Partial<Record<CatalogMediaType, MediaCatalogProvider>>
 describe("SearchMediaUseCase", () => {
   it("interroge tous les catalogues couverts quand aucun type n'est demandé", async () => {
     const tmdb = fakeProvider("tmdb", { ...emptyResult, items: [media("tmdb", "1")], total: 1 });
-    const books = fakeProvider("autre", { ...emptyResult, items: [media("autre", "a")], total: 1 });
-    const useCase = new SearchMediaUseCase(registryOf({ MOVIE: tmdb, SERIES: books }));
+    const books = fakeProvider("books", { ...emptyResult, items: [media("books", "a")], total: 1 });
+    const useCase = new SearchMediaUseCase(
+      registryOf({ MOVIE: tmdb, SERIES: tmdb, BOOK: books }),
+    );
 
     const result = await useCase.execute({ q: "Dune", page: 1, pageSize: 20 });
 
-    expect(result.items.map((m) => m.title)).toEqual(["tmdb-1", "autre-a"]);
+    expect(result.items.map((m) => m.title)).toEqual(["tmdb-1", "books-a"]);
     expect(result.total).toBe(2);
   });
 
@@ -80,7 +82,7 @@ describe("SearchMediaUseCase", () => {
     const tmdb = fakeProvider("tmdb");
     const useCase = new SearchMediaUseCase(registryOf({ MOVIE: tmdb }));
 
-    const result = await useCase.execute({ q: "Dune", page: 1, pageSize: 20, types: ["MOVIE", "SERIES"] });
+    const result = await useCase.execute({ q: "Dune", page: 1, pageSize: 20, types: ["MOVIE", "BOOK"] });
 
     expect(tmdb.search).toHaveBeenCalledTimes(1);
     expect(result.items).toEqual([]);
@@ -88,9 +90,9 @@ describe("SearchMediaUseCase", () => {
 
   it("sert les autres sources quand un catalogue est en panne (dégradation gracieuse)", async () => {
     const tmdb = fakeProvider("tmdb", { ...emptyResult, items: [media("tmdb", "1")], total: 1 });
-    const books = fakeProvider("autre");
+    const books = fakeProvider("books");
     vi.mocked(books.search).mockRejectedValue(new Error("Google Books indisponible"));
-    const useCase = new SearchMediaUseCase(registryOf({ MOVIE: tmdb, SERIES: books }));
+    const useCase = new SearchMediaUseCase(registryOf({ MOVIE: tmdb, BOOK: books }));
 
     const result = await useCase.execute({ q: "Dune", page: 1, pageSize: 20 });
 

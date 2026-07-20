@@ -1,8 +1,10 @@
 import type { MediaDetails } from "@otium/types";
 import { ImageOff, Star } from "lucide-react";
 import type { ReactNode } from "react";
+import { MEDIA_TYPE_LABEL } from "../../../lib/media-type";
+import { BookFacts } from "./book-facts";
 
-const TYPE_LABEL = { MOVIE: "Film", SERIES: "Série" } as const;
+
 
 /** Traduit les statuts TMDB courants ; renvoie la valeur brute sinon (extensible). */
 const STATUS_LABEL: Record<string, string> = {
@@ -19,6 +21,13 @@ const STATUS_LABEL: Record<string, string> = {
 
 function frenchStatus(status: string): string {
   return STATUS_LABEL[status] ?? status;
+}
+
+/** Intitulé du bloc « qui a fait l'œuvre », propre à chaque type de média. */
+function creditsTitle(type: MediaDetails["type"], count: number): string {
+  if (type === "SERIES") return "Création";
+  if (type === "BOOK") return count > 1 ? "Auteurs" : "Auteur";
+  return "Réalisation";
 }
 
 function formatRuntime(minutes: number): string {
@@ -85,11 +94,12 @@ export function MediaDetail({ details, actions }: { details: MediaDetails; actio
               <p className="text-sm italic text-muted-foreground">{details.originalTitle}</p>
             ) : null}
             <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
-              <span>{TYPE_LABEL[details.type]}</span>
+              <span>{MEDIA_TYPE_LABEL[details.type]}</span>
               {details.year ? <span>· {details.year}</span> : null}
               {!isSeries && details.runtimeMinutes ? (
                 <span>· {formatRuntime(details.runtimeMinutes)}</span>
               ) : null}
+              {details.book?.pageCount ? <span>· {details.book.pageCount} pages</span> : null}
               {isSeries && seasonLabel ? (
                 <span>
                   · {seasonLabel}
@@ -133,6 +143,8 @@ export function MediaDetail({ details, actions }: { details: MediaDetails; actio
         </Section>
       ) : null}
 
+      {details.book ? <BookFacts book={details.book} /> : null}
+
       {details.cast.length > 0 ? (
         <Section title="Têtes d'affiche">
           <ul className="flex gap-3 overflow-x-auto pb-2">
@@ -158,8 +170,10 @@ export function MediaDetail({ details, actions }: { details: MediaDetails; actio
         </Section>
       ) : null}
 
-      {details.directors.length > 0 ? (
-        <Section title={isSeries ? "Création" : "Réalisation"}>
+      {/* Pour un livre, auteurs et éditeur figurent déjà dans le bloc « Le livre » :
+          les sections génériques feraient doublon. */}
+      {!details.book && details.directors.length > 0 ? (
+        <Section title={creditsTitle(details.type, details.directors.length)}>
           <p className="text-sm text-muted-foreground">{details.directors.join(", ")}</p>
         </Section>
       ) : null}
@@ -179,7 +193,7 @@ export function MediaDetail({ details, actions }: { details: MediaDetails; actio
         </Section>
       ) : null}
 
-      {details.productionCompanies.length > 0 ? (
+      {!details.book && details.productionCompanies.length > 0 ? (
         <Section title="Production">
           <p className="text-sm text-muted-foreground">
             {details.productionCompanies.map((c) => c.name).join(" · ")}

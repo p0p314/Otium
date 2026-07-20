@@ -1,10 +1,11 @@
 import { Button, Skeleton, buttonVariants } from "@otium/ui";
 import { Link, useParams } from "@tanstack/react-router";
 import { ArrowLeft, X } from "lucide-react";
+import { MEDIA_TYPE_LABEL } from "../../lib/media-type";
 import { useList, useRemoveFromList } from "./api/use-lists";
 
 const GRID = "grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5";
-const TYPE_LABEL = { MOVIE: "Film", SERIES: "Série" } as const;
+
 
 export function ListDetailPage() {
   const { listId } = useParams({ strict: false }) as { listId: string };
@@ -76,7 +77,7 @@ export function ListDetailPage() {
               </div>
               <p className="mt-2 line-clamp-1 text-sm font-medium">{entry.media.title}</p>
               <p className="text-xs text-muted-foreground">
-                {TYPE_LABEL[entry.media.type]}
+                {MEDIA_TYPE_LABEL[entry.media.type]}
                 {entry.media.year ? ` · ${entry.media.year}` : ""}
               </p>
             </li>

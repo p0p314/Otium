@@ -21,6 +21,8 @@ Une décision = un fichier immuable ; on ne modifie pas un ADR accepté, on le *
 | [0013](0013-import-tache-de-fond.md) | Import TV Time en tâche de fond (job + polling) | Accepté |
 | [0014](0014-accueil-nouvelle-saison-a-voir.md) | Accueil : une nouvelle saison récente remonte la série dans « À voir » | Accepté |
 | [0015](0015-registry-catalogues-par-type.md) | Registry de catalogues par type de média + capacités optionnelles | Accepté |
+| [0016](0016-fusion-google-books-open-library.md) | Livres : Google Books prioritaire, Open Library en secours | Accepté |
+| [0017](0017-progression-polymorphe.md) | Progression polymorphe (pages, pourcentage) + historique | Accepté |
 
 ## Gabarit
 

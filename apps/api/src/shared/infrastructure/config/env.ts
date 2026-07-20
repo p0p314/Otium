@@ -17,6 +17,15 @@ export const envSchema = z.object({
   TMDB_API_BASE_URL: z.string().url().default("https://api.themoviedb.org/3"),
   TMDB_IMAGE_BASE_URL: z.string().url().default("https://image.tmdb.org/t/p/w342"),
   TMDB_CACHE_TTL_SECONDS: z.coerce.number().int().positive().default(86400),
+
+  // Catalogue de livres. La clé Google Books est optionnelle : sans elle, l'API répond
+  // avec un quota anonyme plus bas — l'app reste fonctionnelle (ADR-0016).
+  GOOGLE_BOOKS_API_KEY: z.string().optional(),
+  GOOGLE_BOOKS_API_BASE_URL: z.string().url().default("https://www.googleapis.com/books/v1"),
+  OPEN_LIBRARY_API_BASE_URL: z.string().url().default("https://openlibrary.org"),
+  // TTL long (7 j) : les métadonnées d'un livre sont stables, contrairement aux séries
+  // en cours de diffusion — moins d'appels réseau à qualité de service égale.
+  BOOKS_CACHE_TTL_SECONDS: z.coerce.number().int().positive().default(604800),
 });
 
 export type Env = z.infer<typeof envSchema>;

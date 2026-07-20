@@ -1,9 +1,21 @@
 import { z } from "zod";
 import { MediaSummary, MediaType } from "./media.js";
 
+/**
+ * Liste de types transmise en query string sous forme `types=MOVIE,BOOK`. Ajout
+ * **rétro-compatible** : `type` (singulier) reste accepté et les clients existants
+ * fonctionnent sans changement (CLAUDE.md §5).
+ */
+const MediaTypeList = z
+  .union([z.string(), z.array(MediaType)])
+  .transform((value) => (typeof value === "string" ? value.split(",") : value))
+  .pipe(z.array(MediaType).min(1));
+
 export const SearchMediaQuery = z.object({
   q: z.string().min(1).max(200),
   type: MediaType.optional(),
+  /** Sélection multi-types (prioritaire sur `type`), ex. films + livres. */
+  types: MediaTypeList.optional(),
   page: z.coerce.number().int().positive().default(1),
   pageSize: z.coerce.number().int().positive().max(50).default(20),
 });

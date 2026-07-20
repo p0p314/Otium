@@ -32,6 +32,10 @@ import {
   GetReviewUseCase,
   SaveReviewUseCase,
 } from "../src/modules/library/application/review.usecases";
+import {
+  SetConsumptionDatesUseCase,
+  UpdateProgressUseCase,
+} from "../src/modules/library/application/update-progress.usecase";
 import { LibraryController } from "../src/modules/library/presentation/library.controller";
 import { ReviewController } from "../src/modules/library/presentation/review.controller";
 
@@ -53,12 +57,21 @@ const baseItem: LibraryItem = {
   isFavorite: false,
   addedAt: new Date(),
   lastActivityAt: new Date(),
+  startedAt: null,
+  finishedAt: null,
+  progress: null,
 };
 
 class FakeLibraryRepo implements LibraryRepository {
   private item = { ...baseItem };
   async add(): Promise<LibraryItem> {
     return this.item;
+  }
+  async saveProgress(): Promise<LibraryItem> {
+    throw new Error("non utilisé dans ce test");
+  }
+  async setConsumptionDates(): Promise<LibraryItem> {
+    throw new Error("non utilisé dans ce test");
   }
   async findByUser(): Promise<LibraryItem[]> {
     return [this.item];
@@ -120,6 +133,8 @@ describe("Ratings & reviews (e2e)", () => {
         RemoveFromLibraryUseCase,
         ToggleFavoriteUseCase,
         RateMediaUseCase,
+        UpdateProgressUseCase,
+        SetConsumptionDatesUseCase,
         SetWatchStatusUseCase,
         GetHomeDashboardUseCase,
         GetUpcomingUseCase,
