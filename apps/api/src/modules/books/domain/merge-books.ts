@@ -47,6 +47,7 @@ export function mergeBooks(primary: BookRecord, fallback: BookRecord | null): Bo
     previewUrl: keep(primary.previewUrl, fallback.previewUrl),
     averageRating: keep(primary.averageRating, fallback.averageRating),
     ratingsCount: keep(primary.ratingsCount, fallback.ratingsCount),
+    series: primary.series ?? fallback.series,
     sources: [...new Set([...primary.sources, ...fallback.sources])],
   };
 }

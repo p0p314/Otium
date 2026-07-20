@@ -116,6 +116,67 @@ describe("toBookRecord (Google Books)", () => {
     });
   });
 
+  describe("appartenance à une œuvre", () => {
+    /** Extrait réel d'un tome de manga (mesuré sur l'API). */
+    const tome = (over: Record<string, unknown> = {}): GoogleVolume => ({
+      id: "t1",
+      volumeInfo: {
+        title: "One Piece - Édition originale - Tome 50",
+        seriesInfo: {
+          shortSeriesBookTitle: "De nouveau face au mur",
+          bookDisplayNumber: "50",
+          volumeSeries: [
+            { seriesId: "XnfZFwAAABCGYM", seriesBookType: "COLLECTED_EDITION", orderNumber: 49 },
+          ],
+        },
+        ...over,
+      },
+    });
+
+    it("retient l'identifiant de série et le rang du volume", () => {
+      expect(toBookRecord(tome())?.series).toEqual({
+        id: "XnfZFwAAABCGYM",
+        source: "google-books",
+        position: 50,
+        kind: "COLLECTED_EDITION",
+      });
+    });
+
+    it("préfère le numéro affiché à `orderNumber`, décalé d'un rang", () => {
+      // `orderNumber` vaut 49 pour le tome 50 : c'est un index, pas un numéro de tome.
+      expect(toBookRecord(tome())?.series?.position).toBe(50);
+    });
+
+    it("distingue la parution en chapitres de l'édition reliée", () => {
+      const chapitre = tome({
+        seriesInfo: {
+          bookDisplayNumber: "859",
+          volumeSeries: [{ seriesId: "AdWDHAAAABCDyM", seriesBookType: "SERIAL" }],
+        },
+      });
+      expect(toBookRecord(chapitre)?.series).toMatchObject({
+        id: "AdWDHAAAABCDyM",
+        kind: "SERIAL",
+      });
+    });
+
+    it("accepte une série sans rang (hors-série)", () => {
+      const horsSerie = tome({
+        seriesInfo: { volumeSeries: [{ seriesId: "XnfZFwAAABCGYM", orderNumber: 0 }] },
+      });
+      expect(toBookRecord(horsSerie)?.series).toMatchObject({ position: null, kind: "UNKNOWN" });
+    });
+
+    it("ne rattache rien quand le volume n'appartient à aucune série", () => {
+      expect(toBookRecord(volume)?.series).toBeNull();
+    });
+
+    it("ne rattache rien sans identifiant de série exploitable", () => {
+      const sansId = tome({ seriesInfo: { bookDisplayNumber: "3", volumeSeries: [{}] } });
+      expect(toBookRecord(sansId)?.series).toBeNull();
+    });
+  });
+
   it("rejette un volume sans identifiant ou sans titre", () => {
     expect(toBookRecord({ volumeInfo: { title: "Anonyme" } })).toBeNull();
     expect(toBookRecord({ id: "x", volumeInfo: {} })).toBeNull();

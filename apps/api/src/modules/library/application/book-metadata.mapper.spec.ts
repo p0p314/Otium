@@ -39,6 +39,7 @@ function details(overrides: Partial<CatalogMediaDetails> = {}): CatalogMediaDeta
       previewUrl: null,
       coverUrlLarge: null,
       sources: ["google-books"],
+      collection: null,
     },
     ...overrides,
   };

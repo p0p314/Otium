@@ -113,6 +113,7 @@ export class OpenLibraryProvider implements BookProvider {
       averageRating: null,
       ratingsCount: null,
       sources: [OPEN_LIBRARY_SOURCE],
+      series: null,
     };
   }
 
