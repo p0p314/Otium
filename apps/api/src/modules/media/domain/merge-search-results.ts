@@ -34,10 +34,15 @@ export function mergeSearchResults(
     }
   }
 
+  // Les œuvres ne s'entrelacent pas : elles proviennent d'un seul catalogue à la fois et
+  // sont peu nombreuses. On les concatène dans l'ordre des sources.
+  const collections = results.flatMap((result) => result.collections ?? []);
+
   return {
     items,
     page,
     pageSize,
     total: results.reduce((sum, result) => sum + result.total, 0),
+    ...(collections.length > 0 ? { collections } : {}),
   };
 }

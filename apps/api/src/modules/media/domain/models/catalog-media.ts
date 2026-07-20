@@ -26,11 +26,32 @@ export interface CatalogMedia {
   readonly genres: readonly CatalogGenre[];
 }
 
+/**
+ * Œuvre reconstituée à partir des volumes présents dans les résultats (série de tomes,
+ * cycle de romans). Permet d'afficher une fiche unique au lieu de N volumes.
+ */
+export interface CatalogCollection {
+  readonly ref: CatalogExternalRef;
+  readonly title: string;
+  readonly coverUrl: string | null;
+  readonly authors: readonly string[];
+  /** Nombre de volumes **trouvés** — pas le total réel de l'œuvre, souvent plus grand. */
+  readonly volumeCount: number;
+  /** Rangs connus, pour afficher « tomes 1 à 12 » sans charger les volumes. */
+  readonly positions: readonly number[];
+  readonly volumes: readonly CatalogMedia[];
+}
+
 export interface CatalogSearchResult {
   readonly items: readonly CatalogMedia[];
   readonly page: number;
   readonly pageSize: number;
   readonly total: number;
+  /**
+   * Œuvres reconstituées. Champ **additif** : les catalogues qui ne regroupent rien
+   * (TMDB) l'omettent, et les clients qui l'ignorent gardent le comportement d'avant.
+   */
+  readonly collections?: readonly CatalogCollection[];
 }
 
 export interface CatalogEpisode {

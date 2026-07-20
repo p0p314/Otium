@@ -148,6 +148,62 @@ describe("Books catalog (e2e)", () => {
     });
   });
 
+  it("regroupe les tomes d'une même œuvre en une seule entrée", async () => {
+    await app?.close();
+    const tome = (n: number) => ({
+      id: `op${n}`,
+      volumeInfo: {
+        title: `One Piece - Édition originale - Tome ${n}`,
+        authors: ["Eiichiro Oda"],
+        seriesInfo: {
+          bookDisplayNumber: String(n),
+          volumeSeries: [{ seriesId: "OP", seriesBookType: "COLLECTED_EDITION" }],
+        },
+      },
+    });
+    app = await build([
+      {
+        pattern: /books\.test/,
+        payload: { totalItems: 3, items: [tome(2), tome(1), tome(3)] },
+      },
+    ]);
+
+    const response = await request(app.getHttpServer())
+      .get("/media/search")
+      .query({ q: "One Piece", types: "BOOK" });
+
+    expect(response.status).toBe(200);
+    // Les trois tomes ne polluent plus la liste : ils vivent dans leur œuvre…
+    expect(response.body.items).toEqual([]);
+    expect(response.body.collections).toHaveLength(1);
+    const collection = response.body.collections[0];
+    expect(collection).toMatchObject({
+      title: "One Piece - Édition originale",
+      volumeCount: 3,
+      authors: ["Eiichiro Oda"],
+    });
+    // …triés par rang, quel que soit l'ordre de réponse du fournisseur.
+    expect(collection.volumes.map((v: { title: string }) => v.title)).toEqual([
+      "One Piece - Édition originale - Tome 1",
+      "One Piece - Édition originale - Tome 2",
+      "One Piece - Édition originale - Tome 3",
+    ]);
+  });
+
+  it("n'expose aucune œuvre quand les résultats ne forment pas de série", async () => {
+    await app?.close();
+    app = await build([
+      { pattern: /books\.test/, payload: { totalItems: 1, items: [googleVolume] } },
+    ]);
+
+    const response = await request(app.getHttpServer())
+      .get("/media/search")
+      .query({ q: "Dune", types: "BOOK" });
+
+    expect(response.status).toBe(200);
+    expect(response.body.collections).toBeUndefined();
+  });
+
   it("bascule sur Open Library quand Google Books est indisponible", async () => {
     await app?.close();
     app = await build([{ pattern: /openlibrary\.test/, payload: openLibrarySearch }]);
