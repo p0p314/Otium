@@ -1,5 +1,5 @@
 import type { EpisodeDetails, MediaDetails } from "@otium/types";
-import type { CatalogEpisodeDetails, CatalogMediaDetails } from "../domain";
+import type { CatalogBookDetails, CatalogEpisodeDetails, CatalogMediaDetails } from "../domain";
 
 /** Convertit la fiche détaillée du domaine vers le DTO de contrat partagé. */
 export function toMediaDetailsDto(details: CatalogMediaDetails): MediaDetails {
@@ -24,6 +24,28 @@ export function toMediaDetailsDto(details: CatalogMediaDetails): MediaDetails {
     directors: [...details.directors],
     productionCompanies: details.productionCompanies.map((c) => ({ ...c })),
     watchProviders: details.watchProviders.map((p) => ({ ...p })),
+    book: details.book ? toBookDetailsDto(details.book) : null,
+  };
+}
+
+/** Regroupe les identifiants du livre dans le sous-objet attendu par le contrat. */
+function toBookDetailsDto(book: CatalogBookDetails): NonNullable<MediaDetails["book"]> {
+  return {
+    subtitle: book.subtitle,
+    authors: [...book.authors],
+    publisher: book.publisher,
+    publishedDate: book.publishedDate,
+    pageCount: book.pageCount,
+    language: book.language,
+    identifiers: {
+      isbn10: book.isbn10,
+      isbn13: book.isbn13,
+      googleBooksId: book.googleBooksId,
+      openLibraryId: book.openLibraryId,
+    },
+    infoUrl: book.infoUrl,
+    previewUrl: book.previewUrl,
+    sources: [...book.sources],
   };
 }
 

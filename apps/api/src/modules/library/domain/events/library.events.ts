@@ -83,6 +83,37 @@ export class MovieCompleted extends DomainEvent {
   }
 }
 
+/**
+ * Avancement enregistré sur un média à progression continue (livre en pages/%…).
+ * Alimente l'historique et les statistiques de rythme de lecture (ADR-0006 / ADR-0017).
+ */
+export class ProgressUpdated extends DomainEvent {
+  readonly name = "ProgressUpdated";
+  constructor(
+    userId: string,
+    mediaId: string,
+    private readonly unit: string,
+    private readonly from: number,
+    private readonly to: number,
+  ) {
+    super(userId, mediaId);
+  }
+  payload(): Record<string, unknown> {
+    return { unit: this.unit, from: this.from, to: this.to };
+  }
+}
+
+/** Lecture d'un livre terminée (pendant de `MovieCompleted` / `SeriesCompleted`). */
+export class BookCompleted extends DomainEvent {
+  readonly name = "BookCompleted";
+  constructor(userId: string, mediaId: string) {
+    super(userId, mediaId);
+  }
+  payload(): Record<string, unknown> {
+    return {};
+  }
+}
+
 export class MediaRated extends DomainEvent {
   readonly name = "MediaRated";
   constructor(

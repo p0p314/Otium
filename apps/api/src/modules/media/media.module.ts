@@ -1,4 +1,6 @@
 import { Module } from "@nestjs/common";
+import { BooksModule } from "../books/books.module";
+import { CompositeBookCatalogProvider } from "../books/infrastructure/composite-book-catalog.provider";
 import { GetEpisodeDetailsUseCase } from "./application/queries/get-episode-details.usecase";
 import { GetMediaDetailsUseCase } from "./application/queries/get-media-details.usecase";
 import { GetTrendingMediaUseCase } from "./application/queries/get-trending-media.usecase";
@@ -15,6 +17,7 @@ import { TypeBasedMediaCatalogRegistry } from "./infrastructure/type-based-media
 import { MediaController } from "./presentation/media.controller";
 
 @Module({
+  imports: [BooksModule],
   controllers: [MediaController],
   providers: [
     SearchMediaUseCase,
@@ -27,10 +30,14 @@ import { MediaController } from "./presentation/media.controller";
     // (ADR-0004 / ADR-0015).
     {
       provide: CATALOG_PROVIDER_REGISTRATIONS,
-      useFactory: (tmdb: TmdbProvider): CatalogProviderRegistration[] => [
+      useFactory: (
+        tmdb: TmdbProvider,
+        books: CompositeBookCatalogProvider,
+      ): CatalogProviderRegistration[] => [
         { types: ["MOVIE", "SERIES"], provider: tmdb },
+        { types: ["BOOK"], provider: books },
       ],
-      inject: [TmdbProvider],
+      inject: [TmdbProvider, CompositeBookCatalogProvider],
     },
     { provide: MEDIA_CATALOG_REGISTRY, useClass: TypeBasedMediaCatalogRegistry },
     // Capacités optionnelles, portées par TMDB en V1.

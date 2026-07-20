@@ -15,8 +15,10 @@ import {
   type LibraryItem as LibraryItemDto,
   type UpcomingDashboard,
   RateMediaInput,
+  SetConsumptionDatesInput,
   SetWatchStatusInput,
   ToggleFavoriteInput,
+  UpdateProgressInput,
 } from "@otium/types";
 import { ZodValidationPipe } from "../../../shared/presentation/zod-validation.pipe";
 import { AuthGuard, type AuthenticatedUser } from "../../authentication/presentation/auth.guard";
@@ -30,6 +32,10 @@ import { RateMediaUseCase } from "../application/rate-media.usecase";
 import { RemoveFromLibraryUseCase } from "../application/remove-from-library.usecase";
 import { SetWatchStatusUseCase } from "../application/set-watch-status.usecase";
 import { ToggleFavoriteUseCase } from "../application/toggle-favorite.usecase";
+import {
+  SetConsumptionDatesUseCase,
+  UpdateProgressUseCase,
+} from "../application/update-progress.usecase";
 import { toLibraryItemDto, toMediaDescriptor } from "./library.mapper";
 
 @Controller("library")
@@ -45,6 +51,8 @@ export class LibraryController {
     private readonly setWatchStatus: SetWatchStatusUseCase,
     private readonly getHomeDashboard: GetHomeDashboardUseCase,
     private readonly getUpcoming: GetUpcomingUseCase,
+    private readonly updateProgress: UpdateProgressUseCase,
+    private readonly setDates: SetConsumptionDatesUseCase,
   ) {}
 
   @Get()
@@ -118,6 +126,43 @@ export class LibraryController {
       userId: user.id,
       itemId,
       status: input.status,
+    });
+    return toLibraryItemDto(item);
+  }
+
+  /** Avancement d'un média à progression continue (livre : pages ou pourcentage). */
+  @Patch(":itemId/progress")
+  async progress(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("itemId") itemId: string,
+    @Body(new ZodValidationPipe(UpdateProgressInput)) input: UpdateProgressInput,
+  ): Promise<LibraryItemDto> {
+    const item = await this.updateProgress.execute({
+      userId: user.id,
+      itemId,
+      unit: input.unit,
+      value: input.value,
+      ...(input.total !== undefined ? { total: input.total } : {}),
+    });
+    return toLibraryItemDto(item);
+  }
+
+  /** Dates de début/fin de consommation saisies par l'utilisateur. */
+  @Patch(":itemId/dates")
+  async dates(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("itemId") itemId: string,
+    @Body(new ZodValidationPipe(SetConsumptionDatesInput)) input: SetConsumptionDatesInput,
+  ): Promise<LibraryItemDto> {
+    const item = await this.setDates.execute({
+      userId: user.id,
+      itemId,
+      ...(input.startedAt !== undefined
+        ? { startedAt: input.startedAt === null ? null : new Date(input.startedAt) }
+        : {}),
+      ...(input.finishedAt !== undefined
+        ? { finishedAt: input.finishedAt === null ? null : new Date(input.finishedAt) }
+        : {}),
     });
     return toLibraryItemDto(item);
   }

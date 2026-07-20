@@ -128,8 +128,9 @@ describe("MediaController (e2e)", () => {
     });
   });
 
-  it("GET /media/:type/:externalId rejette un type invalide (400)", async () => {
-    const response = await request(app.getHttpServer()).get("/media/BOOK/1");
+  it("GET /media/:type/:externalId rejette un type inconnu (400)", async () => {
+    // `BOOK` est désormais un type valide : on vérifie le rejet d'une valeur hors enum.
+    const response = await request(app.getHttpServer()).get("/media/VINYL/1");
     expect(response.status).toBe(400);
   });
 });

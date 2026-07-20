@@ -1,0 +1,167 @@
+import { Inject, Injectable, Logger, NotFoundException, ServiceUnavailableException } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { CacheService } from "../../../shared/infrastructure/cache/cache.service";
+import type { Env } from "../../../shared/infrastructure/config/env";
+import type {
+  CatalogMediaDetails,
+  CatalogMediaType,
+  CatalogSearchResult,
+  MediaCatalogProvider,
+  MediaCatalogSearchParams,
+} from "../../media/domain";
+import {
+  type BookProvider,
+  type BookRecord,
+  dedupeBooks,
+  FALLBACK_BOOK_PROVIDER,
+  mergeBooks,
+  needsFallback,
+  parseIsbn,
+  PRIMARY_BOOK_PROVIDER,
+  toCatalogMedia,
+  toCatalogMediaDetails,
+} from "../domain";
+
+/**
+ * Adapter « livres » du socle `MediaCatalogProvider` : c'est lui qui applique la stratégie
+ * Google Books → Open Library (ADR-0016) et met les résultats en cache.
+ *
+ * Trois responsabilités, toutes techniques (la règle de fusion, elle, est pure et vit dans
+ * le domaine) :
+ * 1. **Priorité** : la source principale répond ; le secours ne fait que combler.
+ * 2. **Résilience** : une source qui tombe n'interrompt jamais le service — on sert ce
+ *    qu'on a, quitte à ne rien compléter (risque R1).
+ * 3. **Sobriété** : cache à TTL long (les données d'un livre ne changent pas) et appel au
+ *    secours seulement lorsqu'il manque quelque chose.
+ */
+@Injectable()
+export class CompositeBookCatalogProvider implements MediaCatalogProvider {
+  readonly name = "books";
+  private readonly logger = new Logger(CompositeBookCatalogProvider.name);
+
+  constructor(
+    @Inject(PRIMARY_BOOK_PROVIDER) private readonly primary: BookProvider,
+    @Inject(FALLBACK_BOOK_PROVIDER) private readonly fallback: BookProvider,
+    private readonly cache: CacheService,
+    private readonly config: ConfigService<Env, true>,
+  ) {}
+
+  async search(params: MediaCatalogSearchParams): Promise<CatalogSearchResult> {
+    const query = params.query.trim();
+    const cacheKey = `books:search:${params.page}:${params.pageSize}:${query.toLowerCase()}`;
+    const cached = this.cache.get<CatalogSearchResult>(cacheKey);
+    if (cached) return cached;
+
+    const search = { query, page: params.page, pageSize: params.pageSize };
+    const primary = await this.trySearch(this.primary, search);
+    // Le secours n'entre en jeu que si la source principale n'a rien donné d'exploitable :
+    // une recherche fructueuse ne déclenche aucun appel réseau supplémentaire.
+    const fallback =
+      primary === null || primary.items.length === 0 ? await this.trySearch(this.fallback, search) : null;
+
+    if (primary === null && fallback === null) {
+      throw new ServiceUnavailableException(
+        "Les catalogues de livres sont momentanément indisponibles.",
+      );
+    }
+
+    const items = dedupeBooks([...(primary?.items ?? []), ...(fallback?.items ?? [])]);
+    const result: CatalogSearchResult = {
+      items: items.slice(0, params.pageSize).map(toCatalogMedia),
+      page: params.page,
+      pageSize: params.pageSize,
+      total: primary?.total ?? fallback?.total ?? 0,
+    };
+    this.cacheSet(cacheKey, result);
+    return result;
+  }
+
+  async getMediaDetails(
+    type: CatalogMediaType,
+    externalId: string,
+  ): Promise<CatalogMediaDetails> {
+    if (type !== "BOOK") {
+      throw new NotFoundException(`Le catalogue de livres ne couvre pas le type « ${type} ».`);
+    }
+    const cacheKey = `books:details:${externalId}`;
+    const cached = this.cache.get<CatalogMediaDetails>(cacheKey);
+    if (cached) return cached;
+
+    const book = await this.resolveBook(externalId);
+    if (!book) throw new NotFoundException("Livre introuvable dans les catalogues.");
+
+    const result = toCatalogMediaDetails(book);
+    this.cacheSet(cacheKey, result);
+    return result;
+  }
+
+  /**
+   * Assemble la fiche : source principale d'abord, puis complément par le secours si des
+   * informations essentielles manquent (couverture, description, ISBN). Le rapprochement
+   * entre les deux sources se fait par ISBN — la clé la plus fiable dont on dispose.
+   */
+  private async resolveBook(externalId: string): Promise<BookRecord | null> {
+    const primary = await this.tryGet(this.primary, externalId);
+    if (!needsFallback(primary)) return primary;
+
+    const complement = await this.findComplement(primary, externalId);
+    if (!primary) return complement;
+    return mergeBooks(primary, complement);
+  }
+
+  /** Cherche la fiche de secours correspondante : par ISBN si connu, sinon par titre. */
+  private async findComplement(
+    primary: BookRecord | null,
+    externalId: string,
+  ): Promise<BookRecord | null> {
+    try {
+      if (!primary) {
+        // Sans fiche principale, `externalId` peut désigner directement une œuvre du
+        // secours (livre ajouté alors que Google Books était indisponible).
+        return await this.fallback.getByExternalId(externalId);
+      }
+      const isbn = primary.isbn13 ?? primary.isbn10;
+      if (isbn) return await this.fallback.findByIsbn(isbn);
+      const page = await this.fallback.searchBooks({
+        query: [primary.title, primary.authors[0]].filter(Boolean).join(" "),
+        page: 1,
+        pageSize: 1,
+      });
+      return page.items[0] ?? null;
+    } catch (error) {
+      this.logger.warn(
+        `Complément « ${this.fallback.name} » indisponible : ${(error as Error).message}`,
+      );
+      return null;
+    }
+  }
+
+  /** Recherche tolérante : `null` signale une source en panne (et non « aucun résultat »). */
+  private async trySearch(
+    provider: BookProvider,
+    params: { query: string; page: number; pageSize: number },
+  ): Promise<{ items: readonly BookRecord[]; total: number } | null> {
+    try {
+      return await provider.searchBooks(params);
+    } catch (error) {
+      this.logger.warn(`Source « ${provider.name} » indisponible : ${(error as Error).message}`);
+      return null;
+    }
+  }
+
+  private async tryGet(provider: BookProvider, externalId: string): Promise<BookRecord | null> {
+    try {
+      // Un identifiant peut aussi être un ISBN (lien externe, import) : on route en
+      // conséquence plutôt que d'échouer sur une recherche par identifiant interne.
+      const isbn = parseIsbn(externalId);
+      return isbn ? await provider.findByIsbn(isbn) : await provider.getByExternalId(externalId);
+    } catch (error) {
+      this.logger.warn(`Source « ${provider.name} » indisponible : ${(error as Error).message}`);
+      return null;
+    }
+  }
+
+  private cacheSet<T>(key: string, value: T): void {
+    this.cache.set(key, value, this.config.get("BOOKS_CACHE_TTL_SECONDS", { infer: true }));
+  }
+}

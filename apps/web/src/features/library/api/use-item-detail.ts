@@ -1,4 +1,9 @@
-import type { SaveReviewInput, WatchStatus } from "@otium/types";
+import type {
+  SaveReviewInput,
+  SetConsumptionDatesInput,
+  UpdateProgressInput,
+  WatchStatus,
+} from "@otium/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../../lib/api";
 import { useAuth } from "../../auth/api/use-auth";
@@ -34,6 +39,35 @@ export function useSetWatchStatus(itemId: string) {
       queryClient.setQueryData(itemKey(itemId), item);
       queryClient.invalidateQueries({ queryKey: ["library"] });
       queryClient.invalidateQueries({ queryKey: ["home-dashboard"] });
+    },
+  });
+}
+
+/**
+ * Enregistre l'avancement de lecture. Le serveur renvoie l'élément à jour (statut et
+ * dates déduits inclus) : on l'écrit directement dans le cache plutôt que de recharger.
+ * Les statistiques dépendent de la progression : leur cache est invalidé.
+ */
+export function useUpdateProgress(itemId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: UpdateProgressInput) => api.updateProgress(itemId, input),
+    onSuccess: (item) => {
+      queryClient.setQueryData(itemKey(itemId), item);
+      queryClient.invalidateQueries({ queryKey: ["library"] });
+      queryClient.invalidateQueries({ queryKey: ["stats"] });
+    },
+  });
+}
+
+/** Fixe les dates de début/fin de consommation saisies par l'utilisateur. */
+export function useSetConsumptionDates(itemId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: SetConsumptionDatesInput) => api.setConsumptionDates(itemId, input),
+    onSuccess: (item) => {
+      queryClient.setQueryData(itemKey(itemId), item);
+      queryClient.invalidateQueries({ queryKey: ["library"] });
     },
   });
 }

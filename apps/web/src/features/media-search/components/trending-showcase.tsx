@@ -21,15 +21,17 @@ function TrendingRow({ title, type }: { title: string; type: MediaType }) {
 }
 
 /**
- * Vitrine affichée sous la barre de recherche en l'absence de requête :
- * met en avant les films et séries du moment (tendances TMDB).
+ * Vitrine affichée sous la barre de recherche en l'absence de requête : met en avant les
+ * films et séries du moment (tendances TMDB). Les livres n'y figurent pas — aucune de nos
+ * sources n'expose de tendances, et une sélection arbitraire vaudrait moins que rien
+ * (ADR-0015 : les tendances sont une capacité optionnelle du catalogue).
  */
 export function TrendingShowcase() {
-  const { movies, series } = useSearchSettingsStore();
+  const enabled = useSearchSettingsStore((state) => state.enabled);
   return (
     <div className="space-y-8">
-      {series ? <TrendingRow title="Séries du moment" type="SERIES" /> : null}
-      {movies ? <TrendingRow title="Films du moment" type="MOVIE" /> : null}
+      {enabled.SERIES ? <TrendingRow title="Séries du moment" type="SERIES" /> : null}
+      {enabled.MOVIE ? <TrendingRow title="Films du moment" type="MOVIE" /> : null}
     </div>
   );
 }

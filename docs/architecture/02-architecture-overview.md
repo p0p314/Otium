@@ -25,7 +25,7 @@ flowchart LR
 
   DB[(PostgreSQL)]
   Cache[(Redis)]
-  Ext[Fournisseurs externes<br/>TMDB / Trakt / TVMaze / OMDb]
+  Ext[Fournisseurs externes<br/>TMDB · Google Books · Open Library]
 
   Web -- HTTP/JSON via api-sdk --> Pres
   Pres --> App --> Dom
@@ -65,7 +65,10 @@ Le `domain` ne connaît ni Prisma, ni NestJS, ni TMDB. L'`infrastructure` dépen
 | Port (domain) | Adapter (infrastructure) |
 | --- | --- |
 | `MediaRepository` | `PrismaMediaRepository` |
-| `MediaCatalogProvider` | `TmdbProvider`, `TvMazeProvider`, `OmdbProvider`, `TraktProvider` |
+| `MediaCatalogProvider` (socle) | `TmdbProvider` (films/séries), `CompositeBookCatalogProvider` (livres) |
+| `SeriesCatalogProvider` / `TrendingCatalogProvider` (capacités) | `TmdbProvider` |
+| `MediaCatalogRegistry` | `TypeBasedMediaCatalogRegistry` — route par `MediaType` (ADR-0015) |
+| `BookProvider` | `GoogleBooksProvider` (prioritaire), `OpenLibraryProvider` (secours) — ADR-0016 |
 | `CacheStore` | `RedisCacheStore` |
 | `EventPublisher` | `InMemoryEventBus` (MVP) → `BullMQEventBus` (Redis) |
 

@@ -1,8 +1,10 @@
-import type { ViewingStats } from "@otium/types";
+import type { ReadingStats, ViewingStats } from "@otium/types";
 import type { StatsRawData } from "../domain";
 
 const MONTHS_WINDOW = 12;
 const TOP_GENRES = 8;
+const TOP_AUTHORS = 8;
+const MS_PER_DAY = 86_400_000;
 
 function monthKey(date: Date): string {
   return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
@@ -18,8 +20,71 @@ function lastMonths(now: Date, count: number): string[] {
 }
 
 /**
+ * Volet lecture, assemblé par le **même** moteur pur que le visionnage : mêmes fenêtres
+ * glissantes, mêmes conventions de tri et d'égalité (ADR-0003 — les capacités
+ * transversales sont écrites une seule fois).
+ */
+function buildReadingStats(raw: StatsRawData, now: Date): ReadingStats {
+  const books = raw.booksInLibrary;
+  const monthPages = new Map<string, number>();
+  for (const entry of raw.progressEntries) {
+    if (entry.pages <= 0) continue;
+    monthPages.set(monthKey(entry.occurredAt), (monthPages.get(monthKey(entry.occurredAt)) ?? 0) + entry.pages);
+  }
+
+  const yearBooks = new Map<number, number>();
+  for (const book of books) {
+    if (book.finishedAt) {
+      const year = book.finishedAt.getUTCFullYear();
+      yearBooks.set(year, (yearBooks.get(year) ?? 0) + 1);
+    }
+  }
+
+  const authorCount = new Map<string, number>();
+  for (const book of books) {
+    if (book.status !== "COMPLETED") continue;
+    for (const author of book.authors) authorCount.set(author, (authorCount.get(author) ?? 0) + 1);
+  }
+
+  const rated = books.filter((b) => b.rating != null).map((b) => b.rating as number);
+  const pagesRead = raw.progressEntries.reduce((sum, e) => sum + Math.max(0, e.pages), 0);
+
+  return {
+    booksCompleted: books.filter((b) => b.status === "COMPLETED").length,
+    booksInProgress: books.filter((b) => b.status === "IN_PROGRESS").length,
+    booksDropped: books.filter((b) => b.status === "DROPPED").length,
+    pagesRead,
+    pagesByMonth: lastMonths(now, MONTHS_WINDOW).map((month) => ({
+      month,
+      pages: monthPages.get(month) ?? 0,
+    })),
+    booksByYear: [...yearBooks.entries()]
+      .sort((a, b) => a[0] - b[0])
+      .map(([year, count]) => ({ year, books: count })),
+    topAuthors: [...authorCount.entries()]
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+      .slice(0, TOP_AUTHORS)
+      .map(([name, count]) => ({ name, count })),
+    pagesPerDay: readingPace(raw, pagesRead, now),
+    averageRating: rated.length > 0 ? rated.reduce((a, b) => a + b, 0) / rated.length : null,
+  };
+}
+
+/**
+ * Rythme moyen : pages lues rapportées à la durée **réellement observée** (du premier
+ * avancement à aujourd'hui), et non à une fenêtre arbitraire — un lecteur récent n'est
+ * pas pénalisé par les mois où il n'utilisait pas encore l'application.
+ */
+function readingPace(raw: StatsRawData, pagesRead: number, now: Date): number | null {
+  if (pagesRead === 0 || raw.progressEntries.length === 0) return null;
+  const first = Math.min(...raw.progressEntries.map((e) => e.occurredAt.getTime()));
+  const days = Math.max(1, Math.ceil((now.getTime() - first) / MS_PER_DAY));
+  return Math.round((pagesRead / days) * 10) / 10;
+}
+
+/**
  * Assemble le tableau de bord de statistiques (**pur**, testable sans I/O) à partir des
- * données brutes : temps par mois/année, genres les plus regardés, records.
+ * données brutes : temps par mois/année, genres les plus regardés, records, lecture.
  */
 export function buildViewingStats(raw: StatsRawData, now: Date): ViewingStats {
   const monthMinutes = new Map<string, number>();
@@ -70,7 +135,8 @@ export function buildViewingStats(raw: StatsRawData, now: Date): ViewingStats {
       seriesMinutes,
       averageRating: raw.averageRating,
     },
-    breakdown: { movies: raw.movies, series: raw.series },
+    breakdown: { movies: raw.movies, series: raw.series, books: raw.books },
+    reading: buildReadingStats(raw, now),
     topGenres,
     activityByMonth,
     activityByYear,

@@ -2,11 +2,7 @@ import type { MediaSummary } from "@otium/types";
 import { Link } from "@tanstack/react-router";
 import { ImageOff } from "lucide-react";
 import type { ReactNode } from "react";
-
-const TYPE_LABEL: Record<MediaSummary["type"], string> = {
-  MOVIE: "Film",
-  SERIES: "Série",
-};
+import { MEDIA_TYPE_LABEL } from "../../../lib/media-type";
 
 /**
  * Vignette d'un média : lien vers la fiche + action rapide superposée sur l'affiche
@@ -39,7 +35,7 @@ export function MediaCard({ media, action }: { media: MediaSummary; action?: Rea
           {media.title}
         </h3>
         <p className="text-xs text-muted-foreground">
-          {TYPE_LABEL[media.type]}
+          {MEDIA_TYPE_LABEL[media.type]}
           {media.year ? ` · ${media.year}` : ""}
         </p>
       </Link>

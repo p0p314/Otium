@@ -12,10 +12,11 @@ avant toute implémentation** et tenue à jour avec le code.
 5. [`architecture/03-c4-diagrams.md`](architecture/03-c4-diagrams.md) — les diagrammes C4.
 6. [`architecture/04-monorepo-structure.md`](architecture/04-monorepo-structure.md) — l'organisation du code.
 7. [`architecture/06-choix-techniques.md`](architecture/06-choix-techniques.md) — justification de la stack.
-8. [`adr/`](adr/README.md) — décisions structurantes.
-9. [`roadmap.md`](roadmap.md) — le plan de livraison.
-10. [`risques-techniques.md`](risques-techniques.md) — ce qui peut mal tourner.
-11. [`strategie-tests.md`](strategie-tests.md) — comment on garantit la qualité.
+8. [`architecture/07-catalogue-livres.md`](architecture/07-catalogue-livres.md) — providers livres, fusion, extension.
+9. [`adr/`](adr/README.md) — décisions structurantes.
+10. [`roadmap.md`](roadmap.md) — le plan de livraison.
+11. [`risques-techniques.md`](risques-techniques.md) — ce qui peut mal tourner.
+12. [`strategie-tests.md`](strategie-tests.md) — comment on garantit la qualité.
 
 ## Structure
 
@@ -28,10 +29,11 @@ docs/
 │   ├── 03-c4-diagrams.md
 │   ├── 04-monorepo-structure.md
 │   ├── 05-modele-metier.md
-│   └── 06-choix-techniques.md
+│   ├── 06-choix-techniques.md
+│   └── 07-catalogue-livres.md
 ├── adr/
 │   ├── README.md
-│   └── 0001..0007-*.md
+│   └── 0001..0017-*.md
 ├── roadmap.md
 ├── risques-techniques.md
 └── strategie-tests.md

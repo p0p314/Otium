@@ -16,6 +16,21 @@ export interface CompletedMovieRecord {
   readonly minutes: number;
 }
 
+/** Un avancement de lecture horodaté (delta de pages ou de pourcentage). */
+export interface ProgressEntryRecord {
+  readonly occurredAt: Date;
+  /** Pages effectivement lues lors de cet avancement (0 si l'unité n'est pas paginable). */
+  readonly pages: number;
+}
+
+/** Un livre de la bibliothèque, pour les totaux et tops de lecture. */
+export interface BookRecord {
+  readonly status: "PLANNED" | "IN_PROGRESS" | "COMPLETED" | "DROPPED" | "PAUSED";
+  readonly finishedAt: Date | null;
+  readonly authors: readonly string[];
+  readonly rating: number | null;
+}
+
 export interface StatsRawData {
   readonly moviesCompleted: number;
   readonly seriesCompleted: number;
@@ -23,11 +38,15 @@ export interface StatsRawData {
   readonly seriesDropped: number;
   readonly movies: number;
   readonly series: number;
+  readonly books: number;
   readonly averageRating: number | null;
   readonly episodes: readonly WatchedEpisodeRecord[];
   readonly completedMovies: readonly CompletedMovieRecord[];
   /** Genres (libellés, avec répétitions) des médias regardés. */
   readonly watchedGenres: readonly string[];
+  /** Historique d'avancement de lecture (source des pages par mois et du rythme). */
+  readonly progressEntries: readonly ProgressEntryRecord[];
+  readonly booksInLibrary: readonly BookRecord[];
 }
 
 export interface StatsRepository {

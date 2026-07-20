@@ -1,13 +1,21 @@
 import { z } from "zod";
 import { MediaType } from "./media.js";
 
+/**
+ * Types de média couverts par l'import. Sous-ensemble volontaire de `MediaType` : les
+ * sources supportées (TV Time) sont audiovisuelles. Un import de livres (Goodreads,
+ * Babelio…) élargira cet ensemble en même temps que son parseur.
+ */
+export const ImportMediaType = MediaType.exclude(["BOOK"]);
+export type ImportMediaType = z.infer<typeof ImportMediaType>;
+
 /** Formats d'import pris en charge (extensible : d'autres sources plus tard). */
 export const ImportSourceFormat = z.enum(["tvtime"]);
 export type ImportSourceFormat = z.infer<typeof ImportSourceFormat>;
 
 /** Un média que le rapprochement au catalogue n'a pas pu identifier. */
 export const UnmatchedImportEntry = z.object({
-  type: MediaType,
+  type: ImportMediaType,
   title: z.string(),
   year: z.number().int().nullable(),
 });
@@ -55,7 +63,7 @@ export type ImportCandidate = z.infer<typeof ImportCandidate>;
  * de l'utilisateur ({@link ResolveImportInput}).
  */
 export const PendingImport = z.object({
-  type: MediaType,
+  type: ImportMediaType,
   title: z.string(),
   year: z.number().int().nullable(),
   status: ImportEntryStatus,
@@ -68,7 +76,7 @@ export type PendingImport = z.infer<typeof PendingImport>;
 export const ResolveImportInput = z.object({
   candidate: ImportCandidate,
   entry: z.object({
-    type: MediaType,
+    type: ImportMediaType,
     title: z.string(),
     year: z.number().int().nullable(),
     status: ImportEntryStatus,

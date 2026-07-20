@@ -30,6 +30,9 @@ const item: LibraryItem = {
   isFavorite: false,
   addedAt: new Date("2026-01-01T00:00:00.000Z"),
   lastActivityAt: new Date("2026-01-01T00:00:00.000Z"),
+  startedAt: null,
+  finishedAt: null,
+  progress: null,
 };
 
 describe("Library use cases", () => {
@@ -55,6 +58,8 @@ describe("Library use cases", () => {
       getMediaId: vi.fn().mockResolvedValue("media-1"),
       backfillMediaMetadata: vi.fn().mockResolvedValue(undefined),
       listUpcomingMovies: vi.fn().mockResolvedValue([]),
+      saveProgress: vi.fn(),
+      setConsumptionDates: vi.fn(),
     };
     events = { publish: vi.fn().mockResolvedValue(undefined), publishAll: vi.fn() };
     // Par défaut : l'enrichissement échoue (dégradation gracieuse — média inchangé).

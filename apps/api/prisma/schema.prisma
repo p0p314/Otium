@@ -13,6 +13,13 @@ datasource db {
 enum MediaType {
   MOVIE
   SERIES
+  BOOK
+}
+
+/// Unité de progression d'un média (ADR-0017). Extensible : CHAPTERS, VOLUMES, MINUTES…
+enum ProgressUnit {
+  PAGES
+  PERCENT
 }
 
 enum WatchStatus {
@@ -73,9 +80,48 @@ model Media {
   libraryItems     LibraryItem[]
   listItems        ListItem[]
   reviews          Review[]
+  book             BookMetadata?
 
   @@unique([externalProvider, externalId])
   @@index([type])
+}
+
+/**
+ * Données propres aux livres, en table dédiée plutôt qu'en colonnes de `Media` : le média
+ * générique reste mince et les types futurs (manga, BD…) suivront le même patron —
+ * une table de spécialisation par type (ADR-0003).
+ *
+ * `sources` trace les fournisseurs ayant contribué à la fiche après fusion (ADR-0016).
+ */
+model BookMetadata {
+  mediaId       String   @id
+  media         Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  subtitle      String?
+  authors       String[]
+  description   String?
+  pageCount     Int?
+  publisher     String?
+  /// Date de publication brute du fournisseur (`YYYY`, `YYYY-MM` ou `YYYY-MM-DD`).
+  publishedDate String?
+  /// Code langue ISO 639-1, ex. `fr`.
+  language      String?
+  categories    String[]
+  isbn10        String?
+  isbn13        String?
+  googleBooksId String?
+  openLibraryId String?
+  infoUrl       String?
+  previewUrl    String?
+  /// Note moyenne du fournisseur (échelle 0–5 chez Google Books, normalisée en 0–10).
+  averageRating Float?
+  ratingsCount  Int?
+  coverUrlLarge String?
+  sources       String[]
+  updatedAt     DateTime @updatedAt
+
+  @@index([isbn13])
+  @@index([googleBooksId])
+  @@index([openLibraryId])
 }
 
 model Season {
@@ -114,10 +160,37 @@ model LibraryItem {
   isFavorite Boolean          @default(false)
   addedAt    DateTime         @default(now())
   updatedAt  DateTime         @updatedAt
+  /// Début/fin de consommation. Générique (tous types de média), alimenté d'abord par
+  /// la lecture ; un film « vu » pourra les renseigner sans nouvelle migration.
+  startedAt  DateTime?
+  finishedAt DateTime?
+  /// Progression courante, exprimée dans `progressUnit` (ADR-0017). Null = non suivie.
+  progressUnit  ProgressUnit?
+  progressValue Int?
+  /// Total connu (pages du livre). Null si inconnu du catalogue et non saisi.
+  progressTotal Int?
   watched    WatchedEpisode[]
+  progress   ProgressEntry[]
 
   @@unique([userId, mediaId])
   @@index([userId, status])
+}
+
+/**
+ * Historique horodaté des avancements — pendant de `WatchedEpisode` pour les médias à
+ * progression continue. C'est la source des statistiques temporelles (pages par mois,
+ * rythme de lecture) : sans lui, seule la valeur courante serait connue (ADR-0017).
+ */
+model ProgressEntry {
+  id            String       @id @default(cuid())
+  libraryItem   LibraryItem  @relation(fields: [libraryItemId], references: [id], onDelete: Cascade)
+  libraryItemId String
+  unit          ProgressUnit
+  fromValue     Int
+  toValue       Int
+  occurredAt    DateTime     @default(now())
+
+  @@index([libraryItemId, occurredAt])
 }
 
 model WatchedEpisode {

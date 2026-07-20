@@ -29,7 +29,13 @@ export class MediaController {
   async search(
     @Query(new ZodValidationPipe(SearchMediaQuery)) query: SearchMediaQuery,
   ): Promise<SearchMediaResult> {
-    const result = await this.searchMedia.execute(query);
+    const result = await this.searchMedia.execute({
+      q: query.q,
+      page: query.page,
+      pageSize: query.pageSize,
+      ...(query.type ? { type: query.type } : {}),
+      ...(query.types ? { types: query.types } : {}),
+    });
     return toSearchMediaResult(result);
   }
 

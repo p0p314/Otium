@@ -3,6 +3,7 @@ import { Button, Skeleton, buttonVariants, cn } from "@otium/ui";
 import { Link } from "@tanstack/react-router";
 import { Heart, ListVideo, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { MEDIA_TYPE_LABEL_PLURAL } from "../../lib/media-type";
 import { useLibrary, useRemoveFromLibrary, useToggleFavorite } from "./api/use-library";
 import { StatusBadge } from "./components/status-badge";
 import { LibraryToolbar } from "./components/library-toolbar";
@@ -15,10 +16,11 @@ import {
 
 const GRID = "grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5";
 
-const CATEGORY_ORDER: MediaType[] = ["SERIES", "MOVIE"];
+const CATEGORY_ORDER: MediaType[] = ["SERIES", "MOVIE", "BOOK"];
 const CATEGORIES: Record<MediaType, { label: string; empty: string }> = {
-  SERIES: { label: "Séries", empty: "Aucune série suivie pour le moment." },
-  MOVIE: { label: "Films", empty: "Aucun film suivi pour le moment." },
+  SERIES: { label: MEDIA_TYPE_LABEL_PLURAL.SERIES, empty: "Aucune série suivie pour le moment." },
+  MOVIE: { label: MEDIA_TYPE_LABEL_PLURAL.MOVIE, empty: "Aucun film suivi pour le moment." },
+  BOOK: { label: MEDIA_TYPE_LABEL_PLURAL.BOOK, empty: "Aucun livre suivi pour le moment." },
 };
 
 export function LibraryPage() {
@@ -34,10 +36,10 @@ export function LibraryPage() {
     setQuery((q) => ({ ...q, genre: "ALL" }));
   };
 
-  const counts: Record<MediaType, number> = {
-    SERIES: (data ?? []).filter((item) => item.media.type === "SERIES").length,
-    MOVIE: (data ?? []).filter((item) => item.media.type === "MOVIE").length,
-  };
+  const counts = CATEGORY_ORDER.reduce<Record<MediaType, number>>(
+    (acc, type) => ({ ...acc, [type]: (data ?? []).filter((i) => i.media.type === type).length }),
+    { SERIES: 0, MOVIE: 0, BOOK: 0 },
+  );
 
   // Au premier chargement, si la catégorie par défaut est vide mais qu'une autre
   // contient des éléments, on bascule dessus — pour ne jamais paraître « vide » à tort.
@@ -68,7 +70,7 @@ export function LibraryPage() {
         <div className="flex items-start justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Ma bibliothèque</h1>
-            <p className="text-muted-foreground">Vos films et séries suivis, par catégorie.</p>
+            <p className="text-muted-foreground">Vos films, séries et livres suivis, par catégorie.</p>
           </div>
           {/* « Mes listes » vit ici (retiré de la navigation principale). */}
           <Link

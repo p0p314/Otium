@@ -15,6 +15,7 @@ import {
 import type { ReactNode } from "react";
 import { useViewingStats } from "./api/use-stats";
 import { MonthlyActivityChart } from "./components/monthly-activity-chart";
+import { ReadingPanel } from "./components/reading-panel";
 import { StatTile } from "./components/stat-tile";
 import { TopGenresChart } from "./components/top-genres-chart";
 import { TypeBreakdownChart } from "./components/type-breakdown-chart";
@@ -38,7 +39,7 @@ export function StatsPage() {
     <section className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Statistiques</h1>
-        <p className="text-muted-foreground">Votre activité de visionnage en un coup d'œil.</p>
+        <p className="text-muted-foreground">Votre activité de visionnage et de lecture en un coup d'œil.</p>
       </div>
 
       {isLoading ? (
@@ -54,11 +55,11 @@ export function StatsPage() {
             Réessayer
           </Button>
         </div>
-      ) : data.breakdown.movies + data.breakdown.series === 0 ? (
+      ) : data.breakdown.movies + data.breakdown.series + data.breakdown.books === 0 ? (
         <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed py-16 text-center">
           <p className="font-medium">Aucune statistique pour l'instant</p>
           <p className="max-w-xs text-sm text-muted-foreground">
-            Ajoutez des films et séries, marquez-les comme vus : vos statistiques se construiront
+            Ajoutez des films, séries et livres, suivez-les : vos statistiques se construiront
             automatiquement.
           </p>
           <Link to="/search" className={buttonVariants({ size: "sm" })}>
@@ -112,13 +113,19 @@ export function StatsPage() {
           </div>
 
           <div className="grid gap-4 lg:grid-cols-2">
-            <Panel title="Répartition films / séries">
-              <TypeBreakdownChart movies={data.breakdown.movies} series={data.breakdown.series} />
+            <Panel title="Répartition par type">
+              <TypeBreakdownChart
+                movies={data.breakdown.movies}
+                series={data.breakdown.series}
+                books={data.breakdown.books}
+              />
             </Panel>
             <Panel title="Genres les plus regardés">
               <TopGenresChart genres={data.topGenres} />
             </Panel>
           </div>
+
+          {data.breakdown.books > 0 ? <ReadingPanel reading={data.reading} /> : null}
 
           <Panel title="Activité des 12 derniers mois">
             <MonthlyActivityChart data={data.activityByMonth} />

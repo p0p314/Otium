@@ -5,12 +5,14 @@
 | Terme | Définition |
 | --- | --- |
 | **Media** | Concept **générique** d'œuvre culturelle suivie (film, série, livre, jeu…). |
-| **MediaType** | Discriminant du type (`MOVIE`, `SERIES`, futur : `BOOK`, `GAME`…). |
+| **MediaType** | Discriminant du type (`MOVIE`, `SERIES`, `BOOK` ; futur : `MANGA`, `GAME`…). |
 | **ExternalRef** | Référence stable vers une source externe (`provider` + `externalId`). |
 | **LibraryItem** | Relation *utilisateur ↔ média* dans sa bibliothèque (statut, note, favori). |
 | **WatchStatus** | État de consommation (`PLANNED`, `IN_PROGRESS`, `COMPLETED`, `DROPPED`, `PAUSED`). |
 | **List** | Regroupement personnalisé de médias (créé par l'utilisateur). |
-| **Progress** | Avancement dans un média (générique ; spécialisé par type). |
+| **Progress** | Avancement dans un média (générique ; unité selon le type — voir ADR-0017). |
+| **ProgressEntry** | Avancement horodaté (`from` → `to`), source des statistiques temporelles. |
+| **BookMetadata** | Données propres aux livres (auteurs, ISBN, éditeur, pagination). |
 | **Rating** | Note attribuée par l'utilisateur (VO validant l'échelle). |
 | **Review** | Avis textuel. |
 
@@ -55,6 +57,12 @@ classDiagram
     +Episode nextUnwatched(watched)
     +Progress progressFor(watchedEpisodeIds)
   }
+  class Book {
+    +string[] authors
+    +int? pageCount
+    +Isbn? isbn13
+    +Progress progressFor(unit, value)
+  }
   class Season {
     +int number
     +Episode[] episodes
@@ -68,6 +76,7 @@ classDiagram
   }
   Media <|-- Movie
   Media <|-- Series
+  Media <|-- Book
   Series *-- Season
   Season *-- Episode
 ```
@@ -82,7 +91,8 @@ Ajouter un **nouveau type** de média = :
 Le **suivi de progression** est abstrait via un `ProgressModel` polymorphe :
 - `Movie` → progression binaire (vu / non vu) ;
 - `Series` → progression par ensemble d'`Episode` vus, avec calcul du **prochain non vu** ;
-- `Book` (futur) → progression par pages/chapitres.
+- `Book` → progression **continue**, en pages ou en pourcentage, avec historique horodaté
+  (`ProgressEntry`) — voir [ADR-0017](../adr/0017-progression-polymorphe.md).
 
 > C'est ce point qui évite le piège « logique uniquement Movie/Series » : la reprise, la
 > complétion et le pourcentage d'avancement sont exprimés par le `ProgressModel`, pas par du
@@ -102,6 +112,8 @@ Le **suivi de progression** est abstrait via un `ProgressModel` polymorphe :
 - `MediaId`, `EpisodeId`, `UserId`, `ListId` — identifiants typés (pas de `string` nu).
 - `ExternalRef { provider, externalId }` — égalité par valeur.
 - `MediaType` — enum fermé mais **extensible** (ajout d'une valeur, pas refonte).
+- `ProgressUnit` — unité d'avancement (`PAGES`, `PERCENT` ; futur `CHAPTERS`, `VOLUMES`).
+- `Isbn` — identifiant normalisé d'un livre, **clé de contrôle vérifiée** (rapprochement de sources).
 - `WatchStatus` — enum + transitions valides.
 - `Rating` — encapsule l'échelle **0 à 10 (entiers)** et sa validation (0 = non noté/rejeté selon contexte, 1–10 = note). Décision produit validée.
 - `Genre` — normalisé (mapping providers → référentiel interne).
@@ -121,8 +133,10 @@ flowchart LR
   L --> E6[SeriesCompleted]
   L --> E7[FavoriteAdded]
   L --> E8[CommentCreated]
-  E1 & E2 & E3 & E4 & E5 & E6 & E7 & E8 --> H1[Historique]
-  E3 & E4 & E5 --> H2[Statistiques]
+  L --> E9[ProgressUpdated]
+  L --> E10[BookCompleted]
+  E1 & E2 & E3 & E4 & E5 & E6 & E7 & E8 & E9 & E10 --> H1[Historique]
+  E3 & E4 & E5 & E9 & E10 --> H2[Statistiques]
   E1 & E3 & E4 --> H3[Recommandations]
 ```
 

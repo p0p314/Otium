@@ -1,5 +1,9 @@
-import type { LibraryItem as LibraryItemDto, MediaSummary } from "@otium/types";
-import type { LibraryItem, MediaDescriptor } from "../domain";
+import type {
+  LibraryItem as LibraryItemDto,
+  MediaProgress,
+  MediaSummary,
+} from "@otium/types";
+import { computeProgress, type LibraryItem, type MediaDescriptor } from "../domain";
 
 /**
  * Convertit un résumé de média (contrat) vers le descripteur du domaine. Les genres
@@ -35,5 +39,26 @@ export function toLibraryItemDto(item: LibraryItem): LibraryItemDto {
     isFavorite: item.isFavorite,
     addedAt: item.addedAt.toISOString(),
     lastActivityAt: item.lastActivityAt.toISOString(),
+    startedAt: item.startedAt?.toISOString() ?? null,
+    finishedAt: item.finishedAt?.toISOString() ?? null,
+    progress: toProgressDto(item),
+  };
+}
+
+/**
+ * Expose la progression **déjà calculée** (pourcentage, restant) : le calcul vit dans le
+ * domaine et n'est pas rejoué par les clients — une seule vérité, aucun écart possible.
+ */
+function toProgressDto(item: LibraryItem): MediaProgress | null {
+  if (!item.progress) return null;
+  const view = computeProgress(item.progress);
+  return {
+    unit: view.unit,
+    value: view.value,
+    total: view.total,
+    percent: view.percent,
+    remaining: view.remaining,
+    // La progression suit l'activité de l'élément : pas d'horodatage propre en base.
+    updatedAt: item.lastActivityAt.toISOString(),
   };
 }

@@ -9,34 +9,35 @@ function provider(name: string): MediaCatalogProvider {
 
 describe("TypeBasedMediaCatalogRegistry", () => {
   const tmdb = provider("tmdb");
-  const other = provider("autre");
+  const books = provider("books");
 
   const registry = new TypeBasedMediaCatalogRegistry([
-    { types: ["MOVIE"], provider: tmdb },
-    { types: ["SERIES"], provider: other },
+    { types: ["MOVIE", "SERIES"], provider: tmdb },
+    { types: ["BOOK"], provider: books },
   ]);
 
   it("route chaque type vers son fournisseur", () => {
     expect(registry.forType("MOVIE")).toBe(tmdb);
-    expect(registry.forType("SERIES")).toBe(other);
+    expect(registry.forType("SERIES")).toBe(tmdb);
+    expect(registry.forType("BOOK")).toBe(books);
   });
 
   it("expose les types couverts", () => {
-    expect(registry.supports("MOVIE")).toBe(true);
-    expect(registry.supportedTypes()).toEqual(["MOVIE", "SERIES"]);
+    expect(registry.supports("BOOK")).toBe(true);
+    expect(registry.supportedTypes()).toEqual(["MOVIE", "SERIES", "BOOK"]);
   });
 
   it("échoue explicitement pour un type non couvert", () => {
     const partial = new TypeBasedMediaCatalogRegistry([{ types: ["MOVIE"], provider: tmdb }]);
-    expect(partial.supports("SERIES")).toBe(false);
-    expect(() => partial.forType("SERIES")).toThrow(NotFoundException);
+    expect(partial.supports("BOOK")).toBe(false);
+    expect(() => partial.forType("BOOK")).toThrow(NotFoundException);
   });
 
   it("garde le premier fournisseur déclaré en cas de doublon", () => {
     const duplicated = new TypeBasedMediaCatalogRegistry([
-      { types: ["MOVIE"], provider: other },
-      { types: ["MOVIE"], provider: tmdb },
+      { types: ["BOOK"], provider: books },
+      { types: ["BOOK"], provider: tmdb },
     ]);
-    expect(duplicated.forType("MOVIE")).toBe(other);
+    expect(duplicated.forType("BOOK")).toBe(books);
   });
 });

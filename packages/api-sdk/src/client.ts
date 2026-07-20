@@ -31,8 +31,10 @@ import {
   EpisodeReviewResponse,
   type SaveEpisodeReviewInput,
   SeriesTracking,
+  type SetConsumptionDatesInput,
   type SetWatchStatusInput,
   type ToggleFavoriteInput,
+  type UpdateProgressInput,
   type TrendingMediaQuery,
   type UpdateProfileInput,
   UpcomingDashboard,
@@ -85,7 +87,9 @@ export class OtiumClient {
       page: String(query.page),
       pageSize: String(query.pageSize),
     });
-    if (query.type) params.set("type", query.type);
+    // `types` (multi) prime sur `type` (mono), conservé pour compatibilité.
+    if (query.types?.length) params.set("types", query.types.join(","));
+    else if (query.type) params.set("type", query.type);
     return this.request(`/media/search?${params.toString()}`, SearchMediaResult);
   }
 
@@ -198,6 +202,25 @@ export class OtiumClient {
 
   async toggleFavorite(itemId: string, input: ToggleFavoriteInput): Promise<LibraryItem> {
     return this.request(`/library/${itemId}/favorite`, LibraryItem, {
+      method: "PATCH",
+      body: input,
+    });
+  }
+
+  /** Enregistre l'avancement d'un média à progression continue (livre : pages ou %). */
+  async updateProgress(itemId: string, input: UpdateProgressInput): Promise<LibraryItem> {
+    return this.request(`/library/${itemId}/progress`, LibraryItem, {
+      method: "PATCH",
+      body: input,
+    });
+  }
+
+  /** Fixe les dates de début/fin de consommation (`null` efface la date). */
+  async setConsumptionDates(
+    itemId: string,
+    input: SetConsumptionDatesInput,
+  ): Promise<LibraryItem> {
+    return this.request(`/library/${itemId}/dates`, LibraryItem, {
       method: "PATCH",
       body: input,
     });

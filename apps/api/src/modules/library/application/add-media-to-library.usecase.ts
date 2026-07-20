@@ -7,6 +7,7 @@ import {
   SERIES_CATALOG_PROVIDER,
   type SeriesCatalogProvider,
 } from "../../media/domain";
+import { toBookMetadata } from "./book-metadata.mapper";
 import { toPersistableSeasons } from "./series-structure.mapper";
 import {
   LIBRARY_REPOSITORY,
@@ -60,7 +61,10 @@ export class AddMediaToLibraryUseCase implements UseCase<AddMediaToLibraryInput,
   }
 
   /**
-   * Complète genres + durée depuis le catalogue pour alimenter les statistiques.
+   * Complète depuis le catalogue ce que le résumé de recherche ne porte pas : genres et
+   * durée (statistiques), et pour un livre ses métadonnées — dont la **pagination**, sans
+   * laquelle la progression de lecture ne pourrait ni calculer un pourcentage ni détecter
+   * la fin (ADR-0017).
    * Best-effort : une panne du fournisseur (ex. TMDB indisponible) n'échoue pas l'ajout.
    */
   private async enrich(media: MediaDescriptor): Promise<MediaDescriptor> {
@@ -69,11 +73,13 @@ export class AddMediaToLibraryUseCase implements UseCase<AddMediaToLibraryInput,
       const details = await this.catalog
         .forType(media.type)
         .getMediaDetails(media.type, media.externalRef.externalId);
+      const book = toBookMetadata(details);
       return {
         ...media,
         genres: details.genres.map((g) => g.label),
         runtimeMinutes: details.runtimeMinutes ?? media.runtimeMinutes ?? null,
         releaseDate: details.releaseDate ? new Date(details.releaseDate) : (media.releaseDate ?? null),
+        ...(book ? { book } : {}),
       };
     } catch (error) {
       this.logger.warn(`Enrichissement du média impossible : ${(error as Error).message}`);

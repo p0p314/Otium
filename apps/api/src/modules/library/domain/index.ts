@@ -7,3 +7,4 @@ export * from "./ports/review.repository";
 export * from "./ports/episode-review.repository";
 export * from "./events/library.events";
 export * from "./series-progress";
+export * from "./reading-progress";
