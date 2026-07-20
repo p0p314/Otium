@@ -1,4 +1,5 @@
 import type { HomeSeries } from "@otium/types";
+import { MediaCover } from "../../../components/media-cover";
 import { Link } from "@tanstack/react-router";
 import { PlayCircle } from "lucide-react";
 import { memo } from "react";
@@ -17,14 +18,7 @@ function HomeSeriesCardBase({ series }: { series: HomeSeries }) {
       className="group flex gap-3 rounded-xl border bg-card p-3 transition-colors hover:border-primary/50"
     >
       <div className="h-24 w-16 shrink-0 overflow-hidden rounded-md bg-muted">
-        {series.posterUrl ? (
-          <img
-            src={series.posterUrl}
-            alt={`Affiche de ${series.title}`}
-            loading="lazy"
-            className="h-full w-full object-cover"
-          />
-        ) : null}
+        <MediaCover src={series.posterUrl} alt={`Affiche de ${series.title}`} />
       </div>
       <div className="flex min-w-0 flex-1 flex-col justify-between">
         <div className="min-w-0">

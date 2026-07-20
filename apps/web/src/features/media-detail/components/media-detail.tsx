@@ -1,6 +1,7 @@
 import type { MediaDetails } from "@otium/types";
-import { ImageOff, Star } from "lucide-react";
+import { Star } from "lucide-react";
 import type { ReactNode } from "react";
+import { MediaCover } from "../../../components/media-cover";
 import { MEDIA_TYPE_LABEL } from "../../../lib/media-type";
 import { BookFacts } from "./book-facts";
 
@@ -76,17 +77,8 @@ export function MediaDetail({ details, actions }: { details: MediaDetails; actio
         </div>
         <div className="relative -mt-16 flex flex-col gap-4 px-2 sm:-mt-24 sm:flex-row sm:items-end sm:px-6">
           <div className="h-40 w-28 shrink-0 overflow-hidden rounded-xl border-4 border-background bg-muted shadow-lg sm:h-56 sm:w-36">
-            {details.posterUrl ? (
-              <img
-                src={details.posterUrl}
-                alt={`Affiche de ${details.title}`}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-                <ImageOff className="h-8 w-8" aria-hidden />
-              </div>
-            )}
+            {/* Élément visuel principal de la page : chargé sans délai. */}
+            <MediaCover src={details.posterUrl} alt={`Affiche de ${details.title}`} priority />
           </div>
           <div className="pb-1 sm:pb-2">
             <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{details.title}</h1>

@@ -7,6 +7,15 @@
     <title>Otium</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <!-- Hôtes d'images du catalogue : la connexion (DNS + TCP + TLS) est ouverte pendant
+         le chargement du JS, au lieu d'être payée à l'affichage de la première affiche.
+         Deux `preconnect` seulement — chacun coûte une connexion, on les réserve aux hôtes
+         présents sur quasiment tous les écrans. Open Library, plus rare et qui redirige de
+         toute façon vers archive.org, se contente d'une résolution DNS anticipée. -->
+    <link rel="preconnect" href="https://image.tmdb.org" crossorigin />
+    <link rel="preconnect" href="https://books.google.com" crossorigin />
+    <link rel="dns-prefetch" href="https://covers.openlibrary.org" />
+    <link rel="dns-prefetch" href="https://archive.org" />
     <!-- Couleur de l'UI navigateur/barre d'état, accordée au thème (le ThemeProvider
          la met à jour dynamiquement lors d'un basculement manuel). -->
     <meta name="theme-color" media="(prefers-color-scheme: light)" content="#faf7f0" />

@@ -2,6 +2,7 @@ import { Skeleton } from "@otium/ui";
 import type { MediaSummary } from "@otium/types";
 import { SearchX } from "lucide-react";
 import type { ReactNode } from "react";
+import { ABOVE_THE_FOLD } from "../../../components/media-cover";
 import { MediaCard } from "./media-card";
 
 interface MediaResultsProps {
@@ -62,9 +63,13 @@ export function MediaResults({
 
   return (
     <ul className={GRID}>
-      {items.map((media) => (
+      {items.map((media, index) => (
         <li key={`${media.externalRef.provider}:${media.externalRef.externalId}`}>
-          <MediaCard media={media} action={renderAction?.(media)} />
+          <MediaCard
+            media={media}
+            action={renderAction?.(media)}
+            priority={index < ABOVE_THE_FOLD}
+          />
         </li>
       ))}
     </ul>
