@@ -3,7 +3,8 @@ import { Test } from "@nestjs/testing";
 import request from "supertest";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { EVENT_PUBLISHER } from "../src/shared/domain";
-import { MEDIA_CATALOG_PROVIDER } from "../src/modules/media/domain";
+import { MEDIA_CATALOG_REGISTRY, SERIES_CATALOG_PROVIDER } from "../src/modules/media/domain";
+import { singleProviderRegistry } from "./support/catalog-registry.fake";
 import { Email, USER_REPOSITORY, User } from "../src/modules/user/domain";
 import { SESSION_STORE } from "../src/modules/authentication/domain/ports/session-store";
 import { AuthGuard } from "../src/modules/authentication/presentation/auth.guard";
@@ -137,12 +138,23 @@ describe("Ratings & reviews (e2e)", () => {
             markEpisodesSynced: async () => undefined,
           },
         },
+        // Catalogue indisponible : vérifie que l'ajout/la notation restent fonctionnels
+        // malgré l'échec de l'enrichissement (dégradation gracieuse).
         {
-          provide: MEDIA_CATALOG_PROVIDER,
-          useValue: {
+          provide: MEDIA_CATALOG_REGISTRY,
+          useValue: singleProviderRegistry({
+            name: "fake",
+            search: async () => {
+              throw new Error("no details");
+            },
             getMediaDetails: async () => {
               throw new Error("no details");
             },
+          }),
+        },
+        {
+          provide: SERIES_CATALOG_PROVIDER,
+          useValue: {
             getSeriesDetails: async () => {
               throw new Error("no details");
             },

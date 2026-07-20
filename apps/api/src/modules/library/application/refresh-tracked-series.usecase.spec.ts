@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { MediaCatalogProvider } from "../../media/domain";
+import type { SeriesCatalogProvider } from "../../media/domain";
 import type { SeriesSyncCandidate, SeriesTrackingRepository } from "../domain";
 import {
   RefreshTrackedSeriesUseCase,
@@ -8,7 +8,7 @@ import {
 
 describe("RefreshTrackedSeriesUseCase", () => {
   let repo: SeriesTrackingRepository;
-  let catalog: MediaCatalogProvider;
+  let catalog: SeriesCatalogProvider;
 
   beforeEach(() => {
     repo = {
@@ -34,7 +34,7 @@ describe("RefreshTrackedSeriesUseCase", () => {
           },
         ],
       })),
-    } as unknown as MediaCatalogProvider;
+    } as unknown as SeriesCatalogProvider;
   });
 
   it("resynchronise et horodate chaque série périmée", async () => {

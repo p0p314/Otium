@@ -1,7 +1,12 @@
 import { Inject, Injectable, Logger } from "@nestjs/common";
 import type { UseCase } from "../../../shared/application/use-case";
 import { EVENT_PUBLISHER, type EventPublisher } from "../../../shared/domain";
-import { MEDIA_CATALOG_PROVIDER, type MediaCatalogProvider } from "../../media/domain";
+import {
+  MEDIA_CATALOG_REGISTRY,
+  type MediaCatalogRegistry,
+  SERIES_CATALOG_PROVIDER,
+  type SeriesCatalogProvider,
+} from "../../media/domain";
 import { toPersistableSeasons } from "./series-structure.mapper";
 import {
   LIBRARY_REPOSITORY,
@@ -26,7 +31,8 @@ export class AddMediaToLibraryUseCase implements UseCase<AddMediaToLibraryInput,
   constructor(
     @Inject(LIBRARY_REPOSITORY) private readonly library: LibraryRepository,
     @Inject(EVENT_PUBLISHER) private readonly events: EventPublisher,
-    @Inject(MEDIA_CATALOG_PROVIDER) private readonly catalog: MediaCatalogProvider,
+    @Inject(MEDIA_CATALOG_REGISTRY) private readonly catalog: MediaCatalogRegistry,
+    @Inject(SERIES_CATALOG_PROVIDER) private readonly seriesCatalog: SeriesCatalogProvider,
     @Inject(SERIES_TRACKING_REPOSITORY) private readonly tracking: SeriesTrackingRepository,
   ) {}
 
@@ -46,7 +52,7 @@ export class AddMediaToLibraryUseCase implements UseCase<AddMediaToLibraryInput,
     try {
       const ctx = await this.tracking.getContext(userId, itemId);
       if (!ctx || (await this.tracking.hasEpisodes(ctx.mediaId))) return;
-      const details = await this.catalog.getSeriesDetails(ctx.externalId);
+      const details = await this.seriesCatalog.getSeriesDetails(ctx.externalId);
       await this.tracking.saveSeasons(ctx.mediaId, toPersistableSeasons(details.seasons));
     } catch (error) {
       this.logger.warn(`Synchronisation de la série impossible : ${(error as Error).message}`);
@@ -60,7 +66,9 @@ export class AddMediaToLibraryUseCase implements UseCase<AddMediaToLibraryInput,
   private async enrich(media: MediaDescriptor): Promise<MediaDescriptor> {
     if (media.genres && media.genres.length > 0 && media.runtimeMinutes != null) return media;
     try {
-      const details = await this.catalog.getMediaDetails(media.type, media.externalRef.externalId);
+      const details = await this.catalog
+        .forType(media.type)
+        .getMediaDetails(media.type, media.externalRef.externalId);
       return {
         ...media,
         genres: details.genres.map((g) => g.label),

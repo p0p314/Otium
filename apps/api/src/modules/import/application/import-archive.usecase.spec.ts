@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { MediaCatalogProvider } from "../../media/domain";
+import { singleProviderRegistry } from "../../../../test/support/catalog-registry.fake";
 import type { ArchiveReader, ImportBatch, ImportSourceParser } from "../domain";
 import { ImportArchiveUseCase } from "./import-archive.usecase";
 import { MediaImporter } from "./media-importer";
@@ -106,7 +107,13 @@ describe("ImportArchiveUseCase", () => {
       setWatchStatus as never,
       markEpisodes as never,
     );
-    return new ImportArchiveUseCase(archiveReader, [parser], catalog, getLibrary as never, importer);
+    return new ImportArchiveUseCase(
+      archiveReader,
+      [parser],
+      singleProviderRegistry(catalog),
+      getLibrary as never,
+      importer,
+    );
   }
 
   it("importe films et séries, rafraîchit les doublons et liste les non-rapprochés", async () => {

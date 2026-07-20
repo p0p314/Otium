@@ -1,22 +1,15 @@
 import { describe, expect, it, vi } from "vitest";
-import type { CatalogSearchResult, MediaCatalogProvider } from "../../domain";
+import type { CatalogSearchResult, TrendingCatalogProvider } from "../../domain";
 import { GetTrendingMediaUseCase } from "./get-trending-media.usecase";
 
 const emptyResult: CatalogSearchResult = { items: [], page: 1, pageSize: 20, total: 0 };
 
-function fakeProvider(): MediaCatalogProvider {
-  return {
-    name: "fake",
-    search: vi.fn().mockResolvedValue(emptyResult),
-    getTrending: vi.fn().mockResolvedValue(emptyResult),
-    getMediaDetails: vi.fn(),
-    getSeriesDetails: vi.fn().mockResolvedValue({ seasons: [] }),
-    getEpisodeDetails: vi.fn(),
-  };
+function fakeProvider(): TrendingCatalogProvider {
+  return { name: "fake", getTrending: vi.fn().mockResolvedValue(emptyResult) };
 }
 
 describe("GetTrendingMediaUseCase", () => {
-  it("délègue les tendances au port du catalogue", async () => {
+  it("délègue les tendances à la capacité « tendances » du catalogue", async () => {
     const provider = fakeProvider();
     const result = await new GetTrendingMediaUseCase(provider).execute({ page: 1, pageSize: 20 });
 

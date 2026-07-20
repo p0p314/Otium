@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import type { CatalogMediaDetails, MediaCatalogProvider } from "../../domain";
+import type { CatalogMediaDetails, MediaCatalogProvider, MediaCatalogRegistry } from "../../domain";
 import { GetMediaDetailsUseCase } from "./get-media-details.usecase";
 
 const details = {
@@ -12,17 +12,19 @@ function fakeProvider(): MediaCatalogProvider {
   return {
     name: "fake",
     search: vi.fn(),
-    getTrending: vi.fn(),
     getMediaDetails: vi.fn().mockResolvedValue(details),
-    getSeriesDetails: vi.fn(),
-    getEpisodeDetails: vi.fn(),
   };
 }
 
+/** Registry de test : route tous les types vers l'unique fournisseur fourni. */
+function registryOf(provider: MediaCatalogProvider): MediaCatalogRegistry {
+  return { forType: () => provider, supports: () => true, supportedTypes: () => ["MOVIE"] };
+}
+
 describe("GetMediaDetailsUseCase", () => {
-  it("délègue la récupération de la fiche au port du catalogue", async () => {
+  it("délègue la récupération de la fiche au catalogue choisi par le registry", async () => {
     const provider = fakeProvider();
-    const result = await new GetMediaDetailsUseCase(provider).execute({
+    const result = await new GetMediaDetailsUseCase(registryOf(provider)).execute({
       type: "MOVIE",
       externalId: "42",
     });
