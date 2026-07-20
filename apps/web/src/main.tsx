@@ -19,10 +19,15 @@ createRoot(rootElement).render(
 // Retire l'écran de démarrage une fois le premier rendu peint (fondu enchaîné).
 const splash = document.getElementById("app-splash");
 if (splash) {
+  const removeSplash = () => splash.remove();
   requestAnimationFrame(() => {
     splash.style.opacity = "0";
-    splash.addEventListener("transitionend", () => splash.remove(), { once: true });
-    // Filet de sécurité si `transitionend` ne se déclenche pas (onglet en arrière-plan…).
-    window.setTimeout(() => splash.remove(), 800);
+    splash.addEventListener("transitionend", removeSplash, { once: true });
   });
+  // Filet de sécurité **hors** de `requestAnimationFrame` : dans un onglet en arrière-plan,
+  // la callback d'animation n'est jamais appelée. Le splash resterait alors affiché et —
+  // parce qu'il couvre l'écran avec le z-index maximal — **avalerait tous les clics**.
+  // Le placer à l'intérieur du rAF le rendait inopérant dans le seul cas qu'il devait couvrir.
+  // 1,5 s : bien au-delà du fondu de 0,35 s, donc invisible en fonctionnement normal.
+  window.setTimeout(removeSplash, 1500);
 }
