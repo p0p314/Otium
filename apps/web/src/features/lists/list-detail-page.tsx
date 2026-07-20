@@ -1,4 +1,5 @@
 import { Button, Skeleton, buttonVariants } from "@otium/ui";
+import { MediaCover } from "../../components/media-cover";
 import { Link, useParams } from "@tanstack/react-router";
 import { ArrowLeft, X } from "lucide-react";
 import { MEDIA_TYPE_LABEL } from "../../lib/media-type";
@@ -54,14 +55,7 @@ export function ListDetailPage() {
           {data.items.map((entry) => (
             <li key={`${entry.media.externalRef.provider}:${entry.media.externalRef.externalId}`} className="group">
               <div className="relative aspect-[2/3] overflow-hidden rounded-lg bg-muted">
-                {entry.media.posterUrl ? (
-                  <img
-                    src={entry.media.posterUrl}
-                    alt={`Affiche de ${entry.media.title}`}
-                    loading="lazy"
-                    className="h-full w-full object-cover"
-                  />
-                ) : null}
+                <MediaCover src={entry.media.posterUrl} alt={`Affiche de ${entry.media.title}`} />
                 <Button
                   variant="destructive"
                   size="icon"

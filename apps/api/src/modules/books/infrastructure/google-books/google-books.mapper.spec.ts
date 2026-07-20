@@ -62,8 +62,27 @@ describe("toBookRecord (Google Books)", () => {
 
   it("force HTTPS et retire l'ombre décorative des couvertures", () => {
     const book = toBookRecord(volume);
-    expect(book?.coverUrl).toBe("https://books.google.com/books/content?id=B1&zoom=1");
-    expect(book?.coverUrlLarge).toBe("https://books.google.com/books/content?id=B1&zoom=3");
+    expect(book?.coverUrl).toMatch(/^https:/);
+    expect(book?.coverUrl).not.toContain("edge=curl");
+  });
+
+  it("garde la vignette légère et n'agrandit que la couverture de la fiche", () => {
+    const book = toBookRecord(volume);
+    // Mesuré : `zoom=2` coûte ~2,5× le poids et la latence de `zoom=1`. On l'accepte pour
+    // l'unique image d'une fiche, pas pour les vingt vignettes d'une grille.
+    expect(book?.coverUrl).toContain("zoom=1");
+    expect(book?.coverUrlLarge).toContain("zoom=2");
+  });
+
+  it("laisse l'URL intacte si elle ne porte pas de paramètre de zoom", () => {
+    const sansZoom = toBookRecord({
+      id: "x",
+      volumeInfo: {
+        title: "Sans zoom",
+        imageLinks: { thumbnail: "https://books.google.com/books/content?id=X" },
+      },
+    });
+    expect(sansZoom?.coverUrl).toBe("https://books.google.com/books/content?id=X");
   });
 
   it("n'expose un aperçu que si le volume en propose un", () => {

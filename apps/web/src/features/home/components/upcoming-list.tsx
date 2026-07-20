@@ -1,4 +1,5 @@
 import type { UpcomingEpisode } from "@otium/types";
+import { MediaCover } from "../../../components/media-cover";
 import { Link } from "@tanstack/react-router";
 import { CalendarClock } from "lucide-react";
 import { formatUpcomingDate } from "../lib/upcoming-date";
@@ -28,14 +29,7 @@ export function UpcomingList({ episodes }: { episodes: UpcomingEpisode[] }) {
             className="group flex items-center gap-3 rounded-xl border bg-card p-3 transition-colors hover:border-primary/50"
           >
             <div className="h-16 w-11 shrink-0 overflow-hidden rounded-md bg-muted">
-              {ep.posterUrl ? (
-                <img
-                  src={ep.posterUrl}
-                  alt={`Affiche de ${ep.seriesTitle}`}
-                  loading="lazy"
-                  className="h-full w-full object-cover"
-                />
-              ) : null}
+              <MediaCover src={ep.posterUrl} alt={`Affiche de ${ep.seriesTitle}`} />
             </div>
             <div className="min-w-0 flex-1">
               <p className="line-clamp-1 font-medium group-hover:text-primary">{ep.seriesTitle}</p>

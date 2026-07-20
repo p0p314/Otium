@@ -3,6 +3,7 @@ import { Button, Skeleton, buttonVariants, cn } from "@otium/ui";
 import { Link } from "@tanstack/react-router";
 import { Heart, ListVideo, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { ABOVE_THE_FOLD, MediaCover } from "../../components/media-cover";
 import { MEDIA_TYPE_LABEL_PLURAL } from "../../lib/media-type";
 import { useLibrary, useRemoveFromLibrary, useToggleFavorite } from "./api/use-library";
 import { StatusBadge } from "./components/status-badge";
@@ -148,7 +149,7 @@ export function LibraryPage() {
         </div>
       ) : (
         <ul className={GRID}>
-          {items.map((item) => (
+          {items.map((item, index) => (
             <li key={item.id} className="group">
               <div className="relative aspect-[2/3] overflow-hidden rounded-lg bg-muted">
                 <Link
@@ -157,14 +158,12 @@ export function LibraryPage() {
                   aria-label={`Ouvrir ${item.media.title}`}
                   className="block h-full w-full"
                 >
-                  {item.media.posterUrl ? (
-                    <img
-                      src={item.media.posterUrl}
-                      alt={`Affiche de ${item.media.title}`}
-                      loading="lazy"
-                      className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
-                    />
-                  ) : null}
+                  <MediaCover
+                    src={item.media.posterUrl}
+                    alt={`Affiche de ${item.media.title}`}
+                    priority={index < ABOVE_THE_FOLD}
+                    className="transition-transform duration-200 group-hover:scale-105"
+                  />
                 </Link>
                 <div className="pointer-events-none absolute inset-x-1 bottom-1 flex justify-center">
                   <StatusBadge
