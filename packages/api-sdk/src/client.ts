@@ -4,6 +4,7 @@ import {
   AuthSession,
   AuthUser,
   type ChangePasswordInput,
+  CollectionTracking,
   type CreateListInput,
   HomeDashboard,
   ImportJobState,
@@ -140,6 +141,17 @@ export class OtiumClient {
 
   async getHomeDashboard(): Promise<HomeDashboard> {
     return this.request("/library/home", HomeDashboard);
+  }
+
+  /**
+   * Fiche de suivi d'une œuvre (série de tomes) : volumes connus et synthèse
+   * d'avancement. Répond 404 tant qu'aucun volume n'a été ajouté en bibliothèque.
+   */
+  async getCollectionTracking(provider: string, externalId: string): Promise<CollectionTracking> {
+    return this.request(
+      `/library/collections/${encodeURIComponent(provider)}/${encodeURIComponent(externalId)}`,
+      CollectionTracking,
+    );
   }
 
   /** Agenda « À venir » : épisodes à diffusion future des séries suivies. */
