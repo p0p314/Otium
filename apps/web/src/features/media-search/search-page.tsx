@@ -46,6 +46,7 @@ export function SearchPage() {
       {hasQuery ? (
         <MediaResults
           items={data?.items ?? []}
+          collections={data?.collections ?? []}
           isLoading={isLoading}
           isError={isError}
           hasQuery={hasQuery}
