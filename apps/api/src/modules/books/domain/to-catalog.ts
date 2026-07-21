@@ -1,5 +1,6 @@
 import type { CatalogMedia, CatalogMediaDetails } from "../../media/domain";
 import { type BookRecord, publicationYear } from "./models/book";
+import { BOOKS_PROVIDER, providerSeriesKey } from "./collection-identity";
 import { parseVolumeTitle } from "./volume-title";
 
 /**
@@ -8,8 +9,8 @@ import { parseVolumeTitle } from "./volume-title";
  * un `Media` comme un autre (ADR-0003).
  */
 
-/** Identifiant du catalogue livres tel qu'exposé dans les références externes. */
-export const BOOKS_PROVIDER = "books";
+/** Réexport : les appelants historiques importent ce jeton depuis ce module. */
+export { BOOKS_PROVIDER };
 
 export function toCatalogMedia(book: BookRecord): CatalogMedia {
   return {
@@ -68,8 +69,10 @@ export function toCatalogMediaDetails(book: BookRecord): CatalogMediaDetails {
       sources: [...book.sources],
       collection: book.series
         ? {
-            id: book.series.id,
-            provider: book.series.source,
+            // Même identité que celle produite au regroupement : sans quoi la fiche
+            // d'œuvre atteinte depuis la recherche ne retrouverait rien en base.
+            id: providerSeriesKey(book.series.source, book.series.id),
+            provider: BOOKS_PROVIDER,
             // Le titre de l'œuvre se lit dans celui du volume, amputé de son numéro.
             title: parseVolumeTitle(book.title).baseTitle || book.title,
             method: "PROVIDER_SERIES",

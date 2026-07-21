@@ -1,3 +1,4 @@
+import { providerSeriesKey, titleSeriesGroupKey } from "./collection-identity";
 import type { BookRecord } from "./models/book";
 import { parseVolumeTitle, titleSeriesKey } from "./volume-title";
 
@@ -55,7 +56,7 @@ function candidateFor(book: BookRecord): Candidate | null {
     // Le titre du volume porte souvent le nom de l'œuvre ; on le nettoie de son numéro
     // pour nommer le groupe lisiblement, sans que cela n'influence le rattachement.
     return {
-      key: `series:${book.series.source}:${book.series.id}`,
+      key: providerSeriesKey(book.series.source, book.series.id),
       title: parseVolumeTitle(book.title).baseTitle || book.title,
       method: "PROVIDER_SERIES",
     };
@@ -67,7 +68,7 @@ function candidateFor(book: BookRecord): Candidate | null {
 
   const key = titleSeriesKey(parsed.baseTitle, book.authors[0]);
   if (!key) return null;
-  return { key: `title:${key}`, title: parsed.baseTitle, method: "TITLE_AND_AUTHOR" };
+  return { key: titleSeriesGroupKey(key), title: parsed.baseTitle, method: "TITLE_AND_AUTHOR" };
 }
 
 /** Rang du volume dans son œuvre, selon la source qui a servi au rattachement. */
