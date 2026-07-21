@@ -4,6 +4,7 @@ import { Test } from "@nestjs/testing";
 import request from "supertest";
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { BooksModule } from "../src/modules/books/books.module";
+import { COMMUNITY_BOOK_REPOSITORY } from "../src/modules/books/domain";
 import { CompositeBookCatalogProvider } from "../src/modules/books/infrastructure/composite-book-catalog.provider";
 import { GetEpisodeDetailsUseCase } from "../src/modules/media/application/queries/get-episode-details.usecase";
 import { GetMediaDetailsUseCase } from "../src/modules/media/application/queries/get-media-details.usecase";
@@ -16,7 +17,9 @@ import {
 } from "../src/modules/media/domain";
 import { TypeBasedMediaCatalogRegistry } from "../src/modules/media/infrastructure/type-based-media-catalog.registry";
 import { MediaController } from "../src/modules/media/presentation/media.controller";
+import { EVENT_PUBLISHER } from "../src/shared/domain";
 import { CacheService } from "../src/shared/infrastructure/cache/cache.service";
+import { PrismaService } from "../src/shared/infrastructure/prisma/prisma.service";
 import { HttpClient } from "../src/shared/infrastructure/http/http-client";
 
 /** Volume Google Books **incomplet** : ni description ni ISBN → déclenche le secours. */
@@ -79,19 +82,57 @@ function technicalModule(http: HttpClient): new () => object {
       CacheService,
       { provide: HttpClient, useValue: http },
       { provide: ConfigService, useValue: { get: (key: string) => ENV[key] } },
+      // `BooksModule` importe l'authentification (garde de la création de livre), qui
+      // dépend du bus d'événements — global en production.
+      { provide: EVENT_PUBLISHER, useValue: { publish: async () => undefined, publishAll: async () => undefined } },
+      // Idem : `PrismaModule` est global en production. Aucune requête n'est émise ici,
+      // le dépôt communautaire étant remplacé par un double.
+      { provide: PrismaService, useValue: {} },
     ],
-    exports: [CacheService, HttpClient, ConfigService],
+    exports: [CacheService, HttpClient, ConfigService, EVENT_PUBLISHER, PrismaService],
   })
   class TechnicalTestModule {}
   return TechnicalTestModule;
 }
 
+/** Livre saisi par un utilisateur, tel que le dépôt le renverrait. */
+const communityBook = {
+  externalId: "own-1",
+  source: "community",
+  title: "Carnet de voyage en Ardèche",
+  subtitle: null,
+  authors: ["Camille Roy"],
+  description: null,
+  coverUrl: null,
+  coverUrlLarge: null,
+  categories: [],
+  publishedDate: "1998",
+  pageCount: null,
+  language: "fr",
+  publisher: null,
+  isbn10: null,
+  isbn13: null,
+  googleBooksId: null,
+  openLibraryId: null,
+  infoUrl: null,
+  previewUrl: null,
+  averageRating: null,
+  ratingsCount: null,
+  sources: ["community"],
+  series: null,
+};
+
 describe("Books catalog (e2e)", () => {
   let app: INestApplication;
   let http: HttpClient;
+  let community: { search: ReturnType<typeof vi.fn>; findByExternalId: ReturnType<typeof vi.fn> };
 
   const build = async (routes: { pattern: RegExp; payload: unknown }[]) => {
     http = fakeHttp(routes);
+    community = {
+      search: vi.fn().mockResolvedValue([]),
+      findByExternalId: vi.fn().mockResolvedValue(null),
+    };
     const moduleRef = await Test.createTestingModule({
       imports: [technicalModule(http), BooksModule],
       controllers: [MediaController],
@@ -109,7 +150,10 @@ describe("Books catalog (e2e)", () => {
         },
         { provide: MEDIA_CATALOG_REGISTRY, useClass: TypeBasedMediaCatalogRegistry },
       ],
-    }).compile();
+    })
+      .overrideProvider(COMMUNITY_BOOK_REPOSITORY)
+      .useValue({ ...community, create: vi.fn(), findByIsbn: vi.fn() })
+      .compile();
     const application = moduleRef.createNestApplication();
     await application.init();
     return application;
@@ -236,6 +280,54 @@ describe("Books catalog (e2e)", () => {
     // …et Open Library comble description et ISBN manquants.
     expect(response.body.overview).toBe("Sur la planète Arrakis.");
     expect(response.body.book.identifiers.isbn13).toBe("9782221252055");
+  });
+
+  describe("livres communautaires", () => {
+    it("les fait remonter en tête des résultats", async () => {
+      await app?.close();
+      app = await build([
+        { pattern: /books\.test/, payload: { totalItems: 1, items: [googleVolume] } },
+      ]);
+      community.search.mockResolvedValue([communityBook]);
+
+      const response = await request(app.getHttpServer())
+        .get("/media/search")
+        .query({ q: "Ardèche", types: "BOOK" });
+
+      expect(response.status).toBe(200);
+      // Saisi précisément parce qu'aucun catalogue ne le connaissait : le cacher derrière
+      // eux serait absurde.
+      expect(response.body.items[0]).toMatchObject({
+        title: "Carnet de voyage en Ardèche",
+        externalRef: { provider: "books", externalId: "own-1" },
+      });
+    });
+
+    it("sert leur fiche sans appeler le réseau", async () => {
+      await app?.close();
+      app = await build([]);
+      community.findByExternalId.mockResolvedValue(communityBook);
+
+      const response = await request(app.getHttpServer()).get("/media/BOOK/own-1");
+
+      expect(response.status).toBe(200);
+      expect(response.body.title).toBe("Carnet de voyage en Ardèche");
+      // Une lecture en base coûte bien moins qu'un appel distant : on n'en fait aucun.
+      expect(http.getJson).not.toHaveBeenCalled();
+    });
+
+    it("répondent même quand les deux catalogues distants sont en panne", async () => {
+      await app?.close();
+      app = await build([]);
+      community.search.mockResolvedValue([communityBook]);
+
+      const response = await request(app.getHttpServer())
+        .get("/media/search")
+        .query({ q: "Ardèche", types: "BOOK" });
+
+      expect(response.status).toBe(200);
+      expect(response.body.items).toHaveLength(1);
+    });
   });
 
   it("renvoie 404 quand aucune source ne connaît le livre", async () => {

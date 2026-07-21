@@ -4,5 +4,6 @@ export * from "./isbn";
 export * from "./merge-books";
 export * from "./models/book";
 export * from "./ports/book-provider";
+export * from "./ports/community-book.repository";
 export * from "./to-catalog";
 export * from "./volume-title";

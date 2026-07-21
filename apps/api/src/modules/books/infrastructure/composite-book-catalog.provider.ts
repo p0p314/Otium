@@ -14,6 +14,8 @@ import {
   type BookProvider,
   type BookRecord,
   type BookRecord as Book,
+  COMMUNITY_BOOK_REPOSITORY,
+  type CommunityBookRepository,
   dedupeBooks,
   FALLBACK_BOOK_PROVIDER,
   groupVolumes,
@@ -47,6 +49,7 @@ export class CompositeBookCatalogProvider implements MediaCatalogProvider {
   constructor(
     @Inject(PRIMARY_BOOK_PROVIDER) private readonly primary: BookProvider,
     @Inject(FALLBACK_BOOK_PROVIDER) private readonly fallback: BookProvider,
+    @Inject(COMMUNITY_BOOK_REPOSITORY) private readonly community: CommunityBookRepository,
     private readonly cache: CacheService,
     private readonly config: ConfigService<Env, true>,
   ) {}
@@ -58,19 +61,27 @@ export class CompositeBookCatalogProvider implements MediaCatalogProvider {
     if (cached) return cached;
 
     const search = { query, page: params.page, pageSize: params.pageSize };
-    const primary = await this.trySearch(this.primary, search);
+    // Les livres saisis par les utilisateurs sont interrogés **en parallèle** des sources
+    // distantes, jamais en repli : ce sont leurs propres données, elles doivent remonter
+    // même quand un catalogue répond abondamment.
+    const [primary, own] = await Promise.all([
+      this.trySearch(this.primary, search),
+      this.tryCommunitySearch(query, params.pageSize),
+    ]);
     // Le secours n'entre en jeu que si la source principale n'a rien donné d'exploitable :
     // une recherche fructueuse ne déclenche aucun appel réseau supplémentaire.
     const fallback =
       primary === null || primary.items.length === 0 ? await this.trySearch(this.fallback, search) : null;
 
-    if (primary === null && fallback === null) {
+    if (primary === null && fallback === null && own.length === 0) {
       throw new ServiceUnavailableException(
         "Les catalogues de livres sont momentanément indisponibles.",
       );
     }
 
-    const deduped = dedupeBooks([...(primary?.items ?? []), ...(fallback?.items ?? [])]);
+    // Les livres communautaires passent en tête : l'utilisateur a saisi ce livre parce
+    // qu'aucun catalogue ne le connaissait, le lui cacher derrière eux serait absurde.
+    const deduped = dedupeBooks([...own, ...(primary?.items ?? []), ...(fallback?.items ?? [])]);
     // Les tomes d'une même œuvre sont réunis en une entrée : une recherche « One Piece »
     // ne doit pas noyer les autres résultats sous cent onze volumes.
     const { groups, standalone } = groupVolumes(deduped);
@@ -132,6 +143,11 @@ export class CompositeBookCatalogProvider implements MediaCatalogProvider {
    * entre les deux sources se fait par ISBN — la clé la plus fiable dont on dispose.
    */
   private async resolveBook(externalId: string): Promise<BookRecord | null> {
+    // Une lecture en base coûte bien moins qu'un appel réseau : on regarde d'abord si
+    // l'identifiant désigne un livre communautaire.
+    const own = await this.community.findByExternalId(externalId);
+    if (own) return own;
+
     const primary = await this.tryGet(this.primary, externalId);
     if (!needsFallback(primary)) return primary;
 
@@ -164,6 +180,19 @@ export class CompositeBookCatalogProvider implements MediaCatalogProvider {
         `Complément « ${this.fallback.name} » indisponible : ${(error as Error).message}`,
       );
       return null;
+    }
+  }
+
+  /**
+   * Recherche communautaire. Une panne de base ne doit pas faire échouer la recherche
+   * entière : les sources distantes peuvent encore répondre.
+   */
+  private async tryCommunitySearch(query: string, limit: number): Promise<Book[]> {
+    try {
+      return await this.community.search(query, limit);
+    } catch (error) {
+      this.logger.warn(`Livres communautaires indisponibles : ${(error as Error).message}`);
+      return [];
     }
   }
 

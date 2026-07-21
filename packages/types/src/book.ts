@@ -54,3 +54,34 @@ export const BookDetails = z.object({
   collection: BookCollectionRef.nullable(),
 });
 export type BookDetails = z.infer<typeof BookDetails>;
+
+/**
+ * Création manuelle d'un livre absent des catalogues. **Seul le titre est requis** :
+ * exiger davantage ferait échouer précisément le cas que cette fonctionnalité sert —
+ * un ouvrage rare, ancien ou auto-édité dont on ne sait presque rien.
+ *
+ * Les chaînes vides sont ramenées à `null` : un champ laissé vide dans le formulaire
+ * doit se lire « inconnu », pas « connu et vide ».
+ */
+const optionalText = z
+  .string()
+  .trim()
+  .transform((value) => (value === "" ? null : value))
+  .nullable()
+  .optional();
+
+export const CreateBookInput = z.object({
+  title: z.string().trim().min(1, "Le titre est obligatoire").max(300),
+  subtitle: optionalText,
+  authors: z.array(z.string().trim().min(1)).max(20).optional(),
+  description: optionalText,
+  /** URL de couverture fournie par l'utilisateur. */
+  coverUrl: z.string().trim().url().nullable().optional(),
+  publishedDate: optionalText,
+  pageCount: z.number().int().positive().max(50_000).nullable().optional(),
+  isbn: optionalText,
+  categories: z.array(z.string().trim().min(1)).max(20).optional(),
+  language: optionalText,
+  publisher: optionalText,
+});
+export type CreateBookInput = z.infer<typeof CreateBookInput>;
