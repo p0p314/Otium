@@ -56,17 +56,20 @@ export class CompositeBookCatalogProvider implements MediaCatalogProvider {
 
   async search(params: MediaCatalogSearchParams): Promise<CatalogSearchResult> {
     const query = params.query.trim();
-    const cacheKey = `books:search:${params.page}:${params.pageSize}:${query.toLowerCase()}`;
+    // Le champ interrogé fait partie de la clé : « Camus » par titre et par auteur ne
+    // donnent pas les mêmes résultats.
+    const cacheKey = `books:search:${params.field ?? "ALL"}:${params.page}:${params.pageSize}:${query.toLowerCase()}`;
     const cached = this.cache.get<CatalogSearchResult>(cacheKey);
     if (cached) return cached;
 
-    const search = { query, page: params.page, pageSize: params.pageSize };
+    const field = params.field ?? "ALL";
+    const search = { query, page: params.page, pageSize: params.pageSize, field };
     // Les livres saisis par les utilisateurs sont interrogés **en parallèle** des sources
     // distantes, jamais en repli : ce sont leurs propres données, elles doivent remonter
     // même quand un catalogue répond abondamment.
     const [primary, own] = await Promise.all([
       this.trySearch(this.primary, search),
-      this.tryCommunitySearch(query, params.pageSize),
+      this.tryCommunitySearch(query, params.pageSize, field),
     ]);
     // Le secours n'entre en jeu que si la source principale n'a rien donné d'exploitable :
     // une recherche fructueuse ne déclenche aucun appel réseau supplémentaire.
@@ -187,9 +190,13 @@ export class CompositeBookCatalogProvider implements MediaCatalogProvider {
    * Recherche communautaire. Une panne de base ne doit pas faire échouer la recherche
    * entière : les sources distantes peuvent encore répondre.
    */
-  private async tryCommunitySearch(query: string, limit: number): Promise<Book[]> {
+  private async tryCommunitySearch(
+    query: string,
+    limit: number,
+    field: NonNullable<MediaCatalogSearchParams["field"]>,
+  ): Promise<Book[]> {
     try {
-      return await this.community.search(query, limit);
+      return await this.community.search(query, limit, field);
     } catch (error) {
       this.logger.warn(`Livres communautaires indisponibles : ${(error as Error).message}`);
       return [];

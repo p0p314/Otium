@@ -12,11 +12,14 @@ export const MIN_QUERY_LENGTH = 2;
  */
 export function useMediaSearch(query: string) {
   const types = searchTypeFilter(useSearchSettingsStore((state) => state.enabled));
+  const field = useSearchSettingsStore((state) => state.field);
   const trimmed = query.trim();
   return useQuery<SearchMediaResult>({
-    queryKey: ["media-search", trimmed, types?.join(",") ?? "all"],
+    // Le champ interrogé fait partie de la clé : « Camus » par titre et par auteur ne
+    // donnent pas les mêmes résultats.
+    queryKey: ["media-search", trimmed, types?.join(",") ?? "all", field],
     queryFn: () =>
-      api.searchMedia({ q: trimmed, page: 1, pageSize: 20, ...(types ? { types } : {}) }),
+      api.searchMedia({ q: trimmed, page: 1, pageSize: 20, field, ...(types ? { types } : {}) }),
     enabled: trimmed.length >= MIN_QUERY_LENGTH,
   });
 }

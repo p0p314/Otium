@@ -43,7 +43,7 @@ export class OpenLibraryProvider implements BookProvider {
   async searchBooks(params: BookSearchParams): Promise<BookSearchPage> {
     const isbn = parseIsbn(params.query);
     const search = new URLSearchParams({
-      ...(isbn ? { isbn } : { q: params.query.trim() }),
+      ...(isbn ? { isbn } : this.queryParam(params)),
       fields: SEARCH_FIELDS,
       page: String(params.page),
       limit: String(params.pageSize),
@@ -53,6 +53,14 @@ export class OpenLibraryProvider implements BookProvider {
       items: (raw.docs ?? []).map(toBookRecord).filter((b): b is BookRecord => b !== null),
       total: raw.numFound ?? 0,
     };
+  }
+
+  /** Open Library expose des champs dédiés : les employer vaut mieux qu'une requête libre. */
+  private queryParam(params: BookSearchParams): Record<string, string> {
+    const value = params.query.trim();
+    if (params.field === "AUTHOR") return { author: value };
+    if (params.field === "TITLE") return { title: value };
+    return { q: value };
   }
 
   /**

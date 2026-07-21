@@ -29,6 +29,12 @@ describe("useMediaSearch", () => {
     const { result: hook } = renderHook(() => useMediaSearch("Dune"), { wrapper });
 
     await waitFor(() => expect(hook.current.isSuccess).toBe(true));
-    expect(api.searchMedia).toHaveBeenCalledWith({ q: "Dune", page: 1, pageSize: 20 });
+    // `field` accompagne désormais chaque requête ; « ALL » est le mode par défaut.
+    expect(api.searchMedia).toHaveBeenCalledWith({
+      q: "Dune",
+      page: 1,
+      pageSize: 20,
+      field: "ALL",
+    });
   });
 });

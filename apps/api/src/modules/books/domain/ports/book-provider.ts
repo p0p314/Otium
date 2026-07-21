@@ -4,6 +4,8 @@ export interface BookSearchParams {
   readonly query: string;
   readonly page: number;
   readonly pageSize: number;
+  /** Champ interrogé : `AUTHOR` bascule les sources en recherche par auteur. */
+  readonly field?: "ALL" | "TITLE" | "AUTHOR";
 }
 
 /**

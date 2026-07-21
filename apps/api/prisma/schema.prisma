@@ -144,6 +144,11 @@ model BookMetadata {
   ratingsCount  Int?
   coverUrlLarge String?
   sources       String[]
+  /// Auteurs concaténés, tenus à jour à l'écriture. Une colonne dédiée est nécessaire
+  /// parce que PostgreSQL refuse d'indexer `array_to_string(authors, ' ')` : cette
+  /// fonction n'est pas IMMUTABLE. C'est elle que l'index trigramme couvre, ce qui rend
+  /// la recherche partielle par auteur rapide (voir migration `author_search`).
+  authorsText   String?
   updatedAt     DateTime @updatedAt
 
   @@index([isbn13])

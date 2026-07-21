@@ -93,6 +93,8 @@ export class OtiumClient {
     // `types` (multi) prime sur `type` (mono), conservé pour compatibilité.
     if (query.types?.length) params.set("types", query.types.join(","));
     else if (query.type) params.set("type", query.type);
+    // Omis quand il vaut « tout » : la requête reste identique à ce qu'elle était avant.
+    if (query.field && query.field !== "ALL") params.set("field", query.field);
     return this.request(`/media/search?${params.toString()}`, SearchMediaResult);
   }
 

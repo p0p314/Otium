@@ -11,11 +11,24 @@ const MediaTypeList = z
   .transform((value) => (typeof value === "string" ? value.split(",") : value))
   .pipe(z.array(MediaType).min(1));
 
+/**
+ * Champ interrogé par la recherche. `ALL` laisse chaque fournisseur décider — c'est le
+ * comportement historique, et celui qui tolère le mieux les fautes de frappe.
+ */
+export const SearchField = z.enum(["ALL", "TITLE", "AUTHOR"]);
+export type SearchField = z.infer<typeof SearchField>;
+
 export const SearchMediaQuery = z.object({
   q: z.string().min(1).max(200),
   type: MediaType.optional(),
   /** Sélection multi-types (prioritaire sur `type`), ex. films + livres. */
   types: MediaTypeList.optional(),
+  /**
+   * Restreint la recherche à un champ. **Optionnel plutôt que défauté** : un défaut Zod
+   * rendrait le champ obligatoire dans le type de sortie, et tous les appelants
+   * existants — qui n'en ont que faire — devraient le fournir. Absent = tout.
+   */
+  field: SearchField.optional(),
   page: z.coerce.number().int().positive().default(1),
   pageSize: z.coerce.number().int().positive().max(50).default(20),
 });
