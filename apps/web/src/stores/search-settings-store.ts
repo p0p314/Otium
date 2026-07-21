@@ -1,4 +1,4 @@
-import { MediaType } from "@otium/types";
+import { MediaType, type SearchField } from "@otium/types";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -8,8 +8,11 @@ const ALL_ENABLED: Record<MediaType, boolean> = { MOVIE: true, SERIES: true, BOO
 interface SearchSettingsState {
   /** Types de médias inclus dans la recherche, indexés par type. */
   enabled: Record<MediaType, boolean>;
+  /** Champ interrogé : tout, titre, ou auteur. */
+  field: SearchField;
   /** Bascule un type ; garde toujours au moins un type actif. */
   toggle: (type: MediaType) => void;
+  setField: (field: SearchField) => void;
 }
 
 /**
@@ -21,6 +24,8 @@ export const useSearchSettingsStore = create<SearchSettingsState>()(
   persist(
     (set) => ({
       enabled: ALL_ENABLED,
+      field: "ALL",
+      setField: (field) => set({ field }),
       toggle: (type) =>
         set((state) => {
           const next = { ...state.enabled, [type]: !state.enabled[type] };
@@ -43,6 +48,7 @@ export const useSearchSettingsStore = create<SearchSettingsState>()(
             SERIES: legacy?.series ?? true,
             BOOK: true,
           },
+          field: "ALL",
         } as SearchSettingsState;
       },
     },

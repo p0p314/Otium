@@ -4,6 +4,7 @@ import { useDebouncedValue } from "../../hooks/use-debounced-value";
 import { AddToLibraryButton } from "../library/components/add-to-library-button";
 import { MIN_QUERY_LENGTH, useMediaSearch } from "./api/use-media-search";
 import { MediaResults } from "./components/media-results";
+import { SearchFieldFilter } from "./components/search-field-filter";
 import { SearchTypeFilter } from "./components/search-type-filter";
 import { TrendingShowcase } from "./components/trending-showcase";
 
@@ -40,7 +41,10 @@ export function SearchPage() {
             className="h-12 w-full rounded-full border border-input bg-background pl-11 pr-4 text-base outline-none focus-visible:ring-2 focus-visible:ring-ring md:h-11 md:rounded-lg md:text-sm"
           />
         </div>
-        <SearchTypeFilter />
+        <div className="flex flex-wrap items-center gap-2">
+          <SearchTypeFilter />
+          <SearchFieldFilter />
+        </div>
       </div>
 
       {hasQuery ? (

@@ -25,8 +25,11 @@ export interface NewCommunityBook {
 export interface CommunityBookRepository {
   /** Crée le livre et renvoie sa forme normalisée, identifiant compris. */
   create(book: NewCommunityBook): Promise<BookRecord>;
-  /** Recherche par titre ou auteur, insensible à la casse et aux accents. */
-  search(query: string, limit: number): Promise<BookRecord[]>;
+  /**
+   * Recherche par titre et/ou auteur, insensible à la casse. `field` restreint le
+   * critère ; `ALL` interroge les deux.
+   */
+  search(query: string, limit: number, field?: "ALL" | "TITLE" | "AUTHOR"): Promise<BookRecord[]>;
   findByExternalId(externalId: string): Promise<BookRecord | null>;
   findByIsbn(isbn: string): Promise<BookRecord | null>;
 }

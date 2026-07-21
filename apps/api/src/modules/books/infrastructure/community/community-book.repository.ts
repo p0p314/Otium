@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
-import type { Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { PrismaService } from "../../../../shared/infrastructure/prisma/prisma.service";
+import { authorsText } from "../../../../shared/infrastructure/prisma/searchable-text";
 import {
   type BookRecord,
   COMMUNITY_SOURCE,
@@ -44,6 +45,7 @@ export class PrismaCommunityBookRepository implements CommunityBookRepository {
             publishedDate: book.publishedDate,
             language: book.language,
             categories: [...book.categories],
+            authorsText: authorsText(book.authors),
             isbn10: book.isbn10,
             isbn13: book.isbn13,
             coverUrlLarge: book.coverUrl,
@@ -57,24 +59,41 @@ export class PrismaCommunityBookRepository implements CommunityBookRepository {
   }
 
   /**
-   * Recherche par titre **ou** auteur. `mode: "insensitive"` couvre la casse ; les accents
-   * restent distinctifs — une recherche full-text les neutralisera lorsque le volume le
-   * justifiera (voir la recherche par auteur).
+   * Recherche par titre et/ou auteur, insensible à la casse.
+   *
+   * La recherche d'auteur porte sur la colonne `authorsText`, couverte par un index
+   * trigramme : la correspondance **partielle** (« camus » → « Albert Camus ») reste
+   * rapide à grand volume. Écrire la condition autrement — `authors: { has }`, un
+   * `unnest`, ou `array_to_string` — contournerait cet index.
    */
-  async search(query: string, limit: number): Promise<BookRecord[]> {
+  async search(
+    query: string,
+    limit: number,
+    field: "ALL" | "TITLE" | "AUTHOR" = "ALL",
+  ): Promise<BookRecord[]> {
+    const pattern = `%${query.trim()}%`;
+    const byAuthor = Prisma.sql`b."authorsText" ILIKE ${pattern}`;
+    const byTitle = Prisma.sql`m.title ILIKE ${pattern}`;
+    const criterion =
+      field === "AUTHOR" ? byAuthor : field === "TITLE" ? byTitle : Prisma.sql`${byTitle} OR ${byAuthor}`;
+
+    const ids = await this.prisma.$queryRaw<{ id: string }[]>(Prisma.sql`
+      SELECT m.id
+      FROM "Media" m
+      LEFT JOIN "BookMetadata" b ON b."mediaId" = m.id
+      WHERE m."externalProvider" = ${COMMUNITY_SOURCE} AND (${criterion})
+      ORDER BY m."createdAt" DESC
+      LIMIT ${limit}
+    `);
+    if (ids.length === 0) return [];
+
     const rows = await this.prisma.media.findMany({
-      where: {
-        externalProvider: COMMUNITY_SOURCE,
-        OR: [
-          { title: { contains: query, mode: "insensitive" } },
-          { book: { authors: { has: query } } },
-        ],
-      },
+      where: { id: { in: ids.map((row) => row.id) } },
       include: { book: true },
-      take: limit,
-      orderBy: { createdAt: "desc" },
     });
-    return rows.map(toBookRecord);
+    // L'ordre de pertinence vient de la requête indexée, pas du second chargement.
+    const byId = new Map(rows.map((row) => [row.id, row]));
+    return ids.map((row) => byId.get(row.id)).filter((row): row is BookRow => row !== undefined).map(toBookRecord);
   }
 
   async findByExternalId(externalId: string): Promise<BookRecord | null> {

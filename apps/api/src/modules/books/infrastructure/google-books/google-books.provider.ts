@@ -28,7 +28,7 @@ export class GoogleBooksProvider implements BookProvider {
 
   async searchBooks(params: BookSearchParams): Promise<BookSearchPage> {
     const raw = await this.get<GoogleVolumesResponse>("/volumes", {
-      q: this.toGoogleQuery(params.query),
+      q: this.toGoogleQuery(params.query, params.field),
       startIndex: String((params.page - 1) * params.pageSize),
       maxResults: String(Math.min(params.pageSize, MAX_RESULTS)),
       // `books` exclut les magazines : un catalogue de suivi de lecture n'en veut pas.
@@ -61,10 +61,14 @@ export class GoogleBooksProvider implements BookProvider {
    * recherche exacte ; un opérateur déjà présent (`intitle:`…) est respecté tel quel ;
    * sinon, la recherche reste libre — c'est elle qui tolère le mieux les fautes de frappe.
    */
-  private toGoogleQuery(query: string): string {
+  private toGoogleQuery(query: string, field?: BookSearchParams["field"]): string {
     const trimmed = query.trim();
     const isbn = parseIsbn(trimmed);
+    // Un ISBN prime sur tout : c'est une identité, pas un critère de champ.
     if (isbn) return `isbn:${isbn}`;
+    // Les guillemets évitent que « Frank Herbert » soit compris comme deux critères.
+    if (field === "AUTHOR") return `inauthor:"${trimmed}"`;
+    if (field === "TITLE") return `intitle:"${trimmed}"`;
     return trimmed;
   }
 

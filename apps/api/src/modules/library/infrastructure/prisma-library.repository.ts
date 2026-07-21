@@ -1,6 +1,7 @@
 import { Injectable, InternalServerErrorException } from "@nestjs/common";
 import { type Prisma } from "@prisma/client";
 import { PrismaService } from "../../../shared/infrastructure/prisma/prisma.service";
+import { authorsText } from "../../../shared/infrastructure/prisma/searchable-text";
 import type {
   BookMetadata,
   CollectionDescriptor,
@@ -82,6 +83,8 @@ export class PrismaLibraryRepository implements LibraryRepository {
       publishedDate: book.publishedDate,
       language: book.language,
       categories: [...book.categories],
+      // Forme indexable des auteurs (recherche par auteur) — maintenue à chaque écriture.
+      authorsText: authorsText(book.authors),
       isbn10: book.isbn10,
       isbn13: book.isbn13,
       googleBooksId: book.googleBooksId,

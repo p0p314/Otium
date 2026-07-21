@@ -4,11 +4,15 @@ import type {
   CatalogSearchResult,
 } from "../models/catalog-media";
 
+/** Champ interrogé. Les fournisseurs qui ne savent pas restreindre ignorent la valeur. */
+export type CatalogSearchField = "ALL" | "TITLE" | "AUTHOR";
+
 export interface MediaCatalogSearchParams {
   readonly query: string;
   readonly page: number;
   readonly pageSize: number;
   readonly type?: CatalogMediaType;
+  readonly field?: CatalogSearchField;
 }
 
 /**

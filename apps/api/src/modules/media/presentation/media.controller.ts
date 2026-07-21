@@ -35,6 +35,7 @@ export class MediaController {
       pageSize: query.pageSize,
       ...(query.type ? { type: query.type } : {}),
       ...(query.types ? { types: query.types } : {}),
+      ...(query.field && query.field !== "ALL" ? { field: query.field } : {}),
     });
     return toSearchMediaResult(result);
   }

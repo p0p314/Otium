@@ -2,6 +2,7 @@ import { Inject, Injectable, Logger } from "@nestjs/common";
 import type { UseCase } from "../../../../shared/application/use-case";
 import type {
   CatalogMediaType,
+  CatalogSearchField,
   CatalogSearchResult,
   MediaCatalogProvider,
 } from "../../domain";
@@ -19,6 +20,8 @@ export interface SearchMediaInput {
   readonly type?: CatalogMediaType;
   /** Sélection multi-types (prioritaire sur `type`), ex. films + livres. */
   readonly types?: readonly CatalogMediaType[];
+  /** Champ interrogé (titre, auteur). Défaut : tout. */
+  readonly field?: CatalogSearchField;
 }
 
 /**
@@ -90,6 +93,7 @@ export class SearchMediaUseCase implements UseCase<SearchMediaInput, CatalogSear
         page: input.page,
         pageSize: input.pageSize,
         ...(only ? { type: only } : {}),
+        ...(input.field ? { field: input.field } : {}),
       });
     } catch (error) {
       this.logger.warn(
