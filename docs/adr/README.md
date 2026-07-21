@@ -23,6 +23,8 @@ Une décision = un fichier immuable ; on ne modifie pas un ADR accepté, on le *
 | [0015](0015-registry-catalogues-par-type.md) | Registry de catalogues par type de média + capacités optionnelles | Accepté |
 | [0016](0016-fusion-google-books-open-library.md) | Livres : Google Books prioritaire, Open Library en secours | Accepté |
 | [0017](0017-progression-polymorphe.md) | Progression polymorphe (pages, pourcentage) + historique | Accepté |
+| [0018](0018-collection-generique.md) | `Collection` : regrouper des médias en œuvres, de façon générique | Accepté |
+| [0019](0019-taches-periodiques-sans-cron.md) | Tâches périodiques sans cron : échéance en base, déclenchement opportuniste | Accepté |
 
 ## Gabarit
 

@@ -286,6 +286,27 @@ model EpisodeReview {
   @@id([userId, episodeId])
 }
 
+/**
+ * État d'exécution d'une tâche périodique (ADR-0019).
+ *
+ * Le service d'hébergement gratuit **s'endort** : une planification en processus ne se
+ * déclencherait pas pendant le sommeil, et les exécutions manquées seraient perdues.
+ * L'échéance est donc portée par la donnée, et la tâche est déclenchée par les lectures
+ * utilisateur — le même principe que le rafraîchissement des séries suivies.
+ *
+ * `startedAt` sert de verrou : sa mise à jour conditionnelle et atomique garantit qu'une
+ * seule requête déclenche la tâche, même si plusieurs arrivent ensemble.
+ */
+model SyncState {
+  job        String    @id
+  startedAt  DateTime?
+  finishedAt DateTime?
+  /// `SUCCESS`, `FAILED`, ou null tant qu'aucune exécution ne s'est achevée.
+  status     String?
+  lastError  String?
+  updatedAt  DateTime  @updatedAt
+}
+
 // Journal des événements de domaine — source de vérité pour historique/stats/reco (ADR-0006).
 model DomainEvent {
   id         String   @id @default(cuid())

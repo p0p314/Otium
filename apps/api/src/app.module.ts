@@ -12,6 +12,7 @@ import { CacheModule } from "./shared/infrastructure/cache/cache.module";
 import { validateEnv } from "./shared/infrastructure/config/env";
 import { EventsModule } from "./shared/infrastructure/events/events.module";
 import { HttpModule } from "./shared/infrastructure/http/http.module";
+import { JobsModule } from "./shared/infrastructure/jobs/jobs.module";
 import { PrismaModule } from "./shared/infrastructure/prisma/prisma.module";
 
 /**
@@ -43,6 +44,7 @@ function staticModules(): DynamicModule[] {
     PrismaModule,
     CacheModule,
     HttpModule,
+    JobsModule,
     EventsModule,
     HealthModule,
     MediaModule,
