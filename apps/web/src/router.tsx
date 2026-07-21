@@ -19,6 +19,11 @@ const ProfilePage = lazy(() =>
   import("./features/profile/profile-page").then((m) => ({ default: m.ProfilePage })),
 );
 
+// Formulaire de création d'un livre, isolé dans son propre chunk (éco-conception).
+const AddBookPage = lazy(() =>
+  import("./features/books/add-book-page").then((m) => ({ default: m.AddBookPage })),
+);
+
 // Fiche d'œuvre (série de tomes) isolée dans son propre chunk (éco-conception).
 const CollectionPage = lazy(() =>
   import("./features/collection/collection-page").then((m) => ({ default: m.CollectionPage })),
@@ -107,6 +112,14 @@ const episodeDetailRoute = createRoute({
   component: EpisodeDetailPage,
 });
 
+// Création d'un livre : réservée aux connectés (elle écrit dans le catalogue partagé).
+const addBookRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/books/new",
+  beforeLoad: requireAuth,
+  component: AddBookPage,
+});
+
 // Fiche d'une œuvre suivie : réservée aux connectés, elle lit la bibliothèque.
 const collectionRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -147,6 +160,7 @@ const routeTree = rootRoute.addChildren([
   listDetailRoute,
   mediaDetailRoute,
   collectionRoute,
+  addBookRoute,
   episodeDetailRoute,
   statsRoute,
   profileRoute,

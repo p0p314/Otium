@@ -1,7 +1,7 @@
 import type { MediaType } from "@otium/types";
 import { Button, Skeleton, buttonVariants, cn } from "@otium/ui";
 import { Link } from "@tanstack/react-router";
-import { Heart, ListVideo, Trash2 } from "lucide-react";
+import { BookPlus, Heart, ListVideo, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ABOVE_THE_FOLD, MediaCover } from "../../components/media-cover";
 import { MEDIA_TYPE_LABEL_PLURAL } from "../../lib/media-type";
@@ -74,13 +74,22 @@ export function LibraryPage() {
             <p className="text-muted-foreground">Vos films, séries et livres suivis, par catégorie.</p>
           </div>
           {/* « Mes listes » vit ici (retiré de la navigation principale). */}
-          <Link
-            to="/lists"
-            className={cn(buttonVariants({ variant: "outline", size: "sm" }), "shrink-0 gap-2")}
-          >
-            <ListVideo className="h-4 w-4" />
-            <span className="hidden sm:inline">Mes listes</span>
-          </Link>
+          <div className="flex shrink-0 gap-2">
+            <Link
+              to="/books/new"
+              className={cn(buttonVariants({ variant: "outline", size: "sm" }), "gap-2")}
+            >
+              <BookPlus className="h-4 w-4" />
+              <span className="hidden sm:inline">Ajouter un livre</span>
+            </Link>
+            <Link
+              to="/lists"
+              className={cn(buttonVariants({ variant: "outline", size: "sm" }), "gap-2")}
+            >
+              <ListVideo className="h-4 w-4" />
+              <span className="hidden sm:inline">Mes listes</span>
+            </Link>
+          </div>
         </div>
         {/* Segmented control : bascule de catégorie en 1 tap (mieux qu'un select sur mobile). */}
         <div
