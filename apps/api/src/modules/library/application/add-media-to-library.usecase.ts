@@ -7,7 +7,7 @@ import {
   SERIES_CATALOG_PROVIDER,
   type SeriesCatalogProvider,
 } from "../../media/domain";
-import { toBookMetadata } from "./book-metadata.mapper";
+import { toBookMetadata, toCollectionDescriptor } from "./book-metadata.mapper";
 import { toPersistableSeasons } from "./series-structure.mapper";
 import {
   LIBRARY_REPOSITORY,
@@ -74,12 +74,14 @@ export class AddMediaToLibraryUseCase implements UseCase<AddMediaToLibraryInput,
         .forType(media.type)
         .getMediaDetails(media.type, media.externalRef.externalId);
       const book = toBookMetadata(details);
+      const collection = toCollectionDescriptor(details);
       return {
         ...media,
         genres: details.genres.map((g) => g.label),
         runtimeMinutes: details.runtimeMinutes ?? media.runtimeMinutes ?? null,
         releaseDate: details.releaseDate ? new Date(details.releaseDate) : (media.releaseDate ?? null),
         ...(book ? { book } : {}),
+        ...(collection ? { collection } : {}),
       };
     } catch (error) {
       this.logger.warn(`Enrichissement du média impossible : ${(error as Error).message}`);

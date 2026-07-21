@@ -1,5 +1,6 @@
 import type { CatalogMedia, CatalogMediaDetails } from "../../media/domain";
 import { type BookRecord, publicationYear } from "./models/book";
+import { parseVolumeTitle } from "./volume-title";
 
 /**
  * Traduction du modèle « livre » vers le modèle **générique** du catalogue. C'est ici que
@@ -66,7 +67,14 @@ export function toCatalogMediaDetails(book: BookRecord): CatalogMediaDetails {
       coverUrlLarge: book.coverUrlLarge,
       sources: [...book.sources],
       collection: book.series
-        ? { id: book.series.id, provider: book.series.source, position: book.series.position }
+        ? {
+            id: book.series.id,
+            provider: book.series.source,
+            // Le titre de l'œuvre se lit dans celui du volume, amputé de son numéro.
+            title: parseVolumeTitle(book.title).baseTitle || book.title,
+            method: "PROVIDER_SERIES",
+            position: book.series.position ?? parseVolumeTitle(book.title).position,
+          }
         : null,
     },
   };

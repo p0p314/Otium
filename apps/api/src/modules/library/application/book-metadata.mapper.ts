@@ -1,5 +1,5 @@
 import type { CatalogMediaDetails } from "../../media/domain";
-import type { BookMetadata } from "../domain";
+import type { BookMetadata, CollectionDescriptor } from "../domain";
 
 /**
  * Extrait les métadonnées de livre à persister depuis la fiche catalogue. Les données
@@ -10,6 +10,24 @@ import type { BookMetadata } from "../domain";
  * Renvoie `null` si la fiche n'est pas celle d'un livre — l'appelant n'a alors rien à
  * persister.
  */
+/**
+ * Extrait l'œuvre à laquelle rattacher le volume. `null` quand le catalogue n'a pas
+ * établi d'appartenance — on ne devine pas ici, le rattachement se décide en amont.
+ */
+export function toCollectionDescriptor(
+  details: CatalogMediaDetails,
+): CollectionDescriptor | null {
+  const collection = details.book?.collection;
+  if (!collection) return null;
+  return {
+    provider: collection.provider,
+    externalId: collection.id,
+    title: collection.title,
+    method: collection.method,
+    position: collection.position,
+  };
+}
+
 export function toBookMetadata(details: CatalogMediaDetails): BookMetadata | null {
   const book = details.book;
   if (!book) return null;

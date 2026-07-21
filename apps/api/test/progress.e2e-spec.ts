@@ -8,6 +8,7 @@ import { AddMediaToLibraryUseCase } from "../src/modules/library/application/add
 import { GetHomeDashboardUseCase } from "../src/modules/library/application/get-home-dashboard.usecase";
 import { GetLibraryItemUseCase } from "../src/modules/library/application/get-library-item.usecase";
 import { GetLibraryUseCase } from "../src/modules/library/application/get-library.usecase";
+import { GetCollectionTrackingUseCase } from "../src/modules/library/application/get-collection-tracking.usecase";
 import { GetUpcomingUseCase } from "../src/modules/library/application/get-upcoming.usecase";
 import { RateMediaUseCase } from "../src/modules/library/application/rate-media.usecase";
 import { RemoveFromLibraryUseCase } from "../src/modules/library/application/remove-from-library.usecase";
@@ -106,6 +107,9 @@ class InMemoryLibraryRepo implements LibraryRepository {
     };
     return this.item;
   }
+  async findCollection(): Promise<null> {
+    return null;
+  }
   async add(): Promise<LibraryItem> {
     return this.item;
   }
@@ -169,6 +173,7 @@ describe("Reading progress (e2e)", () => {
           SetWatchStatusUseCase,
           GetHomeDashboardUseCase,
           GetUpcomingUseCase,
+          GetCollectionTrackingUseCase,
         ].map((provide) => ({ provide, useValue: notUsed })),
       ],
     }).compile();

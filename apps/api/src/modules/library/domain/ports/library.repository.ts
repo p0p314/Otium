@@ -53,12 +53,45 @@ export interface LibraryRepository {
   listUpcomingMovies(userId: string, now: Date): Promise<UpcomingMovieRecord[]>;
   /** Enregistre progression, statut, dates et delta d'historique en une seule opération. */
   saveProgress(userId: string, itemId: string, update: ProgressUpdate): Promise<LibraryItem>;
+  /**
+   * Œuvre et ses volumes connus, avec le suivi de l'utilisateur. `null` si l'œuvre n'a
+   * jamais été rencontrée. Les volumes hors bibliothèque sont inclus : la fiche doit
+   * pouvoir proposer le tome suivant même s'il n'a pas encore été ajouté.
+   */
+  findCollection(
+    userId: string,
+    provider: string,
+    externalId: string,
+  ): Promise<CollectionRecord | null>;
   /** Fixe les dates de consommation saisies par l'utilisateur (`null` = effacer). */
   setConsumptionDates(
     userId: string,
     itemId: string,
     dates: { startedAt?: Date | null; finishedAt?: Date | null },
   ): Promise<LibraryItem>;
+}
+
+/**
+ * Un volume d'une œuvre, du point de vue de l'utilisateur. `itemId` et `status` sont
+ * `null` quand le volume est connu du catalogue mais absent de sa bibliothèque.
+ */
+export interface CollectionVolumeRecord {
+  readonly itemId: string | null;
+  readonly mediaId: string;
+  readonly externalId: string;
+  readonly title: string;
+  readonly posterUrl: string | null;
+  readonly position: number | null;
+  readonly status: WatchStatus | null;
+}
+
+/** Œuvre telle qu'enregistrée, avec les volumes connus d'Otium. */
+export interface CollectionRecord {
+  readonly provider: string;
+  readonly externalId: string;
+  readonly title: string;
+  readonly method: string;
+  readonly volumes: readonly CollectionVolumeRecord[];
 }
 
 export const LIBRARY_REPOSITORY = Symbol("LIBRARY_REPOSITORY");

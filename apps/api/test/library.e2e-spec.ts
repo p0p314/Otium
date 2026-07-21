@@ -18,6 +18,7 @@ import {
 } from "../src/modules/library/domain";
 import { AddMediaToLibraryUseCase } from "../src/modules/library/application/add-media-to-library.usecase";
 import { GetHomeDashboardUseCase } from "../src/modules/library/application/get-home-dashboard.usecase";
+import { GetCollectionTrackingUseCase } from "../src/modules/library/application/get-collection-tracking.usecase";
 import { GetUpcomingUseCase } from "../src/modules/library/application/get-upcoming.usecase";
 import { RefreshTrackedSeriesUseCase } from "../src/modules/library/application/refresh-tracked-series.usecase";
 import { GetLibraryUseCase } from "../src/modules/library/application/get-library.usecase";
@@ -66,6 +67,9 @@ class InMemoryLibraryRepository implements LibraryRepository {
   }
   async setConsumptionDates(): Promise<LibraryItem> {
     throw new Error("non utilisé dans ce test");
+  }
+  async findCollection(): Promise<null> {
+    return null;
   }
   async findByUser(userId: string): Promise<LibraryItem[]> {
     return [...this.items.values()].filter((i) => i.userId === userId);
@@ -144,6 +148,7 @@ describe("Library (e2e)", () => {
         SetWatchStatusUseCase,
         GetHomeDashboardUseCase,
         GetUpcomingUseCase,
+        GetCollectionTrackingUseCase,
         RefreshTrackedSeriesUseCase,
         AuthGuard,
         { provide: LIBRARY_REPOSITORY, useClass: InMemoryLibraryRepository },
