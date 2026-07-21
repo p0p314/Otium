@@ -46,6 +46,16 @@ function fakeProvider(name: string): BookProvider {
 
 const config = { get: () => 3600 } as unknown as ConfigService<Env, true>;
 
+/** Aucun livre communautaire : ces tests portent sur les sources distantes. */
+function emptyCommunity() {
+  return {
+    create: vi.fn(),
+    search: vi.fn().mockResolvedValue([]),
+    findByExternalId: vi.fn().mockResolvedValue(null),
+    findByIsbn: vi.fn().mockResolvedValue(null),
+  };
+}
+
 describe("CompositeBookCatalogProvider", () => {
   let google: BookProvider;
   let openLibrary: BookProvider;
@@ -54,7 +64,13 @@ describe("CompositeBookCatalogProvider", () => {
   beforeEach(() => {
     google = fakeProvider("google-books");
     openLibrary = fakeProvider("open-library");
-    catalog = new CompositeBookCatalogProvider(google, openLibrary, new CacheService(), config);
+    catalog = new CompositeBookCatalogProvider(
+      google,
+      openLibrary,
+      emptyCommunity(),
+      new CacheService(),
+      config,
+    );
   });
 
   describe("recherche", () => {
