@@ -1,5 +1,6 @@
 import type { BookDetails } from "@otium/types";
-import { ExternalLink } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { ExternalLink, Layers } from "lucide-react";
 
 /** Nom de langue lisible, avec repli sur le code brut si la langue est inconnue de l'API. */
 function languageLabel(code: string): string {
@@ -46,7 +47,8 @@ export function BookFacts({ book }: { book: BookDetails }) {
     ...(identifiers.isbn10 ? [{ label: "ISBN-10", value: identifiers.isbn10 }] : []),
   ];
 
-  if (facts.length === 0 && !book.infoUrl) return null;
+  // Le lien vers l'œuvre suffit à justifier le bloc, même sans autre information.
+  if (facts.length === 0 && !book.infoUrl && !book.collection) return null;
 
   return (
     <section className="space-y-3">
@@ -58,6 +60,17 @@ export function BookFacts({ book }: { book: BookDetails }) {
           ))}
         </dl>
       ) : null}
+      {book.collection ? (
+        <Link
+          to="/collection/$provider/$externalId"
+          params={{ provider: book.collection.provider, externalId: book.collection.id }}
+          className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
+        >
+          <Layers className="h-3.5 w-3.5" aria-hidden />
+          Voir l'œuvre : {book.collection.title}
+        </Link>
+      ) : null}
+
       {book.infoUrl ? (
         <a
           href={book.infoUrl}

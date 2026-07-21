@@ -19,6 +19,11 @@ const ProfilePage = lazy(() =>
   import("./features/profile/profile-page").then((m) => ({ default: m.ProfilePage })),
 );
 
+// Fiche d'œuvre (série de tomes) isolée dans son propre chunk (éco-conception).
+const CollectionPage = lazy(() =>
+  import("./features/collection/collection-page").then((m) => ({ default: m.CollectionPage })),
+);
+
 // Fiche épisode (résumé, casting) isolée dans son propre chunk (éco-conception).
 const EpisodeDetailPage = lazy(() =>
   import("./features/media-detail/episode-detail-page").then((m) => ({
@@ -102,6 +107,14 @@ const episodeDetailRoute = createRoute({
   component: EpisodeDetailPage,
 });
 
+// Fiche d'une œuvre suivie : réservée aux connectés, elle lit la bibliothèque.
+const collectionRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/collection/$provider/$externalId",
+  beforeLoad: requireAuth,
+  component: CollectionPage,
+});
+
 const statsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/stats",
@@ -133,6 +146,7 @@ const routeTree = rootRoute.addChildren([
   listsRoute,
   listDetailRoute,
   mediaDetailRoute,
+  collectionRoute,
   episodeDetailRoute,
   statsRoute,
   profileRoute,
