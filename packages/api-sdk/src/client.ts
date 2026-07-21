@@ -5,6 +5,7 @@ import {
   AuthUser,
   type ChangePasswordInput,
   CollectionTracking,
+  type CreateBookInput,
   type CreateListInput,
   HomeDashboard,
   ImportJobState,
@@ -16,6 +17,7 @@ import {
   type MarkEpisodeInput,
   type MarkEpisodesInput,
   MediaDetails,
+  MediaSummary,
   type MediaType,
   type RateMediaInput,
   type RegisterInput,
@@ -101,6 +103,14 @@ export class OtiumClient {
     });
     if (query.type) params.set("type", query.type);
     return this.request(`/media/trending?${params.toString()}`, SearchMediaResult);
+  }
+
+  /**
+   * Crée un livre absent des catalogues. Renvoie un résumé de média, directement
+   * utilisable pour l'ajouter à la bibliothèque.
+   */
+  async createBook(input: CreateBookInput): Promise<MediaSummary> {
+    return this.request("/books", MediaSummary, { method: "POST", body: input });
   }
 
   async getMediaDetails(type: MediaType, externalId: string): Promise<MediaDetails> {

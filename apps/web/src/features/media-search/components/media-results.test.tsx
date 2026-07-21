@@ -63,9 +63,12 @@ describe("MediaResults", () => {
     expect(screen.getByLabelText(/Chargement des résultats/)).toBeInTheDocument();
   });
 
-  it("affiche un état vide sans résultat", () => {
-    render(<MediaResults {...base} items={[]} />);
-    expect(screen.getByText(/Aucun résultat/)).toBeInTheDocument();
+  it("affiche un état vide sans résultat, et propose de créer le livre", async () => {
+    // L'état vide porte désormais un lien : c'est le moment où le besoin se manifeste.
+    renderWithRouter(<MediaResults {...base} items={[]} />);
+
+    expect(await screen.findByText(/Aucun résultat/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Ajouter un livre" })).toBeInTheDocument();
   });
 
   it("liste les médias trouvés", async () => {

@@ -1,5 +1,6 @@
-import { Skeleton } from "@otium/ui";
+import { Skeleton, buttonVariants } from "@otium/ui";
 import type { CollectionSummary, MediaSummary } from "@otium/types";
+import { Link } from "@tanstack/react-router";
 import { SearchX } from "lucide-react";
 import type { ReactNode } from "react";
 import { ABOVE_THE_FOLD } from "../../../components/media-cover";
@@ -62,7 +63,14 @@ export function MediaResults({
   }
 
   if (items.length === 0 && collections.length === 0) {
-    return <EmptyState title="Aucun résultat" message="Essayez un autre titre." />;
+    return (
+      <EmptyState title="Aucun résultat" message="Essayez un autre titre, ou créez le livre.">
+        {/* C'est ici que le besoin se manifeste : l'ouvrage cherché n'existe nulle part. */}
+        <Link to="/books/new" className={buttonVariants({ size: "sm", variant: "outline" })}>
+          Ajouter un livre
+        </Link>
+      </EmptyState>
+    );
   }
 
   return (
@@ -100,12 +108,21 @@ export function MediaResults({
   );
 }
 
-function EmptyState({ title, message }: { title: string; message: string }) {
+function EmptyState({
+  title,
+  message,
+  children,
+}: {
+  title: string;
+  message: string;
+  children?: ReactNode;
+}) {
   return (
     <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed py-16 text-center">
       <SearchX className="h-8 w-8 text-muted-foreground" aria-hidden />
       <p className="font-medium">{title}</p>
       <p className="max-w-xs text-sm text-muted-foreground">{message}</p>
+      {children}
     </div>
   );
 }
