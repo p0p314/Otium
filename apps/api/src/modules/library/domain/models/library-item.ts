@@ -23,6 +23,21 @@ export interface MediaDescriptor {
   readonly releaseDate?: Date | null;
   /** Données propres aux livres (auteurs, ISBN, pages…), absentes des autres types. */
   readonly book?: BookMetadata | null;
+  /** Œuvre dont ce média est un volume (tome de manga, tome d'un cycle). */
+  readonly collection?: CollectionDescriptor | null;
+}
+
+/**
+ * Œuvre à laquelle rattacher un volume à l'ajout. `method` conserve **comment** le
+ * rattachement a été établi : un regroupement discutable reste identifiable après coup.
+ */
+export interface CollectionDescriptor {
+  readonly provider: string;
+  readonly externalId: string;
+  readonly title: string;
+  readonly method: string;
+  /** Rang du volume dans l'œuvre, `null` pour un hors-série. */
+  readonly position: number | null;
 }
 
 /**

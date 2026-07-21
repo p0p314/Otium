@@ -20,6 +20,7 @@ function libraryFake(overrides: Partial<LibraryRepository> = {}): LibraryReposit
     backfillMediaMetadata: vi.fn(async () => undefined),
     saveProgress: vi.fn(),
     setConsumptionDates: vi.fn(),
+    findCollection: vi.fn(),
     listUpcomingMovies: vi.fn(async () => []),
     ...overrides,
   };

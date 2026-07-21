@@ -21,6 +21,7 @@ import { GetLibraryUseCase } from "../src/modules/library/application/get-librar
 import { GetLibraryItemUseCase } from "../src/modules/library/application/get-library-item.usecase";
 import { AddMediaToLibraryUseCase } from "../src/modules/library/application/add-media-to-library.usecase";
 import { GetHomeDashboardUseCase } from "../src/modules/library/application/get-home-dashboard.usecase";
+import { GetCollectionTrackingUseCase } from "../src/modules/library/application/get-collection-tracking.usecase";
 import { GetUpcomingUseCase } from "../src/modules/library/application/get-upcoming.usecase";
 import { RefreshTrackedSeriesUseCase } from "../src/modules/library/application/refresh-tracked-series.usecase";
 import { RemoveFromLibraryUseCase } from "../src/modules/library/application/remove-from-library.usecase";
@@ -72,6 +73,9 @@ class FakeLibraryRepo implements LibraryRepository {
   }
   async setConsumptionDates(): Promise<LibraryItem> {
     throw new Error("non utilisé dans ce test");
+  }
+  async findCollection(): Promise<null> {
+    return null;
   }
   async findByUser(): Promise<LibraryItem[]> {
     return [this.item];
@@ -138,6 +142,7 @@ describe("Ratings & reviews (e2e)", () => {
         SetWatchStatusUseCase,
         GetHomeDashboardUseCase,
         GetUpcomingUseCase,
+        GetCollectionTrackingUseCase,
         RefreshTrackedSeriesUseCase,
         GetReviewUseCase,
         SaveReviewUseCase,

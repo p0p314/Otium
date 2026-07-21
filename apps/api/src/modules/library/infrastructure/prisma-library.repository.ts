@@ -3,6 +3,8 @@ import { type Prisma } from "@prisma/client";
 import { PrismaService } from "../../../shared/infrastructure/prisma/prisma.service";
 import type {
   BookMetadata,
+  CollectionDescriptor,
+  CollectionRecord,
   LibraryItem,
   LibraryRepository,
   MediaDescriptor,
@@ -54,6 +56,7 @@ export class PrismaLibraryRepository implements LibraryRepository {
     });
 
     if (media.book) await this.upsertBookMetadata(mediaRow.id, media.book);
+    if (media.collection) await this.linkToCollection(mediaRow.id, media.collection);
 
     const item = await this.prisma.libraryItem.upsert({
       where: { userId_mediaId: { userId, mediaId: mediaRow.id } },
@@ -100,6 +103,80 @@ export class PrismaLibraryRepository implements LibraryRepository {
       create: { mediaId, ...fields },
       update: filled,
     });
+  }
+
+  /**
+   * Rattache le média à son œuvre, en la créant au besoin. Le titre est rafraîchi à
+   * chaque passage : un volume ultérieur peut en porter une version plus propre.
+   */
+  private async linkToCollection(
+    mediaId: string,
+    collection: CollectionDescriptor,
+  ): Promise<void> {
+    const row = await this.prisma.collection.upsert({
+      where: {
+        provider_externalId: {
+          provider: collection.provider,
+          externalId: collection.externalId,
+        },
+      },
+      create: {
+        provider: collection.provider,
+        externalId: collection.externalId,
+        title: collection.title,
+        method: collection.method,
+      },
+      update: { title: collection.title },
+    });
+    await this.prisma.media.update({
+      where: { id: mediaId },
+      data: { collectionId: row.id, collectionPosition: collection.position },
+    });
+  }
+
+  async findCollection(
+    userId: string,
+    provider: string,
+    externalId: string,
+  ): Promise<CollectionRecord | null> {
+    const row = await this.prisma.collection.findUnique({
+      where: { provider_externalId: { provider, externalId } },
+      include: {
+        media: {
+          orderBy: [{ collectionPosition: "asc" }, { title: "asc" }],
+          select: {
+            id: true,
+            externalId: true,
+            title: true,
+            posterUrl: true,
+            collectionPosition: true,
+            // Scopé à l'utilisateur : un volume suivi par quelqu'un d'autre reste, pour
+            // celui-ci, un volume non possédé.
+            libraryItems: { where: { userId }, select: { id: true, status: true }, take: 1 },
+          },
+        },
+      },
+    });
+    if (!row) return null;
+
+    return {
+      provider: row.provider,
+      externalId: row.externalId,
+      title: row.title,
+      method: row.method,
+      volumes: row.media.map((media) => {
+        const item = media.libraryItems[0];
+        return {
+          itemId: item?.id ?? null,
+          mediaId: media.id,
+          externalId: media.externalId,
+          title: media.title,
+          posterUrl: media.posterUrl,
+          position: media.collectionPosition,
+          status: item?.status ?? null,
+        };
+      }),
+    };
   }
 
   async findByUser(userId: string): Promise<LibraryItem[]> {

@@ -6,5 +6,6 @@ export * from "./ports/series-tracking.repository";
 export * from "./ports/review.repository";
 export * from "./ports/episode-review.repository";
 export * from "./events/library.events";
+export * from "./collection-progress";
 export * from "./series-progress";
 export * from "./reading-progress";

@@ -60,6 +60,27 @@ model Session {
   @@index([expiresAt])
 }
 
+/**
+ * Œuvre regroupant plusieurs médias : série de tomes, cycle de romans. Générique par
+ * construction — une saga de films suivrait le même modèle sans migration (ADR-0018).
+ *
+ * `method` trace **comment** le rattachement a été établi (donnée du fournisseur, ou
+ * titre + auteur) : un regroupement discutable reste ainsi identifiable et corrigeable
+ * après coup, sans deviner.
+ */
+model Collection {
+  id         String   @id @default(cuid())
+  provider   String
+  externalId String
+  title      String
+  method     String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  media      Media[]
+
+  @@unique([provider, externalId])
+}
+
 model Media {
   id               String        @id @default(cuid())
   type             MediaType
@@ -81,9 +102,15 @@ model Media {
   listItems        ListItem[]
   reviews          Review[]
   book             BookMetadata?
+  /// Œuvre dont ce média est un volume (tome de manga, tome d'un cycle). Null sinon.
+  collection       Collection?   @relation(fields: [collectionId], references: [id], onDelete: SetNull)
+  collectionId     String?
+  /// Rang du volume dans l'œuvre. Null pour un hors-série.
+  collectionPosition Int?
 
   @@unique([externalProvider, externalId])
   @@index([type])
+  @@index([collectionId, collectionPosition])
 }
 
 /**

@@ -11,6 +11,7 @@ import {
 } from "@nestjs/common";
 import {
   AddToLibraryInput,
+  type CollectionTracking,
   type HomeDashboard,
   type LibraryItem as LibraryItemDto,
   type UpcomingDashboard,
@@ -27,6 +28,7 @@ import { AddMediaToLibraryUseCase } from "../application/add-media-to-library.us
 import { GetHomeDashboardUseCase } from "../application/get-home-dashboard.usecase";
 import { GetUpcomingUseCase } from "../application/get-upcoming.usecase";
 import { GetLibraryUseCase } from "../application/get-library.usecase";
+import { GetCollectionTrackingUseCase } from "../application/get-collection-tracking.usecase";
 import { GetLibraryItemUseCase } from "../application/get-library-item.usecase";
 import { RateMediaUseCase } from "../application/rate-media.usecase";
 import { RemoveFromLibraryUseCase } from "../application/remove-from-library.usecase";
@@ -51,6 +53,7 @@ export class LibraryController {
     private readonly setWatchStatus: SetWatchStatusUseCase,
     private readonly getHomeDashboard: GetHomeDashboardUseCase,
     private readonly getUpcoming: GetUpcomingUseCase,
+    private readonly getCollection: GetCollectionTrackingUseCase,
     private readonly updateProgress: UpdateProgressUseCase,
     private readonly setDates: SetConsumptionDatesUseCase,
   ) {}
@@ -71,6 +74,21 @@ export class LibraryController {
   @Get("upcoming")
   async upcoming(@CurrentUser() user: AuthenticatedUser): Promise<UpcomingDashboard> {
     return this.getUpcoming.execute(user.id);
+  }
+
+  /**
+   * `GET /api/library/collections/:provider/:externalId` — fiche d'une œuvre et suivi de
+   * ses volumes. Déclarée **avant** `:itemId`, sans quoi « collections » serait interprété
+   * comme un identifiant d'élément.
+   */
+  @Get("collections/:provider/:externalId")
+  async collection(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("provider") provider: string,
+    @Param("externalId") externalId: string,
+  ): Promise<CollectionTracking> {
+    const tracking = await this.getCollection.execute({ userId: user.id, provider, externalId });
+    return { ...tracking, volumes: [...tracking.volumes] };
   }
 
   @Get(":itemId")

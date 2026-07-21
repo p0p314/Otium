@@ -22,6 +22,9 @@ export type BookIdentifiers = z.infer<typeof BookIdentifiers>;
 export const BookCollectionRef = z.object({
   id: z.string(),
   provider: z.string(),
+  title: z.string(),
+  /** Comment le rattachement a été établi (donnée fournisseur, ou titre + auteur). */
+  method: z.string(),
   position: z.number().int().positive().nullable(),
 });
 export type BookCollectionRef = z.infer<typeof BookCollectionRef>;

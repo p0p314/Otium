@@ -103,19 +103,23 @@ export interface CatalogWatchProvider {
   readonly logoUrl: string | null;
 }
 
+/** Œuvre (série de tomes, cycle) dont un média fait partie. */
+export interface CatalogCollectionRef {
+  readonly id: string;
+  readonly provider: string;
+  /** Titre de l'œuvre, débarrassé du numéro de tome. */
+  readonly title: string;
+  /** Comment le rattachement a été établi — trace un regroupement discutable. */
+  readonly method: string;
+  /** Rang du volume dans l'œuvre, `null` si le fournisseur ne le donne pas. */
+  readonly position: number | null;
+}
+
 /**
  * Bloc propre aux livres, dans le modèle normalisé du catalogue. N'y figure que ce qui
  * n'a pas d'équivalent générique : titre, couverture, description, genres et note moyenne
  * restent au niveau `CatalogMediaDetails` (ADR-0003).
  */
-/** Œuvre (série de tomes, cycle) dont un média fait partie. */
-export interface CatalogCollectionRef {
-  readonly id: string;
-  readonly provider: string;
-  /** Rang du volume dans l'œuvre, `null` si le fournisseur ne le donne pas. */
-  readonly position: number | null;
-}
-
 export interface CatalogBookDetails {
   readonly subtitle: string | null;
   readonly authors: readonly string[];

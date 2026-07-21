@@ -60,6 +60,7 @@ describe("Library use cases", () => {
       listUpcomingMovies: vi.fn().mockResolvedValue([]),
       saveProgress: vi.fn(),
       setConsumptionDates: vi.fn(),
+      findCollection: vi.fn(),
     };
     events = { publish: vi.fn().mockResolvedValue(undefined), publishAll: vi.fn() };
     // Par défaut : l'enrichissement échoue (dégradation gracieuse — média inchangé).
