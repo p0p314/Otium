@@ -1,15 +1,21 @@
 import { cn } from "@otium/ui";
 import { useSearch } from "@tanstack/react-router";
 import { useState } from "react";
+import { NotificationSettings } from "../notifications/components/notification-settings";
 import { ImportPage } from "../import/import-page";
 import { ProfileInfo } from "./components/profile-info";
 
-type Tab = "profile" | "import";
+type Tab = "profile" | "notifications" | "import";
 
 const TABS = [
   ["profile", "Profil"],
+  ["notifications", "Notifications"],
   ["import", "Importer"],
 ] as const;
+
+function isTab(value: string | undefined): value is Tab {
+  return value === "profile" || value === "notifications" || value === "import";
+}
 
 /** Page profil : infos utilisateur et import de données. Mobile-first. */
 export function ProfilePage() {
@@ -17,7 +23,7 @@ export function ProfilePage() {
   // On valide la valeur au lieu de la croire sur parole : un ancien lien (`?tab=settings`,
   // onglet supprimé) ou une URL bricolée doit retomber sur le profil, pas ailleurs.
   const search = useSearch({ strict: false }) as { tab?: string };
-  const [tab, setTab] = useState<Tab>(search.tab === "import" ? "import" : "profile");
+  const [tab, setTab] = useState<Tab>(isTab(search.tab) ? search.tab : "profile");
 
   return (
     <section className="mx-auto max-w-2xl space-y-6">
@@ -46,7 +52,13 @@ export function ProfilePage() {
         ))}
       </div>
 
-      {tab === "profile" ? <ProfileInfo /> : <ImportPage />}
+      {tab === "profile" ? (
+        <ProfileInfo />
+      ) : tab === "notifications" ? (
+        <NotificationSettings />
+      ) : (
+        <ImportPage />
+      )}
     </section>
   );
 }

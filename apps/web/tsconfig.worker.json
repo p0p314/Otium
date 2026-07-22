@@ -1,0 +1,12 @@
+{
+  "extends": "@otium/config/tsconfig/base.json",
+  "compilerOptions": {
+    "lib": ["ESNext", "WebWorker"],
+    "types": [],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "noEmit": true,
+    "baseUrl": "."
+  },
+  "include": ["src/sw.ts"]
+}

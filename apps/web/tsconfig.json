@@ -7,5 +7,8 @@
     },
     "types": ["vite/client", "vitest/globals", "@testing-library/jest-dom"]
   },
-  "include": ["src"]
+  "include": ["src"],
+  // Le service worker s'exécute dans un contexte « webworker » (et non « DOM ») : il est
+  // typé/compilé séparément par vite-plugin-pwa (injectManifest, esbuild), voir tsconfig.worker.json.
+  "exclude": ["src/sw.ts"]
 }
