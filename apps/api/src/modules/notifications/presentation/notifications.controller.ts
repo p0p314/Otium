@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   HttpCode,
+  Inject,
   Patch,
   Post,
   ServiceUnavailableException,
@@ -19,13 +20,16 @@ import {
 import { ZodValidationPipe } from "../../../shared/presentation/zod-validation.pipe";
 import { AuthGuard, type AuthenticatedUser } from "../../authentication/presentation/auth.guard";
 import { CurrentUser } from "../../authentication/presentation/current-user.decorator";
-import { PUSH_SENDER, type PushSender } from "../domain";
-import { GetNotificationPreferencesUseCase } from "../application/notification-preference.usecases";
-import { UpdateNotificationPreferencesUseCase } from "../application/notification-preference.usecases";
+import {
+  GetNotificationPreferencesUseCase,
+  UpdateNotificationPreferencesUseCase,
+} from "../application/notification-preference.usecases";
 import { NotificationTriggerService } from "../application/notification-trigger.service";
-import { RemovePushSubscriptionUseCase } from "../application/push-subscription.usecases";
-import { SavePushSubscriptionUseCase } from "../application/push-subscription.usecases";
-import { Inject } from "@nestjs/common";
+import {
+  RemovePushSubscriptionUseCase,
+  SavePushSubscriptionUseCase,
+} from "../application/push-subscription.usecases";
+import { PUSH_SENDER, type PushSender } from "../domain";
 import { toPreferencesDto, toSubscriptionData } from "./notification.mapper";
 
 /**

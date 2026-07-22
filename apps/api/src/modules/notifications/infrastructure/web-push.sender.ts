@@ -22,14 +22,24 @@ export class WebPushSender implements PushSender {
     const privateKey = config.get("VAPID_PRIVATE_KEY", { infer: true });
     const subject = config.get("VAPID_SUBJECT", { infer: true });
 
-    this.configured = Boolean(publicKey && privateKey);
-    this.vapidPublicKey = publicKey ?? null;
-
-    if (this.configured) {
-      webpush.setVapidDetails(subject, publicKey as string, privateKey as string);
-      this.logger.log("Web Push configuré (VAPID).");
-    } else {
+    if (!publicKey || !privateKey) {
       this.logger.warn("Web Push désactivé : VAPID_PUBLIC_KEY/PRIVATE_KEY absentes.");
+      this.configured = false;
+      this.vapidPublicKey = null;
+      return;
+    }
+
+    try {
+      // Valide et enregistre les clés. En cas de clés **malformées**, on désactive le Push
+      // au lieu de faire échouer tout le démarrage (dégradation gracieuse, comme TMDB).
+      webpush.setVapidDetails(subject, publicKey, privateKey);
+      this.configured = true;
+      this.vapidPublicKey = publicKey;
+      this.logger.log("Web Push configuré (VAPID).");
+    } catch (error) {
+      this.logger.error(`Web Push désactivé : clés VAPID invalides — ${(error as Error).message}`);
+      this.configured = false;
+      this.vapidPublicKey = null;
     }
   }
 
