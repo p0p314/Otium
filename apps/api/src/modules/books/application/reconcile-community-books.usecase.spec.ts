@@ -80,6 +80,21 @@ describe("ReconcileCommunityBooksUseCase", () => {
     expect(primary.searchBooks).not.toHaveBeenCalled();
   });
 
+  it("examine plusieurs candidats, pas seulement le mieux classé", async () => {
+    // Le premier résultat d'un fournisseur est souvent une édition ou une étude ;
+    // n'examiner que lui ferait manquer des rapprochements légitimes.
+    repo.listPending.mockResolvedValue([book()]);
+    vi.mocked(primary.searchBooks).mockResolvedValue({
+      items: [book({ title: "Étude sur Le Rivage des Syrtes", authors: ["Un critique"] }), officiel],
+      total: 2,
+    });
+
+    const report = await useCase.execute();
+
+    expect(repo.promote).toHaveBeenCalledWith("own-1", officiel);
+    expect(report.promoted).toBe(1);
+  });
+
   it("ne rattache pas un candidat qui ne correspond pas", async () => {
     repo.listPending.mockResolvedValue([book()]);
     vi.mocked(primary.searchBooks).mockResolvedValue({
@@ -90,7 +105,7 @@ describe("ReconcileCommunityBooksUseCase", () => {
     const report = await useCase.execute();
 
     expect(repo.promote).not.toHaveBeenCalled();
-    expect(report).toMatchObject({ promoted: 0, rejected: 1 });
+    expect(report).toMatchObject({ promoted: 0, unmatched: 1 });
   });
 
   it("n'interroge pas les sources pour un livre sans auteur", async () => {
@@ -143,6 +158,6 @@ describe("ReconcileCommunityBooksUseCase", () => {
   });
 
   it("ne fait rien quand aucun livre communautaire n'attend", async () => {
-    await expect(useCase.execute()).resolves.toEqual({ examined: 0, promoted: 0, rejected: 0 });
+    await expect(useCase.execute()).resolves.toEqual({ examined: 0, promoted: 0, unmatched: 0 });
   });
 });
