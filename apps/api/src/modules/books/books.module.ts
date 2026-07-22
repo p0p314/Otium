@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 import { AuthenticationModule } from "../authentication/authentication.module";
 import { CreateBookUseCase } from "./application/create-book.usecase";
+import { ReconcileCommunityBooksUseCase } from "./application/reconcile-community-books.usecase";
 import { CompositeBookCatalogProvider } from "./infrastructure/composite-book-catalog.provider";
 import { GoogleBooksProvider } from "./infrastructure/google-books/google-books.provider";
 import { OpenLibraryProvider } from "./infrastructure/open-library/open-library.provider";
@@ -22,6 +23,7 @@ import {
   controllers: [BooksController],
   providers: [
     CreateBookUseCase,
+    ReconcileCommunityBooksUseCase,
     { provide: COMMUNITY_BOOK_REPOSITORY, useClass: PrismaCommunityBookRepository },
     GoogleBooksProvider,
     OpenLibraryProvider,

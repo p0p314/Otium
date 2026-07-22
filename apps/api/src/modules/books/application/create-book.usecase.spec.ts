@@ -17,6 +17,8 @@ describe("CreateBookUseCase", () => {
       search: vi.fn(),
       findByExternalId: vi.fn(),
       findByIsbn: vi.fn(),
+      listPending: vi.fn(),
+      promote: vi.fn(),
     };
     useCase = new CreateBookUseCase(repo);
   });

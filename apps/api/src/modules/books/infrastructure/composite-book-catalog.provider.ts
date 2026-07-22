@@ -1,6 +1,7 @@
 import { Inject, Injectable, Logger, NotFoundException, ServiceUnavailableException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { CacheService } from "../../../shared/infrastructure/cache/cache.service";
+import { DueJobRunner } from "../../../shared/infrastructure/jobs/due-job.runner";
 import type { Env } from "../../../shared/infrastructure/config/env";
 import type {
   CatalogCollection,
@@ -10,6 +11,7 @@ import type {
   MediaCatalogProvider,
   MediaCatalogSearchParams,
 } from "../../media/domain";
+import { ReconcileCommunityBooksUseCase } from "../application/reconcile-community-books.usecase";
 import {
   type BookProvider,
   type BookRecord,
@@ -28,6 +30,12 @@ import {
   toCatalogMediaDetails,
 } from "../domain";
 import { BOOKS_PROVIDER } from "../domain";
+
+/** Identifiant de la tâche de réconciliation des livres communautaires. */
+const RECONCILE_JOB = "community-books-reconciliation";
+
+/** Une semaine : un livre absent des catalogues n'y entre pas du jour au lendemain. */
+const RECONCILE_INTERVAL_MS = 7 * 24 * 60 * 60 * 1000;
 
 /**
  * Adapter « livres » du socle `MediaCatalogProvider` : c'est lui qui applique la stratégie
@@ -52,9 +60,18 @@ export class CompositeBookCatalogProvider implements MediaCatalogProvider {
     @Inject(COMMUNITY_BOOK_REPOSITORY) private readonly community: CommunityBookRepository,
     private readonly cache: CacheService,
     private readonly config: ConfigService<Env, true>,
+    private readonly jobs: DueJobRunner,
+    private readonly reconcile: ReconcileCommunityBooksUseCase,
   ) {}
 
   async search(params: MediaCatalogSearchParams): Promise<CatalogSearchResult> {
+    // Une recherche de livres est le moment naturel pour vérifier si les ouvrages saisis
+    // par les utilisateurs sont entrés au catalogue depuis. Déclenché sans être attendu :
+    // la recherche n'en subit pas la latence (ADR-0019).
+    void this.jobs.runIfDue(RECONCILE_JOB, RECONCILE_INTERVAL_MS, () =>
+      this.reconcile.execute().then(() => undefined),
+    );
+
     const query = params.query.trim();
     // Le champ interrogé fait partie de la clé : « Camus » par titre et par auteur ne
     // donnent pas les mêmes résultats.

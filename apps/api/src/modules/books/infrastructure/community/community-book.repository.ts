@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { PrismaService } from "../../../../shared/infrastructure/prisma/prisma.service";
 import { authorsText } from "../../../../shared/infrastructure/prisma/searchable-text";
 import {
+  BOOKS_PROVIDER,
   type BookRecord,
   COMMUNITY_SOURCE,
   type CommunityBookRepository,
@@ -104,6 +105,86 @@ export class PrismaCommunityBookRepository implements CommunityBookRepository {
       include: { book: true },
     });
     return row ? toBookRecord(row) : null;
+  }
+
+  async listPending(limit: number): Promise<BookRecord[]> {
+    const rows = await this.prisma.media.findMany({
+      where: { externalProvider: COMMUNITY_SOURCE },
+      include: { book: true },
+      take: limit,
+      // Les plus anciens d'abord : un livre saisi il y a longtemps a plus de chances
+      // d'être entré au catalogue depuis, et attend son tour depuis plus longtemps.
+      orderBy: { createdAt: "asc" },
+    });
+    return rows.map(toBookRecord);
+  }
+
+  async promote(communityExternalId: string, official: BookRecord): Promise<boolean> {
+    const existing = await this.prisma.media.findUnique({
+      where: {
+        externalProvider_externalId: {
+          externalProvider: BOOKS_PROVIDER,
+          externalId: official.externalId,
+        },
+      },
+      select: { id: true },
+    });
+    // L'ouvrage officiel est déjà suivi par quelqu'un : fusionner deux médias distincts
+    // (et leurs bibliothèques) est une opération autrement plus risquée, qu'on ne tente
+    // pas au fil d'une synchronisation automatique.
+    if (existing) return false;
+
+    const media = await this.prisma.media.findUnique({
+      where: {
+        externalProvider_externalId: {
+          externalProvider: COMMUNITY_SOURCE,
+          externalId: communityExternalId,
+        },
+      },
+      select: { id: true },
+    });
+    if (!media) return false;
+
+    // Une seule ligne change de référence : tout ce qui pointe sur `media.id` — élément
+    // de bibliothèque, avis, progression, historique, appartenance à une liste — reste
+    // intact par construction.
+    await this.prisma.media.update({
+      where: { id: media.id },
+      data: {
+        externalProvider: BOOKS_PROVIDER,
+        externalId: official.externalId,
+        title: official.title,
+        year: publicationYear(official.publishedDate),
+        posterUrl: official.coverUrl,
+        genres: [...official.categories],
+        book: {
+          update: {
+            subtitle: official.subtitle,
+            authors: [...official.authors],
+            authorsText: authorsText(official.authors),
+            description: official.description,
+            pageCount: official.pageCount,
+            publisher: official.publisher,
+            publishedDate: official.publishedDate,
+            language: official.language,
+            categories: [...official.categories],
+            isbn10: official.isbn10,
+            isbn13: official.isbn13,
+            googleBooksId: official.googleBooksId,
+            openLibraryId: official.openLibraryId,
+            infoUrl: official.infoUrl,
+            previewUrl: official.previewUrl,
+            coverUrlLarge: official.coverUrlLarge,
+            averageRating: official.averageRating,
+            ratingsCount: official.ratingsCount,
+            // La provenance communautaire est conservée : le livre a bien été saisi par
+            // un utilisateur avant d'entrer au catalogue.
+            sources: [...new Set([COMMUNITY_SOURCE, ...official.sources])],
+          },
+        },
+      },
+    });
+    return true;
   }
 
   async findByIsbn(isbn: string): Promise<BookRecord | null> {
