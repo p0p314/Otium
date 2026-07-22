@@ -17,10 +17,18 @@ import {
  */
 export const RECONCILE_BATCH_SIZE = 10;
 
+/**
+ * Candidats examinés par source. Le mieux classé n'est pas toujours le bon ouvrage —
+ * une édition, un guide ou une étude peuvent le devancer. La règle de rapprochement étant
+ * stricte, examiner quelques candidats augmente le taux de réussite sans risque.
+ */
+const CANDIDATES_PER_SOURCE = 5;
+
 export interface ReconcileReport {
   readonly examined: number;
   readonly promoted: number;
-  readonly rejected: number;
+  /** Examinés sans rapprochement : aucun candidat sûr, ou équivalent déjà suivi. */
+  readonly unmatched: number;
 }
 
 /**
@@ -49,23 +57,19 @@ export class ReconcileCommunityBooksUseCase {
   async execute(): Promise<ReconcileReport> {
     const pending = await this.books.listPending(RECONCILE_BATCH_SIZE);
     let promoted = 0;
-    let rejected = 0;
 
     for (const own of pending) {
+      // `findOfficial` n'en renvoie qu'un dont la règle a jugé qu'il désigne le même
+      // ouvrage : il n'y a plus rien à décider ici.
       const candidate = await this.findOfficial(own);
-      if (!candidate) continue;
-
-      const verdict = matchCommunityBook(own, candidate);
-      if (verdict.confidence !== "CERTAIN") {
-        rejected += 1;
-        this.logger.debug(`« ${own.title} » non rapproché : ${verdict.reason}`);
+      if (!candidate) {
+        this.logger.debug(`« ${own.title} » : aucun équivalent officiel sûr`);
         continue;
       }
 
-      const done = await this.books.promote(own.externalId, candidate);
-      if (done) {
+      if (await this.books.promote(own.externalId, candidate)) {
         promoted += 1;
-        this.logger.log(`« ${own.title} » rattaché au catalogue : ${verdict.reason}`);
+        this.logger.log(`« ${own.title} » rattaché au catalogue.`);
       } else {
         // L'ouvrage officiel est déjà suivi : on laisse le livre communautaire tel quel
         // plutôt que de fusionner deux médias et leurs bibliothèques.
@@ -73,7 +77,7 @@ export class ReconcileCommunityBooksUseCase {
       }
     }
 
-    return { examined: pending.length, promoted, rejected };
+    return { examined: pending.length, promoted, unmatched: pending.length - promoted };
   }
 
   /**
@@ -87,10 +91,17 @@ export class ReconcileCommunityBooksUseCase {
     const isbn = own.isbn13 ?? own.isbn10;
     for (const provider of [this.primary, this.fallback]) {
       try {
-        const found = isbn
-          ? await provider.findByIsbn(isbn)
+        const candidates = isbn
+          ? [await provider.findByIsbn(isbn)]
           : await this.searchByTitleAndAuthor(provider, own);
-        if (found) return found;
+        // Tous les candidats sont soumis à la règle : le mieux classé par le fournisseur
+        // n'est pas toujours le bon ouvrage, et la règle est assez stricte pour trancher
+        // sans risque. N'en examiner qu'un ferait manquer des rapprochements légitimes.
+        for (const candidate of candidates) {
+          if (candidate && matchCommunityBook(own, candidate).confidence === "CERTAIN") {
+            return candidate;
+          }
+        }
       } catch (error) {
         this.logger.debug(`Source « ${provider.name} » indisponible : ${(error as Error).message}`);
       }
@@ -101,16 +112,15 @@ export class ReconcileCommunityBooksUseCase {
   private async searchByTitleAndAuthor(
     provider: BookProvider,
     own: BookRecord,
-  ): Promise<BookRecord | null> {
+  ): Promise<BookRecord[]> {
     // Sans auteur, le rapprochement serait de toute façon rejeté : on s'épargne l'appel.
     const author = own.authors[0];
-    if (!author) return null;
+    if (!author) return [];
     const page = await provider.searchBooks({
       query: `${own.title} ${author}`,
       page: 1,
-      pageSize: 3,
+      pageSize: CANDIDATES_PER_SOURCE,
     });
-    // La règle de rapprochement tranche ensuite ; on ne retient que le mieux classé.
-    return page.items[0] ?? null;
+    return [...page.items];
   }
 }

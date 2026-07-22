@@ -113,9 +113,16 @@ Les clients affichent, ils ne calculent pas.
 ## 7. Livres communautaires et réconciliation
 
 Un ouvrage qu'aucun fournisseur ne connaît peut être **saisi par l'utilisateur**
-(`POST /api/books`, seul le titre est requis). Il devient un `Media` ordinaire — seul son
-`externalProvider` (`community`) le distingue — donc bibliothèque, suivi, statistiques,
-favoris et listes le traitent comme n'importe quel livre, sans code dédié.
+(`POST /api/books`, seul le titre est requis). Il devient un `Media` ordinaire — même
+`externalProvider` (`books`) que les livres du catalogue, seule la présence de `community`
+dans `sources` le distingue — donc bibliothèque, suivi, statistiques, favoris et listes le
+traitent comme n'importe quel livre, sans code dédié.
+
+> **Pourquoi le même fournisseur.** Les stocker sous `community` alors que l'API les expose
+> sous `books` créait **deux lignes pour le même livre** : celle de la saisie, et celle que
+> l'ajout en bibliothèque créait faute de retrouver la première. La réconciliation
+> travaillait alors sur la ligne orpheline, jamais sur celle réellement suivie. L'identité
+> doit être la même à l'écriture et à la lecture.
 
 En recherche, le dépôt communautaire est interrogé **en parallèle** des sources distantes,
 jamais en repli, et ses résultats passent en tête : l'utilisateur a saisi ce livre parce

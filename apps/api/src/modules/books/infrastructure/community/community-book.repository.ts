@@ -14,12 +14,19 @@ import {
 type BookRow = Prisma.MediaGetPayload<{ include: { book: true } }>;
 
 /**
- * Adapter Prisma des livres communautaires. Ceux-ci sont des `Media` ordinaires —
- * seul leur `externalProvider` les distingue — et leurs métadonnées vivent dans la même
- * table que celles des livres du catalogue. C'est ce qui les rend immédiatement
- * utilisables partout : bibliothèque, statistiques, favoris et listes n'ont rien à savoir
- * de leur origine.
+ * Adapter Prisma des livres communautaires.
+ *
+ * Ils sont stockés **exactement comme les autres livres** : `externalProvider` vaut
+ * `books`, et seule la présence de `community` dans `BookMetadata.sources` les distingue.
+ *
+ * Ce détail n'en est pas un. Les stocker sous un `externalProvider` distinct alors que
+ * l'API les expose sous `books` créait **deux lignes pour le même livre** : celle créée
+ * par la saisie, et celle que l'ajout en bibliothèque créait faute de retrouver la
+ * première. L'identité doit être la même à l'écriture et à la lecture.
  */
+
+/** Un livre communautaire porte ce marqueur dans `sources`, quel que soit son fournisseur. */
+const COMMUNITY_FILTER = { book: { sources: { has: COMMUNITY_SOURCE } } } as const;
 @Injectable()
 export class PrismaCommunityBookRepository implements CommunityBookRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -31,7 +38,9 @@ export class PrismaCommunityBookRepository implements CommunityBookRepository {
         title: book.title,
         year: publicationYear(book.publishedDate),
         posterUrl: book.coverUrl,
-        externalProvider: COMMUNITY_SOURCE,
+        // Même fournisseur que les livres du catalogue : c'est ce qui garantit qu'ajouter
+        // ce livre en bibliothèque retrouve **cette** ligne au lieu d'en créer une autre.
+        externalProvider: BOOKS_PROVIDER,
         // L'identifiant est généré : un livre communautaire n'a, par définition, pas de
         // référence chez un fournisseur.
         externalId: crypto.randomUUID(),
@@ -81,8 +90,8 @@ export class PrismaCommunityBookRepository implements CommunityBookRepository {
     const ids = await this.prisma.$queryRaw<{ id: string }[]>(Prisma.sql`
       SELECT m.id
       FROM "Media" m
-      LEFT JOIN "BookMetadata" b ON b."mediaId" = m.id
-      WHERE m."externalProvider" = ${COMMUNITY_SOURCE} AND (${criterion})
+      JOIN "BookMetadata" b ON b."mediaId" = m.id
+      WHERE ${COMMUNITY_SOURCE} = ANY(b.sources) AND (${criterion})
       ORDER BY m."createdAt" DESC
       LIMIT ${limit}
     `);
@@ -98,10 +107,8 @@ export class PrismaCommunityBookRepository implements CommunityBookRepository {
   }
 
   async findByExternalId(externalId: string): Promise<BookRecord | null> {
-    const row = await this.prisma.media.findUnique({
-      where: {
-        externalProvider_externalId: { externalProvider: COMMUNITY_SOURCE, externalId },
-      },
+    const row = await this.prisma.media.findFirst({
+      where: { externalId, ...COMMUNITY_FILTER },
       include: { book: true },
     });
     return row ? toBookRecord(row) : null;
@@ -109,7 +116,9 @@ export class PrismaCommunityBookRepository implements CommunityBookRepository {
 
   async listPending(limit: number): Promise<BookRecord[]> {
     const rows = await this.prisma.media.findMany({
-      where: { externalProvider: COMMUNITY_SOURCE },
+      // Seuls les livres **encore** exclusivement communautaires : une fois rattachés, ils
+      // portent aussi la source officielle et n'ont plus à être réexaminés.
+      where: { book: { sources: { equals: [COMMUNITY_SOURCE] } } },
       include: { book: true },
       take: limit,
       // Les plus anciens d'abord : un livre saisi il y a longtemps a plus de chances
@@ -134,13 +143,8 @@ export class PrismaCommunityBookRepository implements CommunityBookRepository {
     // pas au fil d'une synchronisation automatique.
     if (existing) return false;
 
-    const media = await this.prisma.media.findUnique({
-      where: {
-        externalProvider_externalId: {
-          externalProvider: COMMUNITY_SOURCE,
-          externalId: communityExternalId,
-        },
-      },
+    const media = await this.prisma.media.findFirst({
+      where: { externalId: communityExternalId, ...COMMUNITY_FILTER },
       select: { id: true },
     });
     if (!media) return false;
@@ -151,7 +155,8 @@ export class PrismaCommunityBookRepository implements CommunityBookRepository {
     await this.prisma.media.update({
       where: { id: media.id },
       data: {
-        externalProvider: BOOKS_PROVIDER,
+        // Le fournisseur est déjà `books` : seul l'identifiant change, l'UUID généré
+        // cédant la place à la référence officielle.
         externalId: official.externalId,
         title: official.title,
         year: publicationYear(official.publishedDate),
@@ -190,8 +195,8 @@ export class PrismaCommunityBookRepository implements CommunityBookRepository {
   async findByIsbn(isbn: string): Promise<BookRecord | null> {
     const row = await this.prisma.media.findFirst({
       where: {
-        externalProvider: COMMUNITY_SOURCE,
-        book: { OR: [{ isbn13: isbn }, { isbn10: isbn }] },
+        ...COMMUNITY_FILTER,
+        book: { sources: { has: COMMUNITY_SOURCE }, OR: [{ isbn13: isbn }, { isbn10: isbn }] },
       },
       include: { book: true },
     });
