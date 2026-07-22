@@ -293,6 +293,33 @@ model EpisodeReview {
 }
 
 /**
+ * Instantané des livres populaires d'une source, rafraîchi une fois par jour (ADR-0019).
+ *
+ * Servi depuis la base plutôt qu'appelé à la demande : la source impose un quota
+ * (60 requêtes/minute) et son jeton est personnel. C'est aussi ce qui permet de continuer
+ * à afficher quelque chose quand elle est indisponible — les données précédentes restent
+ * en place tant qu'un nouvel instantané n'a pas abouti.
+ */
+model TrendingSnapshot {
+  id          String   @id @default(cuid())
+  source      String
+  /// Rang dans le classement, à partir de 0. Détermine l'ordre d'affichage.
+  position    Int
+  externalId  String
+  title       String
+  authors     String[]
+  coverUrl    String?
+  description String?
+  publishedDate String?
+  infoUrl     String?
+  rating      Float?
+  fetchedAt   DateTime @default(now())
+
+  @@unique([source, position])
+  @@index([source, position])
+}
+
+/**
  * État d'exécution d'une tâche périodique (ADR-0019).
  *
  * Le service d'hébergement gratuit **s'endort** : une planification en processus ne se

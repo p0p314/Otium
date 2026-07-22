@@ -153,7 +153,43 @@ recopie : bibliothèques, notes, avis, favoris, dates, progression et historique
 sur l'identifiant **interne** du média, qui ne change pas. Seules les métadonnées
 s'enrichissent, et `sources` conserve la trace de l'origine communautaire.
 
-## 8. Points d'extension
+## 8. Découverte de livres (Hardcover)
+
+Une vitrine « Livres à découvrir » complète les tendances films/séries, alimentée par
+[Hardcover](https://docs.hardcover.app/api/getting-started/).
+
+> ⚠️ **Hardcover n'expose aucune requête « tendances ».** Son schéma ne fournit que des
+> signaux bruts (`users_count`, `users_read_count`, `rating`). Le classement affiché est
+> donc **le nôtre** — « les livres récents que le plus d'utilisateurs Hardcover ont
+> ajoutés » — et non un palmarès officiel. La formule tient dans une seule requête
+> GraphQL : la changer n'affecte rien d'autre.
+
+Trois contraintes de la plateforme dictent la conception :
+
+| Contrainte | Conséquence |
+| --- | --- |
+| 60 requêtes/minute, profondeur de requête ≤ 3 | pas d'appel à la demande ; la requête tient en 3 niveaux |
+| Jeton **personnel** (lié à un compte, pas à une application) | un seul appel quotidien, côté serveur |
+| API en **bêta** | tous les champs traités comme optionnels ; les erreurs GraphQL (renvoyées en HTTP 200) sont détectées explicitement |
+
+### Instantané quotidien
+
+`GET /api/books/discover` sert un instantané stocké en base, rafraîchi au plus une fois
+par jour par une tâche périodique (ADR-0019) déclenchée à l'affichage.
+
+- Le remplacement est **transactionnel** : une interruption ne laisse jamais la liste à
+  moitié effacée.
+- Un résultat **vide n'écrase rien** — un schéma modifié en bêta ne doit pas supprimer des
+  données encore valables.
+- Source indisponible ⇒ **le dernier instantané reste servi**. La synchronisation échoue,
+  la page de découverte non.
+- Sans jeton configuré, la section est simplement absente : aucune erreur, aucun appel.
+
+L'instantané ne stocke que ce qu'il faut pour **découvrir** un titre (couverture, titre,
+auteurs, note). Ouvrir la fiche passe par Google Books et Open Library, qui décrivent
+l'ouvrage — ISBN et pagination compris (§ 3).
+
+## 9. Points d'extension
 
 | Besoin futur | Geste attendu |
 | --- | --- |
@@ -163,6 +199,7 @@ s'enrichissent, et `sources` conserve la trace de l'origine communautaire.
 | Ajouter un type de média (manga, BD…) | Un module catalogue + une ligne dans `CATALOG_PROVIDER_REGISTRATIONS` |
 | Suivre en chapitres ou en tomes | Une valeur d'enum `ProgressUnit` + son total effectif |
 | Temps de lecture restant estimé | Dérivable de `ProgressEntry` (rythme) × pages restantes — aucune migration |
-| Tendances livres | Implémenter `TrendingCatalogProvider` le jour où une source en expose |
+| Changer la définition des « tendances » | La requête GraphQL de `HardcoverProvider`, un seul endroit |
+| Ajouter une source de découverte | Un adapter + une entrée `source` dans `TrendingSnapshot` |
 | Assouplir/durcir le rapprochement | `matchCommunityBook`, fonction pure — un seul point, testable |
 | Fusionner deux médias déjà suivis | Non traité : la réconciliation s'abstient quand l'ouvrage officiel existe déjà |
