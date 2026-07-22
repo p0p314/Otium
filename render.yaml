@@ -45,6 +45,18 @@ services:
       # Cache TMDB en mémoire : 24 h par défaut, ajustable pour limiter les appels réseau.
       - key: TMDB_CACHE_TTL_SECONDS
         value: "86400"
+      # Google Books — source prioritaire du catalogue de livres (ADR-0016). Facultative :
+      # sans clé, l'API répond avec un quota anonyme nettement plus bas et renvoie
+      # fréquemment des 503 ; Open Library assure alors le service.
+      - key: GOOGLE_BOOKS_API_KEY
+        sync: false
+      # Cache livres : 7 j (les métadonnées d'un livre publié ne changent pas).
+      - key: BOOKS_CACHE_TTL_SECONDS
+        value: "604800"
+      # Hardcover — vitrine « Livres à découvrir ». Jeton **personnel** (hardcover.app/account/api),
+      # API en bêta. Absent : la section est simplement masquée, aucune erreur.
+      - key: HARDCOVER_API_TOKEN
+        sync: false
       # Notifications Push (VAPID — ADR-0020). Générer une fois via
       # `npx web-push generate-vapid-keys` et renseigner dans le dashboard (secrets).
       # Absentes : l'app démarre mais le Push est désactivé.
