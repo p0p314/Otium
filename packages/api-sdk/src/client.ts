@@ -120,6 +120,14 @@ export class OtiumClient {
     return this.request("/books", MediaSummary, { method: "POST", body: input });
   }
 
+  /**
+   * Livres à découvrir. Servi depuis un instantané côté serveur : aucun appel à la source
+   * externe n'est déclenché par l'affichage.
+   */
+  async getBookDiscoveries(): Promise<SearchMediaResult> {
+    return this.request("/books/discover", SearchMediaResult);
+  }
+
   async getMediaDetails(type: MediaType, externalId: string): Promise<MediaDetails> {
     return this.request(`/media/${type}/${encodeURIComponent(externalId)}`, MediaDetails);
   }

@@ -86,6 +86,22 @@ export class HttpClient {
     }
   }
 
+  /**
+   * POST JSON — nécessaire aux API GraphQL, qui n'exposent qu'un seul endpoint.
+   *
+   * Pas de réessai ici : rejouer un POST suppose que l'opération soit idempotente, ce que
+   * seul l'appelant sait. Une lecture GraphQL l'est, une mutation ne l'est pas.
+   */
+  async postJson<T>(url: string, body: unknown, headers: Record<string, string> = {}): Promise<T> {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "content-type": "application/json", ...headers },
+      body: JSON.stringify(body),
+    });
+    if (!response.ok) throw new HttpRequestError(response.status, url);
+    return (await response.json()) as T;
+  }
+
   private wait(ms: number): Promise<void> {
     return ms > 0 ? new Promise((resolve) => setTimeout(resolve, ms)) : Promise.resolve();
   }

@@ -27,6 +27,13 @@ export const envSchema = z.object({
   // en cours de diffusion — moins d'appels réseau à qualité de service égale.
   BOOKS_CACHE_TTL_SECONDS: z.coerce.number().int().positive().default(604800),
 
+  // Hardcover — découverte de livres populaires. Le jeton est **personnel** (lié à un
+  // compte, pas à une application) et l'API est en bêta : sans jeton, la fonctionnalité
+  // est simplement absente, le reste de l'application fonctionne.
+  // https://docs.hardcover.app/api/getting-started/
+  HARDCOVER_API_TOKEN: z.string().optional(),
+  HARDCOVER_API_URL: z.string().url().default("https://api.hardcover.app/v1/graphql"),
+
   // Notifications Push (Web Push / VAPID — ADR-0020). Les clés sont fournies **uniquement**
   // par l'environnement et **jamais générées au démarrage** : une génération automatique
   // changerait de clé à chaque redémarrage et invaliderait tous les abonnements existants.

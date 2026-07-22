@@ -1,7 +1,10 @@
 import { Module } from "@nestjs/common";
 import { AuthenticationModule } from "../authentication/authentication.module";
 import { CreateBookUseCase } from "./application/create-book.usecase";
+import { GetBookDiscoveriesUseCase } from "./application/get-book-discoveries.usecase";
 import { ReconcileCommunityBooksUseCase } from "./application/reconcile-community-books.usecase";
+import { HardcoverProvider } from "./infrastructure/hardcover/hardcover.provider";
+import { PrismaTrendingBooksRepository } from "./infrastructure/hardcover/trending-books.repository";
 import { CompositeBookCatalogProvider } from "./infrastructure/composite-book-catalog.provider";
 import { GoogleBooksProvider } from "./infrastructure/google-books/google-books.provider";
 import { OpenLibraryProvider } from "./infrastructure/open-library/open-library.provider";
@@ -11,6 +14,7 @@ import {
   COMMUNITY_BOOK_REPOSITORY,
   FALLBACK_BOOK_PROVIDER,
   PRIMARY_BOOK_PROVIDER,
+  TRENDING_BOOKS_REPOSITORY,
 } from "./domain";
 
 /**
@@ -24,6 +28,9 @@ import {
   providers: [
     CreateBookUseCase,
     ReconcileCommunityBooksUseCase,
+    GetBookDiscoveriesUseCase,
+    HardcoverProvider,
+    { provide: TRENDING_BOOKS_REPOSITORY, useClass: PrismaTrendingBooksRepository },
     { provide: COMMUNITY_BOOK_REPOSITORY, useClass: PrismaCommunityBookRepository },
     GoogleBooksProvider,
     OpenLibraryProvider,
