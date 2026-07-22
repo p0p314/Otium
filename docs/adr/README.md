@@ -25,6 +25,7 @@ Une décision = un fichier immuable ; on ne modifie pas un ADR accepté, on le *
 | [0017](0017-progression-polymorphe.md) | Progression polymorphe (pages, pourcentage) + historique | Accepté |
 | [0018](0018-collection-generique.md) | `Collection` : regrouper des médias en œuvres, de façon générique | Accepté |
 | [0019](0019-taches-periodiques-sans-cron.md) | Tâches périodiques sans cron : échéance en base, déclenchement opportuniste | Accepté |
+| [0020](0020-notifications-push-pwa.md) | Notifications Push (PWA) : Web Push, anti-doublon en base, détection opportuniste | Accepté |
 
 ## Gabarit
 

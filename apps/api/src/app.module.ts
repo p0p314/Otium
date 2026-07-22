@@ -7,6 +7,7 @@ import { HealthModule } from "./modules/health/health.module";
 import { ImportModule } from "./modules/import/import.module";
 import { LibraryModule } from "./modules/library/library.module";
 import { MediaModule } from "./modules/media/media.module";
+import { NotificationsModule } from "./modules/notifications/notifications.module";
 import { StatsModule } from "./modules/stats/stats.module";
 import { CacheModule } from "./shared/infrastructure/cache/cache.module";
 import { validateEnv } from "./shared/infrastructure/config/env";
@@ -52,6 +53,7 @@ function staticModules(): DynamicModule[] {
     LibraryModule,
     StatsModule,
     ImportModule,
+    NotificationsModule,
     ...staticModules(),
   ],
 })

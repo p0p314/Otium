@@ -20,10 +20,15 @@ export default defineConfig({
   define: { __OTIUM_BUILD_ID__: JSON.stringify(String(Date.now())) },
   plugins: [
     react(),
-    // PWA : app installable (écran d'accueil, plein écran) + service worker Workbox.
+    // PWA : app installable (écran d'accueil, plein écran) + service worker **unique**
+    // (`src/sw.ts`) assurant précache **et** notifications Push (ADR-0020). Stratégie
+    // `injectManifest` : on écrit le worker, Workbox n'y injecte que la liste de précache.
     // `injectRegister: "script"` génère un fichier d'enregistrement externe (pas de
     // script inline) pour rester compatible avec la CSP `script-src 'self'` de l'API.
     VitePWA({
+      strategies: "injectManifest",
+      srcDir: "src",
+      filename: "sw.ts",
       registerType: "autoUpdate",
       injectRegister: "script",
       includeAssets: ["favicon.svg", "logo-mark.svg", "apple-touch-icon.png"],
@@ -49,18 +54,11 @@ export default defineConfig({
           },
         ],
       },
-      workbox: {
-        // App shell précachée ; repli SPA hors ligne (sauf routes API).
+      injectManifest: {
+        // App shell précachée (le repli SPA et le skipWaiting/clientsClaim sont gérés
+        // dans `src/sw.ts`). Pas de cache d'images TMDB par le SW : un `CacheFirst` sur
+        // des réponses cross-origin opaques pouvait figer des images cassées.
         globPatterns: ["**/*.{js,css,html,svg,png,ico,woff2}"],
-        navigateFallback: "/index.html",
-        navigateFallbackDenylist: [/^\/api/],
-        // Le nouveau SW prend la main immédiatement (remplace un ancien SW en place).
-        skipWaiting: true,
-        clientsClaim: true,
-        cleanupOutdatedCaches: true,
-        // Pas de cache d'images TMDB par le service worker : un `CacheFirst` sur des
-        // réponses cross-origin opaques pouvait figer des images cassées côté PWA. On
-        // laisse le cache HTTP du navigateur gérer les affiches (déjà efficace).
       },
     }),
   ],

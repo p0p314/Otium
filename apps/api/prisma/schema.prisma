@@ -42,6 +42,9 @@ model User {
   reviews        Review[]
   episodeReviews EpisodeReview[]
   sessions       Session[]
+  pushSubscriptions      PushSubscription[]
+  notificationPreference NotificationPreference?
+  sentNotifications      SentNotification[]
 }
 
 /**
@@ -179,6 +182,9 @@ model Episode {
   reviews        EpisodeReview[]
 
   @@unique([seasonId, number])
+  // La détection de notifications ne requête que les épisodes fraîchement diffusés
+  // (fenêtre récente sur `airDate`) : l'index borne ce balayage (éco-conception).
+  @@index([airDate])
 }
 
 model LibraryItem {
@@ -305,6 +311,65 @@ model SyncState {
   status     String?
   lastError  String?
   updatedAt  DateTime  @updatedAt
+}
+
+/**
+ * Abonnement Push d'un **appareil** (Web Push / VAPID — ADR-0020). Un utilisateur peut en
+ * enregistrer plusieurs (téléphone, tablette, ordinateur) et chacun reçoit les notifications.
+ * L'`endpoint` est l'identifiant unique fourni par le service Push du navigateur : un abonnement
+ * invalide (410/404 au moment de l'envoi) est supprimé automatiquement.
+ */
+model PushSubscription {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  endpoint  String   @unique
+  /// Clé publique de l'appareil (P-256), base64url — chiffrement de la charge utile.
+  p256dh    String
+  /// Secret d'authentification, base64url.
+  auth      String
+  /// Étiquette lisible de l'appareil (user-agent), pour la gestion côté utilisateur.
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+/**
+ * Préférences de notification par utilisateur, chaque canal **activable indépendamment**
+ * (ADR-0020). Une ligne par utilisateur, créée à la demande ; tout est actif par défaut.
+ * Structurée ainsi dès la V1 pour éviter une migration lorsque l'UI exposera chaque canal.
+ */
+model NotificationPreference {
+  userId        String   @id
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  newEpisodes   Boolean  @default(true)
+  newSeasons    Boolean  @default(true)
+  movieReminder Boolean  @default(true)
+  movieRelease  Boolean  @default(true)
+  updatedAt     DateTime @updatedAt
+}
+
+/**
+ * Registre **anti-doublon** des notifications déjà prises en charge (ADR-0020). L'unicité
+ * `(userId, dedupKey)` garantit qu'une même notification n'est envoyée **qu'une seule fois** —
+ * quels que soient les redémarrages, relances de la tâche ou exécutions concurrentes. La prise
+ * se fait par `INSERT … ON CONFLICT DO NOTHING` **avant** tout envoi : deux exécutions
+ * simultanées ne peuvent pas réclamer la même clé.
+ */
+model SentNotification {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  /// Clé d'identité stable de la notification (ex. `EPISODE:<episodeId>`, `MOVIE_RELEASE:<mediaId>`).
+  dedupKey  String
+  /// Nature (`episode`, `season`, `movie_reminder`, `movie_release`) — observabilité.
+  type      String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, dedupKey])
+  @@index([userId])
 }
 
 // Journal des événements de domaine — source de vérité pour historique/stats/reco (ADR-0006).

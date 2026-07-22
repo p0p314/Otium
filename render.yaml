@@ -45,3 +45,15 @@ services:
       # Cache TMDB en mémoire : 24 h par défaut, ajustable pour limiter les appels réseau.
       - key: TMDB_CACHE_TTL_SECONDS
         value: "86400"
+      # Notifications Push (VAPID — ADR-0020). Générer une fois via
+      # `npx web-push generate-vapid-keys` et renseigner dans le dashboard (secrets).
+      # Absentes : l'app démarre mais le Push est désactivé.
+      - key: VAPID_PUBLIC_KEY
+        sync: false
+      - key: VAPID_PRIVATE_KEY
+        sync: false
+      - key: VAPID_SUBJECT
+        sync: false
+      # Secret facultatif du déclencheur externe POST /api/notifications/run (cron).
+      - key: NOTIFICATIONS_CRON_SECRET
+        sync: false
