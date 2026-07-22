@@ -1,6 +1,7 @@
 export * from "./collection-identity";
 export * from "./group-volumes";
 export * from "./isbn";
+export * from "./match-community-book";
 export * from "./merge-books";
 export * from "./models/book";
 export * from "./ports/book-provider";

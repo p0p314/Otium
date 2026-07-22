@@ -19,6 +19,7 @@ import { TypeBasedMediaCatalogRegistry } from "../src/modules/media/infrastructu
 import { MediaController } from "../src/modules/media/presentation/media.controller";
 import { EVENT_PUBLISHER } from "../src/shared/domain";
 import { CacheService } from "../src/shared/infrastructure/cache/cache.service";
+import { DueJobRunner } from "../src/shared/infrastructure/jobs/due-job.runner";
 import { PrismaService } from "../src/shared/infrastructure/prisma/prisma.service";
 import { HttpClient } from "../src/shared/infrastructure/http/http-client";
 
@@ -88,8 +89,18 @@ function technicalModule(http: HttpClient): new () => object {
       // Idem : `PrismaModule` est global en production. Aucune requête n'est émise ici,
       // le dépôt communautaire étant remplacé par un double.
       { provide: PrismaService, useValue: {} },
+      // Idem : `JobsModule` est global. La réconciliation périodique n'est pas le sujet
+      // de ces tests — elle n'est jamais due.
+      { provide: DueJobRunner, useValue: { runIfDue: vi.fn().mockResolvedValue(false) } },
     ],
-    exports: [CacheService, HttpClient, ConfigService, EVENT_PUBLISHER, PrismaService],
+    exports: [
+      CacheService,
+      HttpClient,
+      ConfigService,
+      EVENT_PUBLISHER,
+      PrismaService,
+      DueJobRunner,
+    ],
   })
   class TechnicalTestModule {}
   return TechnicalTestModule;

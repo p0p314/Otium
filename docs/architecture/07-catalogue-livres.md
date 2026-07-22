@@ -110,7 +110,50 @@ Le serveur borne la saisie, calcule `percent` et `remaining`, déduit statut et 
 le delta dans `ProgressEntry` — source des statistiques « pages par mois » et « rythme de lecture ».
 Les clients affichent, ils ne calculent pas.
 
-## 7. Points d'extension
+## 7. Livres communautaires et réconciliation
+
+Un ouvrage qu'aucun fournisseur ne connaît peut être **saisi par l'utilisateur**
+(`POST /api/books`, seul le titre est requis). Il devient un `Media` ordinaire — seul son
+`externalProvider` (`community`) le distingue — donc bibliothèque, suivi, statistiques,
+favoris et listes le traitent comme n'importe quel livre, sans code dédié.
+
+En recherche, le dépôt communautaire est interrogé **en parallèle** des sources distantes,
+jamais en repli, et ses résultats passent en tête : l'utilisateur a saisi ce livre parce
+qu'aucun catalogue ne le connaissait.
+
+### Réconciliation hebdomadaire
+
+Une tâche périodique (ADR-0019) vérifie si ces livres sont depuis entrés au catalogue.
+Elle est déclenchée par une recherche de livres, sans être attendue, et traite un lot borné
+par exécution — le reliquat passe à l'échéance suivante.
+
+| Étape | Comportement |
+| --- | --- |
+| Recherche du candidat | par **ISBN** si connu (c'est une identité), sinon titre + auteur |
+| Ordre des sources | Google Books, puis Open Library ; une panne n'interrompt pas la tâche |
+| Décision | `matchCommunityBook`, **fonction pure** — seul un verdict `CERTAIN` associe |
+| Association | la **même ligne** change de référence externe ; rien n'est recréé |
+| Ouvrage officiel déjà suivi | on ne touche à rien (fusionner deux bibliothèques est une autre opération) |
+
+**Anti-faux-positifs.** L'enjeu n'est pas de rapprocher le plus possible : une association
+erronée remplacerait le livre d'un utilisateur par un autre, en emportant sa note, son avis
+et sa progression. Un rapprochement manqué, lui, ne coûte rien — le livre sera réexaminé.
+
+| Signal | Verdict |
+| --- | --- |
+| ISBN identique | rapprochement, quels que soient les titres |
+| ISBN différents | refus, même sur titre identique |
+| Titre + auteur identiques, année compatible (± 1 an) | rapprochement |
+| Titre identique, auteur différent | **refus** (« Dune » / « Dune, le mook ») |
+| Auteur absent d'un côté | **refus** — il ne resterait que le titre |
+| Années éloignées | refus |
+
+**Préservation des données utilisateur.** Elle est garantie *par construction*, non par une
+recopie : bibliothèques, notes, avis, favoris, dates, progression et historique pointent
+sur l'identifiant **interne** du média, qui ne change pas. Seules les métadonnées
+s'enrichissent, et `sources` conserve la trace de l'origine communautaire.
+
+## 8. Points d'extension
 
 | Besoin futur | Geste attendu |
 | --- | --- |
@@ -121,3 +164,5 @@ Les clients affichent, ils ne calculent pas.
 | Suivre en chapitres ou en tomes | Une valeur d'enum `ProgressUnit` + son total effectif |
 | Temps de lecture restant estimé | Dérivable de `ProgressEntry` (rythme) × pages restantes — aucune migration |
 | Tendances livres | Implémenter `TrendingCatalogProvider` le jour où une source en expose |
+| Assouplir/durcir le rapprochement | `matchCommunityBook`, fonction pure — un seul point, testable |
+| Fusionner deux médias déjà suivis | Non traité : la réconciliation s'abstient quand l'ouvrage officiel existe déjà |

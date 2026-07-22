@@ -53,6 +53,8 @@ function emptyCommunity() {
     search: vi.fn().mockResolvedValue([]),
     findByExternalId: vi.fn().mockResolvedValue(null),
     findByIsbn: vi.fn().mockResolvedValue(null),
+    listPending: vi.fn().mockResolvedValue([]),
+    promote: vi.fn(),
   };
 }
 
@@ -70,6 +72,9 @@ describe("CompositeBookCatalogProvider", () => {
       emptyCommunity(),
       new CacheService(),
       config,
+      // La réconciliation périodique n'est pas le sujet de ces tests : jamais due.
+      { runIfDue: vi.fn().mockResolvedValue(false) } as never,
+      { execute: vi.fn() } as never,
     );
   });
 

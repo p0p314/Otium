@@ -32,6 +32,18 @@ export interface CommunityBookRepository {
   search(query: string, limit: number, field?: "ALL" | "TITLE" | "AUTHOR"): Promise<BookRecord[]>;
   findByExternalId(externalId: string): Promise<BookRecord | null>;
   findByIsbn(isbn: string): Promise<BookRecord | null>;
+  /** Livres communautaires à réexaminer, les plus anciennement créés d'abord. */
+  listPending(limit: number): Promise<BookRecord[]>;
+  /**
+   * Associe un livre communautaire à son équivalent officiel : la **même ligne** change
+   * de référence externe et reçoit les métadonnées du catalogue.
+   *
+   * Rien n'est recréé, donc rien n'est perdu : bibliothèques, notes, avis, favoris,
+   * dates, progression et historique pointent sur cet identifiant interne et ne bougent
+   * pas. Renvoie `false` si l'ouvrage officiel est **déjà** présent en base — fusionner
+   * deux médias déjà suivis est une opération distincte, qu'on ne tente pas ici.
+   */
+  promote(communityExternalId: string, official: BookRecord): Promise<boolean>;
 }
 
 export const COMMUNITY_BOOK_REPOSITORY = Symbol("COMMUNITY_BOOK_REPOSITORY");
