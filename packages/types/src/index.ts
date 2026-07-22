@@ -7,6 +7,7 @@ export * from "./i18n.js";
 export * from "./import.js";
 export * from "./media.js";
 export * from "./media-details.js";
+export * from "./notifications.js";
 export * from "./library.js";
 export * from "./list.js";
 export * from "./review.js";

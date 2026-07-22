@@ -19,6 +19,11 @@ import {
   MediaDetails,
   MediaSummary,
   type MediaType,
+  NotificationPreferences,
+  type PushSubscriptionInput,
+  type RemovePushSubscriptionInput,
+  type UpdateNotificationPreferencesInput,
+  VapidPublicKey,
   type RateMediaInput,
   type RegisterInput,
   type ResolveImportInput,
@@ -351,6 +356,44 @@ export class OtiumClient {
 
   async markEpisodes(itemId: string, input: MarkEpisodesInput): Promise<SeriesTracking> {
     return this.request(`/library/${itemId}/episodes/batch`, SeriesTracking, {
+      method: "PATCH",
+      body: input,
+    });
+  }
+
+  // --- Notifications Push (PWA) ---
+
+  /** Clé publique VAPID nécessaire à l'inscription Push côté navigateur. */
+  async getVapidPublicKey(): Promise<VapidPublicKey> {
+    return this.request("/notifications/vapid-public-key", VapidPublicKey);
+  }
+
+  /** Enregistre (ou met à jour) l'abonnement Push de l'appareil courant. Idempotent. */
+  async savePushSubscription(input: PushSubscriptionInput): Promise<void> {
+    await this.request("/notifications/subscriptions", z.void(), {
+      method: "POST",
+      body: input,
+    });
+  }
+
+  /** Retire l'abonnement Push d'un appareil (désinscription / permission révoquée). */
+  async deletePushSubscription(input: RemovePushSubscriptionInput): Promise<void> {
+    await this.request("/notifications/subscriptions", z.void(), {
+      method: "DELETE",
+      body: input,
+    });
+  }
+
+  /** Préférences de notification de l'utilisateur (crée les valeurs par défaut au besoin). */
+  async getNotificationPreferences(): Promise<NotificationPreferences> {
+    return this.request("/notifications/preferences", NotificationPreferences);
+  }
+
+  /** Met à jour partiellement les préférences de notification. */
+  async updateNotificationPreferences(
+    input: UpdateNotificationPreferencesInput,
+  ): Promise<NotificationPreferences> {
+    return this.request("/notifications/preferences", NotificationPreferences, {
       method: "PATCH",
       body: input,
     });

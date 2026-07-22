@@ -26,6 +26,19 @@ export const envSchema = z.object({
   // TTL long (7 j) : les métadonnées d'un livre sont stables, contrairement aux séries
   // en cours de diffusion — moins d'appels réseau à qualité de service égale.
   BOOKS_CACHE_TTL_SECONDS: z.coerce.number().int().positive().default(604800),
+
+  // Notifications Push (Web Push / VAPID — ADR-0020). Les clés sont fournies **uniquement**
+  // par l'environnement et **jamais générées au démarrage** : une génération automatique
+  // changerait de clé à chaque redémarrage et invaliderait tous les abonnements existants.
+  // Absentes : l'app démarre, mais l'envoi Push est désactivé proprement.
+  // Générer une paire : `npx web-push generate-vapid-keys`.
+  VAPID_PUBLIC_KEY: z.string().optional(),
+  VAPID_PRIVATE_KEY: z.string().optional(),
+  // Sujet VAPID : URL `mailto:` ou `https:` identifiant l'émetteur (requis par la spec).
+  VAPID_SUBJECT: z.string().default("mailto:notifications@otium.app"),
+  // Secret facultatif protégeant le déclencheur externe `POST /api/notifications/run`
+  // (cron GitHub Actions / Render). Vide : l'endpoint reste réservé au déclenchement interne.
+  NOTIFICATIONS_CRON_SECRET: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;
