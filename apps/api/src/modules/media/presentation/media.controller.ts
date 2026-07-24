@@ -8,6 +8,7 @@ import {
   TrendingMediaQuery,
 } from "@otium/types";
 import { ZodValidationPipe } from "../../../shared/presentation/zod-validation.pipe";
+import { RateLimit } from "../../../shared/presentation/rate-limit.decorator";
 import { GetEpisodeDetailsUseCase } from "../application/queries/get-episode-details.usecase";
 import { GetMediaDetailsUseCase } from "../application/queries/get-media-details.usecase";
 import { GetTrendingMediaUseCase } from "../application/queries/get-trending-media.usecase";
@@ -15,6 +16,9 @@ import { SearchMediaUseCase } from "../application/queries/search-media.usecase"
 import { toEpisodeDetailsDto, toMediaDetailsDto } from "./media-details.mapper";
 import { toSearchMediaResult } from "./media.mapper";
 
+// Endpoints publics relayant vers des fournisseurs externes (TMDB/Google Books) : on borne
+// l'abus (épuisement de quota, DoS de cache) à 60 requêtes / minute / IP.
+@RateLimit({ limit: 60, windowSeconds: 60 })
 @Controller("media")
 export class MediaController {
   constructor(

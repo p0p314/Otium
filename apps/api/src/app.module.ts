@@ -13,6 +13,7 @@ import { validateEnv } from "./shared/infrastructure/config/env";
 import { EventsModule } from "./shared/infrastructure/events/events.module";
 import { HttpModule } from "./shared/infrastructure/http/http.module";
 import { PrismaModule } from "./shared/infrastructure/prisma/prisma.module";
+import { RateLimitModule } from "./shared/infrastructure/rate-limit/rate-limit.module";
 
 /**
  * Service unique (API + SPA) : quand `WEB_DIST_PATH` est défini (production Render),
@@ -41,6 +42,7 @@ function staticModules(): DynamicModule[] {
       validate: validateEnv,
     }),
     PrismaModule,
+    RateLimitModule,
     CacheModule,
     HttpModule,
     EventsModule,

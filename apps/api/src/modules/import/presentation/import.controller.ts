@@ -19,6 +19,7 @@ import {
 import { AuthGuard, type AuthenticatedUser } from "../../authentication/presentation/auth.guard";
 import { CurrentUser } from "../../authentication/presentation/current-user.decorator";
 import { ZodValidationPipe } from "../../../shared/presentation/zod-validation.pipe";
+import { RateLimit } from "../../../shared/presentation/rate-limit.decorator";
 import { GetImportJobUseCase } from "../application/get-import-job.usecase";
 import { ResolveImportUseCase } from "../application/resolve-import.usecase";
 import { StartImportUseCase } from "../application/start-import.usecase";
@@ -45,6 +46,8 @@ export class ImportController {
    * du job. Le traitement se poursuit côté serveur (même si le client se déconnecte) ; le
    * client suit la progression via `GET /import/jobs/:jobId`.
    */
+  // Traitement lourd (décompression + appels fournisseurs) : 5 imports / heure / IP.
+  @RateLimit({ limit: 5, windowSeconds: 3600 })
   @Post("tvtime")
   @UseInterceptors(FileInterceptor("file", { limits: { fileSize: MAX_ARCHIVE_BYTES } }))
   async importTvTime(

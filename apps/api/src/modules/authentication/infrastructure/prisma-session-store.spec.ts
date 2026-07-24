@@ -74,4 +74,24 @@ describe("PrismaSessionStore", () => {
 
     expect(deleteMany).toHaveBeenCalledWith({ where: { token: "t" } });
   });
+
+  it("revokeAllForUser supprime toutes les sessions de l'utilisateur", async () => {
+    const deleteMany = vi.fn(async () => ({ count: 3 }));
+    const store = new PrismaSessionStore(makePrisma({ deleteMany }));
+
+    await store.revokeAllForUser("user-1");
+
+    expect(deleteMany).toHaveBeenCalledWith({ where: { userId: "user-1" } });
+  });
+
+  it("revokeAllForUser conserve la session courante (exceptToken)", async () => {
+    const deleteMany = vi.fn(async () => ({ count: 2 }));
+    const store = new PrismaSessionStore(makePrisma({ deleteMany }));
+
+    await store.revokeAllForUser("user-1", "keep");
+
+    expect(deleteMany).toHaveBeenCalledWith({
+      where: { userId: "user-1", token: { not: "keep" } },
+    });
+  });
 });

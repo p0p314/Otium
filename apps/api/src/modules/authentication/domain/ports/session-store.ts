@@ -15,6 +15,12 @@ export interface SessionStore {
   resolve(token: string): Promise<string | null>;
   /** Révoque un jeton (déconnexion). */
   revoke(token: string): Promise<void>;
+  /**
+   * Révoque **toutes** les sessions d'un utilisateur, sauf éventuellement `exceptToken`
+   * (la session courante, à conserver). Utilisé après un changement d'identifiant sensible
+   * (mot de passe) : les jetons volés antérieurement cessent d'être valides.
+   */
+  revokeAllForUser(userId: string, exceptToken?: string): Promise<void>;
 }
 
 export const SESSION_STORE = Symbol("SESSION_STORE");

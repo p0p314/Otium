@@ -26,6 +26,7 @@ import {
 import type { Response } from "express";
 import type { Env } from "../../../shared/infrastructure/config/env";
 import { ZodValidationPipe } from "../../../shared/presentation/zod-validation.pipe";
+import { RateLimit } from "../../../shared/presentation/rate-limit.decorator";
 import type { AuthResult } from "../application/auth-result";
 import { EmailAlreadyUsedError, InvalidCredentialsError } from "../application/errors";
 import { LoginUserUseCase } from "../application/login-user.usecase";
@@ -52,6 +53,8 @@ export class AuthController {
     return this.config.get("NODE_ENV", { infer: true }) === "production";
   }
 
+  // Anti-brute force / anti-énumération de masse : 10 tentatives / minute / IP.
+  @RateLimit({ limit: 10, windowSeconds: 60 })
   @Post("register")
   async register(
     @Body(new ZodValidationPipe(RegisterInput)) input: RegisterInput,
@@ -65,6 +68,8 @@ export class AuthController {
     }
   }
 
+  // Anti-brute force / credential stuffing : 10 tentatives / minute / IP.
+  @RateLimit({ limit: 10, windowSeconds: 60 })
   @Post("login")
   @HttpCode(200)
   async login(
@@ -103,11 +108,17 @@ export class AuthController {
   @HttpCode(204)
   @UseGuards(AuthGuard)
   async changeMyPassword(
+    @Req() request: RequestWithUser,
     @CurrentUser() user: AuthenticatedUser,
     @Body(new ZodValidationPipe(ChangePasswordInput)) input: ChangePasswordInput,
   ): Promise<void> {
     try {
-      await this.changePassword.execute({ userId: user.id, ...input });
+      await this.changePassword.execute({
+        userId: user.id,
+        ...input,
+        // Conserve la session courante ; révoque toutes les autres.
+        ...(request.authToken ? { keepSessionToken: request.authToken } : {}),
+      });
     } catch (error) {
       // Mauvais mot de passe actuel → 400 (jamais 401 : ne pas déconnecter la session).
       if (error instanceof InvalidCredentialsError) {

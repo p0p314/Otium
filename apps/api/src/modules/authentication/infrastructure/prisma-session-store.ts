@@ -36,4 +36,10 @@ export class PrismaSessionStore implements SessionStore {
     // deleteMany : idempotent, ne lève pas si le jeton n'existe plus.
     await this.prisma.session.deleteMany({ where: { token } });
   }
+
+  async revokeAllForUser(userId: string, exceptToken?: string): Promise<void> {
+    await this.prisma.session.deleteMany({
+      where: { userId, ...(exceptToken ? { token: { not: exceptToken } } : {}) },
+    });
+  }
 }

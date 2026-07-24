@@ -83,6 +83,11 @@ class InMemorySessionStore {
   async revoke(token: string): Promise<void> {
     this.tokens.delete(token);
   }
+  async revokeAllForUser(userId: string, exceptToken?: string): Promise<void> {
+    for (const [token, owner] of this.tokens) {
+      if (owner === userId && token !== exceptToken) this.tokens.delete(token);
+    }
+  }
 }
 
 describe("Authentication (e2e)", () => {
@@ -196,6 +201,37 @@ describe("Authentication (e2e)", () => {
       .post("/auth/login")
       .send({ email: "bob@example.com", password: "bob-nouveau-1" });
     expect(relogin.status).toBe(200);
+  });
+
+  it("le changement de mot de passe révoque les autres sessions, conserve la courante", async () => {
+    await request(server())
+      .post("/auth/register")
+      .send({ email: "carol@example.com", password: "carol-initial", displayName: "Carol" });
+
+    // Deux sessions distinctes (deux « appareils »).
+    const a = await request(server())
+      .post("/auth/login")
+      .send({ email: "carol@example.com", password: "carol-initial" });
+    const b = await request(server())
+      .post("/auth/login")
+      .send({ email: "carol@example.com", password: "carol-initial" });
+    const tokenA = a.body.token as string;
+    const tokenB = b.body.token as string;
+
+    // Changement depuis la session A.
+    const changed = await request(server())
+      .put("/auth/password")
+      .set("authorization", `Bearer ${tokenA}`)
+      .send({ currentPassword: "carol-initial", newPassword: "carol-nouveau-1" });
+    expect(changed.status).toBe(204);
+
+    // Session A (courante) toujours valide ; session B révoquée.
+    expect(
+      (await request(server()).get("/auth/me").set("authorization", `Bearer ${tokenA}`)).status,
+    ).toBe(200);
+    expect(
+      (await request(server()).get("/auth/me").set("authorization", `Bearer ${tokenB}`)).status,
+    ).toBe(401);
   });
 
   it("mauvais mot de passe → 401", async () => {

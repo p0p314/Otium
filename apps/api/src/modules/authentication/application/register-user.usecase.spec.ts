@@ -37,6 +37,7 @@ describe("RegisterUserUseCase", () => {
       create: vi.fn(async (id: string) => makeSession(id)),
       resolve: vi.fn(),
       revoke: vi.fn(),
+      revokeAllForUser: vi.fn(),
     };
     events = { publish: vi.fn().mockResolvedValue(undefined), publishAll: vi.fn() };
     useCase = new RegisterUserUseCase(users, hasher, sessions, events);

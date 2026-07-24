@@ -35,6 +35,7 @@ describe("LoginUserUseCase", () => {
       }),
       resolve: vi.fn(),
       revoke: vi.fn(),
+      revokeAllForUser: vi.fn(),
     };
     useCase = new LoginUserUseCase(users, hasher, sessions);
   });
