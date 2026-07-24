@@ -10,6 +10,7 @@ import {
   UseInterceptors,
 } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
+import type { Request } from "express";
 import {
   type ImportJobState,
   ResolveImportInput,
@@ -26,6 +27,30 @@ import { StartImportUseCase } from "../application/start-import.usecase";
 
 /** Taille maximale de l'archive acceptée (garde-fou mémoire ; export RGPD ~ quelques Mo). */
 const MAX_ARCHIVE_BYTES = 50 * 1024 * 1024;
+
+/** Types MIME plausibles pour une archive ZIP (les navigateurs varient). */
+const ZIP_MIME_TYPES = new Set([
+  "application/zip",
+  "application/x-zip-compressed",
+  "application/octet-stream",
+  "multipart/x-zip",
+]);
+
+/**
+ * Rejet précoce des fichiers manifestement non-ZIP (défense en profondeur, en amont du
+ * lecteur d'archive durci). On accepte si l'extension est `.zip` **ou** le MIME est zip-ish :
+ * la validation de fond reste la décompression elle-même (bornée contre les zip bombs).
+ */
+export function zipFileFilter(
+  _req: Request,
+  file: { originalname: string; mimetype: string },
+  cb: (error: Error | null, accept: boolean) => void,
+): void {
+  const isZip =
+    file.originalname.toLowerCase().endsWith(".zip") || ZIP_MIME_TYPES.has(file.mimetype);
+  // `false` sans erreur : le fichier est ignoré → `@UploadedFile()` vaut `undefined` → 400.
+  cb(null, isZip);
+}
 
 /** Vue minimale du fichier uploadé (stockage mémoire multer) : seul le buffer nous importe. */
 interface UploadedArchive {
@@ -49,12 +74,17 @@ export class ImportController {
   // Traitement lourd (décompression + appels fournisseurs) : 5 imports / heure / IP.
   @RateLimit({ limit: 5, windowSeconds: 3600 })
   @Post("tvtime")
-  @UseInterceptors(FileInterceptor("file", { limits: { fileSize: MAX_ARCHIVE_BYTES } }))
+  @UseInterceptors(
+    FileInterceptor("file", {
+      limits: { fileSize: MAX_ARCHIVE_BYTES, files: 1 },
+      fileFilter: zipFileFilter,
+    }),
+  )
   async importTvTime(
     @CurrentUser() user: AuthenticatedUser,
     @UploadedFile() file?: UploadedArchive,
   ): Promise<StartImportResult> {
-    if (!file) throw new BadRequestException("Fichier d'archive manquant.");
+    if (!file) throw new BadRequestException("Fichier d'archive ZIP manquant ou invalide.");
     return this.startImport.execute({ userId: user.id, format: "tvtime", archive: file.buffer });
   }
 

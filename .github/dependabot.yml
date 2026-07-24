@@ -1,0 +1,26 @@
+# Mises à jour de dépendances automatisées (SCA/veille — voir audit sécurité VULN-12).
+# Dependabot ouvre des PR de montée de version, chacune re-testée par la CI, ce qui permet
+# de traiter les CVE connues (multer, path-to-regexp, montée NestJS 11…) de façon revue.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    # Regroupe les mises à jour de dev pour limiter le bruit de PR.
+    groups:
+      dev-dependencies:
+        dependency-type: development
+      production-dependencies:
+        dependency-type: production
+    commit-message:
+      prefix: chore
+      include: scope
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: chore

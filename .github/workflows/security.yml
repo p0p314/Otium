@@ -1,0 +1,71 @@
+# Chaîne de sécurité (audit VULN-12) : SCA (audit de dépendances), secret scanning et SAST.
+# Complète `ci.yml` (typecheck/lint/test/build). Voir docs/audit/.
+name: Security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Re-scan hebdomadaire : une CVE peut être publiée sans changement de code.
+    - cron: "0 6 * * 1"
+
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  dependency-audit:
+    name: Audit des dépendances (SCA)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      # Bloquant sur les failles CRITIQUES des dépendances de production (aucune à ce jour).
+      # À durcir en `--audit-level=high` une fois la dette connue résorbée (montée NestJS 11,
+      # multer 2.x… traitées via Dependabot).
+      - name: "Audit prod (bloquant : critique)"
+        run: pnpm audit --prod --audit-level=critical
+      # Rapport informatif complet (non bloquant) : garde la dette visible sans figer la CI.
+      - name: Rapport complet (informatif)
+        if: always()
+        run: pnpm audit || true
+
+  secret-scan:
+    name: Secret scanning (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  codeql:
+    name: SAST (CodeQL)
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+      - name: Analyze
+        uses: github/codeql-action/analyze@v3
