@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import type { Prisma } from "@prisma/client";
 import { PrismaService } from "../../../shared/infrastructure/prisma/prisma.service";
+import { enrichMediaPatch } from "./media-enrichment";
 import type { CustomList, CustomListDetail, ListRepository, MediaDescriptor } from "../domain";
 
 type ListDetailRow = Prisma.ListGetPayload<{
@@ -104,8 +105,11 @@ export class PrismaListRepository implements ListRepository {
     return this.findDetail(userId, listId);
   }
 
-  private upsertMedia(media: MediaDescriptor) {
-    return this.prisma.media.upsert({
+  // Média partagé entre utilisateurs : on le crée s'il manque mais on n'écrase jamais ses
+  // champs depuis le descriptor client (anti-falsification du catalogue — audit VULN-11).
+  // On complète seulement les champs vides.
+  private async upsertMedia(media: MediaDescriptor) {
+    const row = await this.prisma.media.upsert({
       where: {
         externalProvider_externalId: {
           externalProvider: media.externalRef.provider,
@@ -121,8 +125,11 @@ export class PrismaListRepository implements ListRepository {
         externalId: media.externalRef.externalId,
         genres: [],
       },
-      update: { title: media.title, year: media.year, posterUrl: media.posterUrl },
+      update: {},
     });
+    const patch = enrichMediaPatch(row, media);
+    if (Object.keys(patch).length === 0) return row;
+    return this.prisma.media.update({ where: { id: row.id }, data: patch });
   }
 
   private toDetail(list: ListDetailRow): CustomListDetail {

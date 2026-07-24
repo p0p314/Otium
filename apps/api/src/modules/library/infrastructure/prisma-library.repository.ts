@@ -1,6 +1,7 @@
 import { Injectable, InternalServerErrorException } from "@nestjs/common";
 import { type Prisma } from "@prisma/client";
 import { PrismaService } from "../../../shared/infrastructure/prisma/prisma.service";
+import { enrichMediaPatch } from "./media-enrichment";
 import type {
   BookMetadata,
   LibraryItem,
@@ -24,7 +25,11 @@ export class PrismaLibraryRepository implements LibraryRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async add(userId: string, media: MediaDescriptor): Promise<LibraryItem> {
-    const mediaRow = await this.prisma.media.upsert({
+    // Le média générique est **partagé** entre utilisateurs (dédup par provider+externalId).
+    // On crée à la volée s'il manque, mais on n'**écrase jamais** ses champs partagés depuis
+    // le descriptor client (anti-falsification du catalogue — audit VULN-11) : l'`update` est
+    // un no-op. L'enrichissement des champs vides se fait ensuite, de façon contrôlée.
+    let mediaRow = await this.prisma.media.upsert({
       where: {
         externalProvider_externalId: {
           externalProvider: media.externalRef.provider,
@@ -42,16 +47,14 @@ export class PrismaLibraryRepository implements LibraryRepository {
         runtimeMinutes: media.runtimeMinutes ?? null,
         releaseDate: media.releaseDate ?? null,
       },
-      update: {
-        title: media.title,
-        year: media.year,
-        posterUrl: media.posterUrl,
-        // Enrichit un média déjà présent mais sans genres/durée (ajout antérieur).
-        ...(media.genres && media.genres.length > 0 ? { genres: [...media.genres] } : {}),
-        ...(media.runtimeMinutes != null ? { runtimeMinutes: media.runtimeMinutes } : {}),
-        ...(media.releaseDate != null ? { releaseDate: media.releaseDate } : {}),
-      },
+      update: {},
     });
+
+    // Complète uniquement les champs actuellement vides (jamais le titre).
+    const patch = enrichMediaPatch(mediaRow, media);
+    if (Object.keys(patch).length > 0) {
+      mediaRow = await this.prisma.media.update({ where: { id: mediaRow.id }, data: patch });
+    }
 
     if (media.book) await this.upsertBookMetadata(mediaRow.id, media.book);
 
@@ -192,11 +195,7 @@ export class PrismaLibraryRepository implements LibraryRepository {
     }));
   }
 
-  async saveProgress(
-    userId: string,
-    itemId: string,
-    update: ProgressUpdate,
-  ): Promise<LibraryItem> {
+  async saveProgress(userId: string, itemId: string, update: ProgressUpdate): Promise<LibraryItem> {
     // Transaction : l'état courant et son historique doivent avancer ensemble, sinon les
     // statistiques temporelles divergeraient de la progression affichée.
     await this.prisma.$transaction(async (tx) => {
