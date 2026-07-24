@@ -1,3 +1,4 @@
+export * from "./account.js";
 export * from "./auth.js";
 export * from "./book.js";
 export * from "./progress.js";

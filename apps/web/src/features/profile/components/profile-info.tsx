@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import { useAuth, useLogout, useUpdateProfile } from "../../auth/api/use-auth";
 import { Field } from "../../auth/components/field";
 import { ChangePassword } from "./change-password";
+import { PrivacyData } from "./privacy-data";
 
 /** Onglet « Profil » : édition du nom affiché et de l'e-mail + déconnexion. */
 export function ProfileInfo() {
@@ -66,6 +67,8 @@ export function ProfileInfo() {
       </form>
 
       <ChangePassword />
+
+      <PrivacyData />
 
       <div className="border-t pt-4">
         <Button

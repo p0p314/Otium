@@ -1,5 +1,6 @@
 import type {
   ChangePasswordInput,
+  DeleteAccountInput,
   LoginInput,
   RegisterInput,
   UpdateProfileInput,
@@ -59,6 +60,34 @@ export function useLogout() {
     mutationFn: () => api.logout(),
     // On nettoie la session localement même si l'appel réseau échoue.
     onSettled: () => {
+      clear();
+      queryClient.clear();
+    },
+  });
+}
+
+/** Exporte les données personnelles (RGPD Art. 20) et déclenche le téléchargement. */
+export function useExportData() {
+  return useMutation({
+    mutationFn: () => api.exportMyData(),
+    onSuccess: (blob) => {
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `otium-donnees-${new Date().toISOString().slice(0, 10)}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+    },
+  });
+}
+
+/** Supprime définitivement le compte (RGPD Art. 17), puis purge l'état local. */
+export function useDeleteAccount() {
+  const clear = useAuthStore((s) => s.clear);
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: DeleteAccountInput) => api.deleteAccount(input),
+    onSuccess: () => {
       clear();
       queryClient.clear();
     },

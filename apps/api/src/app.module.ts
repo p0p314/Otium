@@ -4,6 +4,7 @@ import { ConfigModule } from "@nestjs/config";
 import { APP_GUARD } from "@nestjs/core";
 import { ServeStaticModule } from "@nestjs/serve-static";
 import { CsrfHeaderGuard } from "./shared/presentation/csrf-header.guard";
+import { AccountModule } from "./modules/account/account.module";
 import { AuthenticationModule } from "./modules/authentication/authentication.module";
 import { HealthModule } from "./modules/health/health.module";
 import { ImportModule } from "./modules/import/import.module";
@@ -51,6 +52,7 @@ function staticModules(): DynamicModule[] {
     HealthModule,
     MediaModule,
     AuthenticationModule,
+    AccountModule,
     LibraryModule,
     StatsModule,
     ImportModule,

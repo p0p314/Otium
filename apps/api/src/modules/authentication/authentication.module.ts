@@ -23,8 +23,9 @@ import { AuthGuard } from "./presentation/auth.guard";
     { provide: PASSWORD_HASHER, useClass: BcryptPasswordHasher },
     { provide: SESSION_STORE, useClass: PrismaSessionStore },
   ],
-  // Exporté pour que d'autres modules (library…) puissent protéger leurs routes.
-  // On ré-exporte UserModule pour que l'AuthGuard résolve USER_REPOSITORY chez l'importateur.
-  exports: [AuthGuard, SESSION_STORE, UserModule],
+  // Exporté pour que d'autres modules (library, account…) puissent protéger leurs routes
+  // et réutiliser l'auth. On ré-exporte UserModule pour que l'AuthGuard (et le module
+  // account) résolvent USER_REPOSITORY chez l'importateur.
+  exports: [AuthGuard, SESSION_STORE, PASSWORD_HASHER, UserModule],
 })
 export class AuthenticationModule {}

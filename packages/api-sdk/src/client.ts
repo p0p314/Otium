@@ -1,6 +1,7 @@
 import {
   type AddToLibraryInput,
   type AddToListInput,
+  type DeleteAccountInput,
   AuthSession,
   AuthUser,
   type ChangePasswordInput,
@@ -132,6 +133,32 @@ export class OtiumClient {
 
   async logout(): Promise<void> {
     await this.request("/auth/logout", z.void(), { method: "POST" });
+  }
+
+  // --- Compte (RGPD) ---
+
+  /**
+   * Télécharge l'export des données personnelles (portabilité — RGPD Art. 20). Renvoie un
+   * `Blob` JSON prêt à être enregistré côté navigateur (on ne re-valide pas notre propre sortie).
+   */
+  async exportMyData(): Promise<Blob> {
+    const response = await this.fetchImpl(`${this.baseUrl}/account/export`, {
+      credentials: "include",
+      headers: {
+        "x-otium-csrf": "1",
+        ...(this.getToken?.() ? { authorization: `Bearer ${this.getToken()}` } : {}),
+      },
+    });
+    if (!response.ok) {
+      if (response.status === 401) this.onUnauthorized?.();
+      throw new ApiError(response.status, "Export des données échoué", undefined);
+    }
+    return response.blob();
+  }
+
+  /** Supprime définitivement le compte (effacement — RGPD Art. 17). Mot de passe exigé. */
+  async deleteAccount(input: DeleteAccountInput): Promise<void> {
+    await this.request("/account", z.void(), { method: "DELETE", body: input });
   }
 
   async getLibrary(): Promise<LibraryItem[]> {
