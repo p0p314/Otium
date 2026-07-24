@@ -84,6 +84,35 @@ describe("PrismaSessionStore", () => {
     expect(deleteMany).toHaveBeenCalledWith({ where: { userId: "user-1" } });
   });
 
+  it("purge les sessions expirées à la création (best-effort)", async () => {
+    const deleteMany = vi.fn(async () => ({ count: 5 }));
+    const store = new PrismaSessionStore(makePrisma({ deleteMany }));
+
+    await store.create("user-1");
+
+    expect(deleteMany).toHaveBeenCalledWith({ where: { expiresAt: { lte: expect.any(Date) } } });
+  });
+
+  it("throttle la purge (au plus une fois par intervalle)", async () => {
+    const deleteMany = vi.fn(async () => ({ count: 0 }));
+    const store = new PrismaSessionStore(makePrisma({ deleteMany }));
+
+    await store.create("user-1");
+    await store.create("user-1");
+
+    // La 2e création réutilise la fenêtre de purge : une seule purge effective.
+    expect(deleteMany).toHaveBeenCalledTimes(1);
+  });
+
+  it("une purge en échec ne fait pas échouer la création", async () => {
+    const deleteMany = vi.fn(async () => {
+      throw new Error("db down");
+    });
+    const store = new PrismaSessionStore(makePrisma({ deleteMany }));
+
+    await expect(store.create("user-1")).resolves.toMatchObject({ userId: "user-1" });
+  });
+
   it("revokeAllForUser conserve la session courante (exceptToken)", async () => {
     const deleteMany = vi.fn(async () => ({ count: 2 }));
     const store = new PrismaSessionStore(makePrisma({ deleteMany }));

@@ -4,6 +4,7 @@ import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client
 import { RouterProvider } from "@tanstack/react-router";
 import { queryClient } from "../lib/query-client";
 import { router } from "../router";
+import { isPersistableQuery } from "./query-persistence";
 
 /**
  * Persistance du cache de données dans `localStorage` : au **redémarrage** de l'app, les
@@ -28,7 +29,9 @@ export function AppProviders() {
           maxAge: 24 * 60 * 60 * 1000, // 24 h : au-delà, on repart d'un fetch frais.
           buster: __OTIUM_BUILD_ID__,
           dehydrateOptions: {
-            shouldDehydrateQuery: (query) => query.state.status === "success",
+            // Persiste uniquement les requêtes réussies ET publiques (jamais de PII sur disque).
+            shouldDehydrateQuery: (query) =>
+              query.state.status === "success" && isPersistableQuery(query.queryKey),
           },
         }}
       >

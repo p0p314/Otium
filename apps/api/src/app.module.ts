@@ -1,7 +1,9 @@
 import { resolve } from "node:path";
 import { type DynamicModule, Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
+import { APP_GUARD } from "@nestjs/core";
 import { ServeStaticModule } from "@nestjs/serve-static";
+import { CsrfHeaderGuard } from "./shared/presentation/csrf-header.guard";
 import { AuthenticationModule } from "./modules/authentication/authentication.module";
 import { HealthModule } from "./modules/health/health.module";
 import { ImportModule } from "./modules/import/import.module";
@@ -54,5 +56,7 @@ function staticModules(): DynamicModule[] {
     ImportModule,
     ...staticModules(),
   ],
+  // Garde anti-CSRF globale : exige l'en-tête custom sur toute requête mutante (VULN-06).
+  providers: [{ provide: APP_GUARD, useClass: CsrfHeaderGuard }],
 })
 export class AppModule {}

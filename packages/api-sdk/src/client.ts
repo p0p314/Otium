@@ -216,10 +216,7 @@ export class OtiumClient {
   }
 
   /** Fixe les dates de début/fin de consommation (`null` efface la date). */
-  async setConsumptionDates(
-    itemId: string,
-    input: SetConsumptionDatesInput,
-  ): Promise<LibraryItem> {
+  async setConsumptionDates(itemId: string, input: SetConsumptionDatesInput): Promise<LibraryItem> {
     return this.request(`/library/${itemId}/dates`, LibraryItem, {
       method: "PATCH",
       body: input,
@@ -344,6 +341,9 @@ export class OtiumClient {
       // pour les clients non-navigateur (mobile) via `getToken`.
       credentials: "include",
       headers: {
+        // En-tête anti-CSRF exigé par l'API sur les requêtes mutantes (défense en profondeur ;
+        // un formulaire cross-site ne peut pas le poser). Doit rester synchronisé avec l'API.
+        "x-otium-csrf": "1",
         // Pour un envoi multipart (FormData), on laisse le navigateur poser le
         // content-type avec la bonne frontière (boundary).
         ...(init?.form ? {} : { "content-type": "application/json" }),
