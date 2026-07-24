@@ -42,6 +42,9 @@ export class HttpRequestError extends Error {
   }
 }
 
+/** Délai maximal par défaut d'un appel sortant (garde-fou : pas de socket pendante). */
+const DEFAULT_TIMEOUT_MS = 10_000;
+
 export interface HttpGetOptions {
   /**
    * Nombre de nouvelles tentatives sur erreur **transitoire** (0 = aucune). À réserver aux
@@ -50,6 +53,12 @@ export interface HttpGetOptions {
   readonly retries?: number;
   /** Délai de base entre deux tentatives (doublé à chaque essai). */
   readonly retryDelayMs?: number;
+  /**
+   * Délai maximal d'une tentative (ms). Au-delà, la requête est **abandonnée** (AbortSignal)
+   * et traitée comme une panne réseau (retentée si des tentatives restent). Évite qu'un
+   * fournisseur lent immobilise une requête et sa socket indéfiniment (robustesse + éco).
+   */
+  readonly timeoutMs?: number;
 }
 
 /**
@@ -67,10 +76,11 @@ export class HttpClient {
   ): Promise<T> {
     const retries = options.retries ?? 0;
     const baseDelay = options.retryDelayMs ?? 200;
+    const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
 
     for (let attempt = 0; ; attempt++) {
       try {
-        const response = await fetch(url, { headers });
+        const response = await fetch(url, { headers, signal: AbortSignal.timeout(timeoutMs) });
         if (response.ok) return (await response.json()) as T;
         if (attempt >= retries || !TRANSIENT_STATUSES.has(response.status)) {
           throw new HttpRequestError(response.status, url);

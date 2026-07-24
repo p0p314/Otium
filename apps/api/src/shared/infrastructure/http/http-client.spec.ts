@@ -52,6 +52,23 @@ describe("HttpClient", () => {
     await expect(client.getJson("https://api.test/x")).resolves.toEqual({ ok: 1 });
   });
 
+  it("borne chaque tentative par un AbortSignal (timeout)", async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ ok: 1 }));
+    await client.getJson("https://api.test/x");
+    const init = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    expect(init.signal).toBeInstanceOf(AbortSignal);
+  });
+
+  it("retente un dépassement de délai comme une panne réseau", async () => {
+    fetchMock
+      .mockRejectedValueOnce(new DOMException("timeout", "TimeoutError"))
+      .mockResolvedValueOnce(jsonResponse({ ok: 1 }));
+
+    await expect(
+      client.getJson("https://api.test/x", {}, { retries: 1, retryDelayMs: 0 }),
+    ).resolves.toEqual({ ok: 1 });
+  });
+
   it("ne réessaie pas par défaut", async () => {
     fetchMock.mockResolvedValue(errorResponse(503));
     await expect(client.getJson("https://api.test/x")).rejects.toThrow(HttpRequestError);
