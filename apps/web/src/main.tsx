@@ -3,9 +3,14 @@ import { setupFrenchZodErrors } from "@otium/types";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { AppProviders } from "./app/providers";
+import { ensureSessionLoaded } from "./lib/session";
 
 // Messages de validation Zod en français (formulaires React Hook Form).
 setupFrenchZodErrors();
+
+// Restaure la session depuis le cookie httpOnly dès le démarrage (rien n'est persisté
+// côté JS) : l'en-tête et l'accueil reflètent l'état connecté sans attendre une navigation.
+void ensureSessionLoaded();
 
 const rootElement = document.getElementById("root");
 if (!rootElement) throw new Error("Élément racine #root introuvable");

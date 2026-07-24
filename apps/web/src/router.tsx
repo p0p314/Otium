@@ -27,6 +27,7 @@ const EpisodeDetailPage = lazy(() =>
 );
 import { RootLayout } from "./routes/root-layout";
 import { HomePage } from "./routes/home";
+import { ensureSessionLoaded } from "./lib/session";
 import { useAuthStore } from "./stores/auth-store";
 
 const rootRoute = createRootRoute({ component: RootLayout });
@@ -55,7 +56,10 @@ const registerRoute = createRoute({
   component: RegisterPage,
 });
 
-const requireAuth = () => {
+const requireAuth = async () => {
+  // Attend la restauration de session (cookie httpOnly) avant de décider : évite une
+  // redirection vers /login au chargement d'une route protégée tant que /auth/me n'a pas répondu.
+  await ensureSessionLoaded();
   if (useAuthStore.getState().user === null) {
     throw redirect({ to: "/login" });
   }
